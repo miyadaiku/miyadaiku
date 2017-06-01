@@ -1,0 +1,142 @@
+import collections
+import yaml
+import pathlib
+import locale
+import pkg_resources
+import tzlocal
+
+from . import utils
+from . import YAML_ENCODING
+from . import main
+
+default_timezone = tzlocal.get_localzone().zone
+
+#      import pytz
+#     >>> eastern = pytz.timezone('US/Eastern')
+
+# Convert the datetime:
+
+#     >>> dt.astimezone(eastern)
+
+
+default_theme = 'miyadaiku.themes.base'
+defaults = dict(
+    themes=(default_theme,),
+    lang='en',
+    charset='utf-8',
+    timezone=default_timezone,
+
+    site_url = 'http://localhost:8888',
+    site_title = '(FIXME-site_title)',
+    
+    article_template='page_article.html',
+    filename_templ='{content.name}.html',
+
+    article_abstract_length = 500,
+
+    indexpage_template='page_index.html',
+    indexpage_template2='page_index.html',
+
+    indexpage_group_template='page_index.html',
+    indexpage_group_template2='page_index.html',
+
+    indexpage_filename_templ='{stem}.html',
+    indexpage_filename_templ2='{stem}_{cur_page}.html',
+
+    indexpage_group_filename_templ='index_{groupby}_{value}.html',
+    indexpage_group_filename_templ2='index_{groupby}_{value}_{cur_page}.html',
+    
+    indexpage_max_articles=3,
+    indexpage_orphan=1,
+
+    rss_num_articles=10,
+)
+
+
+def _load_theme_config(package):
+    try:
+        s = pkg_resources.resource_string(package, main.CONFIG_FILE)
+    except FileNotFoundError:
+        cfg = {}
+    else:
+        cfg = yaml.load(s.decode(YAML_ENCODING))
+    
+    if not cfg:
+        cfg = {}
+    return cfg
+
+
+def _load_theme_configs(themes):
+    seen = set()
+    themes = themes[:]
+    while themes:
+        theme = themes.pop(0)
+        if theme in seen:
+            continue
+        seen.add(theme)
+        cfg = _load_theme_config(theme)
+        themes = list(t for t in cfg.get('themes', [])) + themes
+        yield theme, cfg
+
+
+class Config:
+    def __init__(self, path):
+        self._configs = collections.defaultdict(list)
+        self.themes = []
+        # read root config
+        if path:
+            d = yaml.load(path.read_text(encoding=YAML_ENCODING)) or {}
+            self.add((), d)
+            
+            themes = list(d.get('themes', [])) + [default_theme] 
+            for theme, cfg in _load_theme_configs(themes):
+                self.themes.append(theme)
+                self.add((), cfg)
+                
+    def add(self, dirname, cfg):
+        dirname = utils.dirname_to_tuple(dirname)
+        self._configs[dirname].append(cfg)
+
+    _omit = object()
+
+    def get(self, dirname, name, default=_omit):
+        if not isinstance(dirname, tuple):
+            dirname = utils.dirname_to_tuple(name)
+
+        while True:
+            configs = self._configs.get(dirname, None)
+            if configs:
+                for config in configs:
+                    if name in config:
+                        return config[name]
+
+            if not dirname:
+                if name in defaults:
+                    return defaults[name]
+
+                if default is not self._omit:
+                    return default
+                else:
+                    raise AttributeError(
+                        f"Invalid config name: {dirname}:{name}")
+
+            dirname = dirname[:-1]
+
+
+def load_config(path):
+    return Config(yaml.load(path.read_text()))
+
+
+def to_bool(s):
+    if not isinstance(s, str):
+        return bool(s)
+
+    s = s.strip().lower()
+    # http://yaml.org/type/bool.html
+    if s in {'y', 'yes', 'true', 'on'}:
+        return True
+
+    if s in {'n', 'no', 'false', 'off'}:
+        return False
+
+    raise ValueError(f'Invalid boolean string: {s}')

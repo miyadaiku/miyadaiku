@@ -1,0 +1,62 @@
+
+{% extends 'miyadaiku.themes.base!base.html' %}
+
+
+{% macro article_metadata(article) -%}
+  <div class="article-metadata">
+    <span class="article-date"> {{ article.date.strftime("%Y-%m-%d") if article.date else "" }} </span>
+    <span> {{ article.category }} </span>
+    <span> {{ ",".join(article.tags) }} </span>
+  </div>
+{%- endmacro %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ page.path_to('/static/css/sample_article.css') }}">
+{% endblock head %}
+
+
+
+{% block body %}
+<div class="container">
+  <h1 class="index-title">
+    <a href="{{page.path_to(contents['/index.yml'])}}">{{ page.site_title }}</a>
+  </h1>
+
+  <div class="container-inner">
+    <div class="container-body">
+      {% block container_body %}
+
+      {% endblock container_body %}
+    </div>
+    <aside class="container-right">
+
+      Categories:
+        
+      <ul>
+        {% for category in contents.categories %}
+          <li>
+            <a href="{{ contents['/index_category.yml'].path_from_page(page, [category], 1) }}">
+              {{ category }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+
+      Tags:
+        
+      <ul>
+        {% for tag in contents.tags %}
+          <li>
+            <a href="{{ contents['/index_tag.yml'].path_from_page(page, [tag], 1) }}">
+              {{ tag }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+
+    </aside>
+  </div>
+
+</div>
+{% endblock body %}

@@ -1,0 +1,1 @@
+YAML_ENCODING = 'utf8'

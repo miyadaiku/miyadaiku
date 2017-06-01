@@ -1,0 +1,11 @@
+*.dll
+*.exe
+*.o
+*.so
+*.pyc
+*.egg-info
+dist
+build
+.DS_Store
+.cache
+.venv

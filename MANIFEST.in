@@ -1,0 +1,3 @@
+recursive-include docs  *.html *.css *.rst *.py
+recursive-include example  *.html *.css *.rst *.py
+recursive-include test  *.html *.css *.rst *.py
