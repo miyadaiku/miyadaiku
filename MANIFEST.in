@@ -1,1 +1,1 @@
-recursive-include miyadaiku  *.html *.css *.js *.rst *.md *.py
+recursive-include miyadaiku  *.html *.css *.js *.rst *.md *.py *.yml
