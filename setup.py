@@ -33,7 +33,7 @@ def list_packages(root):
 
 setup(
     name="miyadaiku",
-    version="0.0.1",
+    version="0.0.2",
     author="Atsuo Ishimoto",
     license="MIT",
     classifiers=[
