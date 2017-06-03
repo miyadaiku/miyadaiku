@@ -36,13 +36,7 @@ class ContentArgProxy:
         if f:
             return f(self.page_content)
 
-        try:
-            return getattr(self.content, name)
-        except AttributeError:
-            if name in self.content.metadata:
-                return self.content.metadata[name]
-
-        return self.site.config.get(self.content.dirname, name)
+        return getattr(self.content, name)
 
     def get_content(self, target):
         if isinstance(target, str):
@@ -249,7 +243,7 @@ class HTMLContent(Content):
             if re.match(r'h\d', c.name or ''):
                 id = f'h_{"_".join(self.dirname)}_{self.name}_{n}'
                 n += 1
-                a = soup.new_tag('a', id=id)
+                a = soup.new_tag('a', id=id, **{'class':'header_anchor'})
                 c.insert_before(a)
                 headers.append((id, c.name, c.text))
 

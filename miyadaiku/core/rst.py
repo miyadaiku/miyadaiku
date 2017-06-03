@@ -120,7 +120,8 @@ settings = {
     'input_encoding': 'utf-8',
     'syntax_highlight': 'short',
     'embed_stylesheet': False,
-#    'doctitle_xform': False
+#    'doctitle_xform': False,
+#    'initial_header_level': 1,
 }
 
 

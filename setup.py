@@ -1,6 +1,9 @@
-import os
+import os, sys
 import pathlib
 from setuptools import setup, find_packages
+
+if sys.version_info < (3,6):
+    raise RuntimeError('Miyadaiku requires Python later than 3.6')
 
 DIR = pathlib.Path(__file__).resolve().parent
 os.chdir(DIR)
@@ -33,7 +36,7 @@ def list_packages(root):
 
 setup(
     name="miyadaiku",
-    version="0.0.3",
+    version="0.0.4",
     author="Atsuo Ishimoto",
     license="MIT",
     classifiers=[
