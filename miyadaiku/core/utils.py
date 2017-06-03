@@ -31,13 +31,30 @@ def walk_package(package, dir):
             yield p
 
 def abs_path(relpath, dirtuple=None):
+    if not isinstance(relpath, str):
+        return relpath
     d, f = posixpath.split(relpath)
+    d = abs_dir(d, dirtuple)
+    return d, f
+
+
+def abs_dir(d, dirtuple=None):
+    if not isinstance(d, str):
+        return d
+
     if not d.startswith('/'):
+        if dirtuple is None:
+            raise ValueError(f'relpath without base directory: {d}')
+
         dir = '/'.join(dirtuple) or '/'
         d = posixpath.join(dir, d)
-    d = posixpath.normpath(d)
-    return dirname_to_tuple(d), f
 
+    d = posixpath.normpath(d)
+    if d == '.':
+        d = ()
+    else:
+        d = dirname_to_tuple(d)
+    return d
 
 def format_dirname(dirname):
     return dirname.replace('\\', '/').strip('/')

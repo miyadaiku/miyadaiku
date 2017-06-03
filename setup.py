@@ -43,7 +43,7 @@ setup(
         "Environment :: Console",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
-        "Operating System :: OS Independent ",
+        "Operating System :: OS Independent",
     ],
     description='Miyadaiku - Flexible static site generator for Jinja2 artists',
     long_description=read('README.rst'),

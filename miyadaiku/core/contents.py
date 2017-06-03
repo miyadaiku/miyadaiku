@@ -106,6 +106,7 @@ class Content:
         self.metadata = _metadata(metadata)
         self.body = body
 
+        self.metadata['stat'] = None
         path = self.metadata.get('path', None)
         if path:
             try:
@@ -113,36 +114,49 @@ class Content:
             except IOError:
                 pass
 
-    def _get_metadata(self, name):
+    _omit=object()
+    def get_metadata(self, name, default=_omit):
         if name in self.metadata:
             return getattr(self.metadata, name)
-        return self.site.config.get(self.dirname, name)
+
+        if default is self._omit:
+            return self.site.config.get(self.dirname, name)
+        else:
+            return self.site.config.get(self.dirname, name, default)
+
+
+
+    def __getattr__(self, name):
+        _omit=object()
+        ret = self.get_metadata(name, default=_omit)
+        if ret is _omit:
+            raise AttributeError(f"Invalid attr name: {name}")
+        return ret
 
     def _to_filename(self, name):
         return name
 
     @property
     def title(self):
-        return self.metadata.get('title') or os.path.splitext(self.name)[0]
+        return self.get_metadata('title', None) or os.path.splitext(self.name)[0]
 
     @property
     def filename(self):
-        filename = self.metadata.get('filename')
+        filename = self.get_metadata('filename', None)
         if not filename:
             filename = self._to_filename(self.name)
         return urllib.parse.quote(filename)
 
     @property
     def url(self):
-        site_url = self._get_metadata('site_url')
+        site_url = self.get_metadata('site_url')
         dir = '/'.join(self.dirname)
         ret = urllib.parse.urljoin(site_url, dir)
         return urllib.parse.urljoin(ret, self.filename)
 
     @property
     def timezone_name(self):
-        return self.metadata.timezone or self.site.config.get(
-            self.dirname, 'timezone')
+        return self.get_metadata('timezone', '')
 
     @property
     def timezone(self):
@@ -150,7 +164,7 @@ class Content:
 
     @property
     def date(self):
-        date = self.metadata.date
+        date = self.get_metadata('date', None)
         if not date:
             return 
         tz = self.timezone
@@ -178,7 +192,7 @@ class BinContent(Content):
 
     def get_outputs(self):
         return [Output(dirname=self.dirname, name=self.name, 
-                stat=self.metadata.get('stat', None),
+                stat=self.stat,
                 body=self.body)]
 
 
@@ -203,7 +217,7 @@ class HTMLContent(Content):
     def prop_get_abstract(self, page_content):
         html = self._get_html(page_content)
         soup = BeautifulSoup(html, 'html.parser')
-        article_abstract_length = self._get_metadata('article_abstract_length')
+        article_abstract_length = self.article_abstract_length
         
         slen = 0
         gen = soup.recursiveChildGenerator()
@@ -252,13 +266,13 @@ class Snippet(HTMLContent):
 class Article(HTMLContent):
     def get_outputs(self):
 
-        templatename = self._get_metadata('article_template')
+        templatename = self.article_template
         template = self.site.jinjaenv.get_template(templatename)
         body = template.render(
             **self.get_render_args(self))
 
         return [Output(dirname=self.dirname, name=self.filename,
-                       stat=self.metadata.get('stat', None),
+                       stat=self.stat,
                        body=body.encode('utf-8'))]
 
 
@@ -267,21 +281,21 @@ class IndexPage(Content):
         value = '_'.join(values)
         stem, ext = os.path.splitext(self.name)
 
-        if self.metadata.groupby:
+        if getattr(self, 'groupby', None):
             if npage == 1:
-                filename_templ = self._get_metadata('indexpage_group_filename_templ')
+                filename_templ = self.indexpage_group_filename_templ
             else:
-                filename_templ = self._get_metadata('indexpage_group_filename_templ2')
+                filename_templ = self.indexpage_group_filename_templ2
         else:
             if npage == 1:
-                filename_templ = self._get_metadata('indexpage_filename_templ')
+                filename_templ = self.indexpage_filename_templ
             else:
-                filename_templ = self._get_metadata('indexpage_filename_templ2')
+                filename_templ = self.indexpage_filename_templ2
 
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
         template = self.site.jinjaenv.from_string(filename_templ)
         ret = template.render(
-            groupby=self.metadata.groupby, value=value, cur_page=npage,
+            groupby=getattr(self, 'groupby', None), value=value, cur_page=npage,
             stem=stem, ext=ext,**self.get_render_args(self))
 
         return urllib.parse.quote(ret)
@@ -291,7 +305,7 @@ class IndexPage(Content):
         to = f"/{'/'.join(self.dirname)}/{filename}"
 
         if page_from._use_abs_path:
-            site_url = self._get_metadata('site_url')
+            site_url = self.site_url
             return urllib.parse.urljoin(site_url, to)
         else:
             here = f"/{'/'.join(page_from.dirname)}/"
@@ -301,13 +315,13 @@ class IndexPage(Content):
         return self.filename_to_page([''], 1)
 
     def get_outputs(self):
-        n_per_page = int(self._get_metadata('indexpage_max_articles'))
-        page_orphan = int(self._get_metadata('indexpage_orphan'))
+        n_per_page = int(self.indexpage_max_articles)
+        page_orphan = int(self.indexpage_orphan)
 
-        templatename1 = self._get_metadata('indexpage_template')
-        templatename2 = self._get_metadata('indexpage_template2')
+        templatename1 = self.indexpage_template
+        templatename2 = self.indexpage_template2
         outputs = []
-        groups = self.site.contents.group_items(self.metadata.groupby)
+        groups = self.site.contents.group_items(getattr(self, 'groupby', None), {'article'})
 
         for names, group in groups:
             num = len(group)
@@ -337,7 +351,7 @@ class IndexPage(Content):
                 
                 filename = self.filename_to_page(names, page+1)
                 output = Output(dirname=self.dirname, name=filename,
-                                stat=self.metadata.get('stat', None),
+                                stat=self.stat,
                                 body=body.encode('utf-8'))
                 outputs.append(output)
 
@@ -353,7 +367,7 @@ class FeedPage(Content):
     def _to_filename(self, name):
         n, e = os.path.splitext(name)
 
-        feedtype = self.metadata.feedtype
+        feedtype = self.feedtype
         if feedtype == 'atom':
             ext = 'xml'
         elif feedtype == 'rss':
@@ -365,7 +379,7 @@ class FeedPage(Content):
 
     def get_outputs(self):
 
-        feedtype = self.metadata.feedtype
+        feedtype = self.feedtype
         if feedtype == 'atom':
             cls = Atom1Feed
         elif feedtype == 'rss':
@@ -374,14 +388,14 @@ class FeedPage(Content):
             raise ValueError(f"Invarid feed type: {feedtype}")
 
         feed = cls(
-            title=self._get_metadata('site_title'),
-            link=self._get_metadata('site_url'),
+            title=self.site_title,
+            link=self.site_url,
             feed_url=self.url,
             description='')
 
-        contents = [c for c in self.site.contents.get_contents() if c.date]
+        contents = [c for c in self.site.contents.get_contents({'article'}) if c.date]
 
-        num_articles = int(self._get_metadata('rss_num_articles'))
+        num_articles = int(self.rss_num_articles)
         for c in contents[:num_articles]:
             title = c.title
             link = c.url
@@ -397,7 +411,7 @@ class FeedPage(Content):
 
         body = feed.writeString('utf-8').encode('utf-8')
         return [Output(dirname=self.dirname, name=self.filename,
-                       stat=self.metadata.get('stat', None),
+                       stat=self.stat,
                        body=body)]
 
 
@@ -411,15 +425,20 @@ class Contents:
             self._contents[key] = content
 
     def get_content(self, key, base=None):
-        dirname, filename = utils.abs_path(key, base.dirname if base else '/')
+        dirname, filename = utils.abs_path(key, base.dirname if base else ())
         return self._contents[(dirname, filename)]
 
-    def get_contents(self, types=None):
+    def get_contents(self, types=None, subdirs=None, base=None):
         if not types:
             contents = [c for c in self._contents.values()]
         else:
-            contents = [c for c in self._contents.values() if c.metadata.type in types]
-        
+            contents = [c for c in self._contents.values() if c.type in types]
+
+        if subdirs:
+            cur = base.dirname if base else None
+            subdirs = [utils.abs_dir(d, cur) for d in subdirs]
+            contents = filter(lambda c:any(c.dirname[:len(d)] == d for d in subdirs), contents)
+
         recs = []
         for c in contents:
             d = c.date
@@ -432,16 +451,13 @@ class Contents:
         recs.sort(reverse=True, key=lambda r:(r[0], r[1].title))
         return [c for (ts, c) in recs]
 
-    def group_items(self, group):
+    def group_items(self, group, types=None, subdirs=None, base=None):
         if not group:
-            return [(('',), list(self.get_contents({'article'})))]
+            return [(('',), list(self.get_contents(types, subdirs, base)))]
 
         d = collections.defaultdict(list)
-        for c in self.get_contents({'article'}):
-            if hasattr(c.metadata, group):
-                g = getattr(c.metadata, group)
-            else:
-                g = getattr(c, group)
+        for c in self.get_contents(types, subdirs, base):
+            g = getattr(c, group, None)
 
             if g:
                 if isinstance(g, str):
@@ -455,14 +471,14 @@ class Contents:
     @property
     def categories(self):
         contents = self.get_contents({'article'})
-        categories = (c.metadata.category for c in contents if c.metadata.category)
-        return sorted(set(categories))
+        categories = (getattr(c, 'category', None) for c in contents)
+        return sorted(set(c for c in categories if c))
 
     @property
     def tags(self):
         tags = set()
         for c in self.get_contents({'article'}):
-            t = c.metadata.tags
+            t = getattr(c, 'tags', None)
             if t:
                 tags.update(t)
         return sorted(tags)
