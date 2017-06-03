@@ -39,7 +39,13 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
+        "Development Status :: 2 - Pre-Alpha",
+        "Environment :: Console",
+        "Environment :: Web Environment",
+        "Intended Audience :: Developers",
+        "Operating System :: OS Independent ",
     ],
+    description='Miyadaiku - Flexible static site generator for Jinja2 artists',
     long_description=read('README.rst'),
     entry_points=entry_points,
     packages=list(list_packages('miyadaiku')),

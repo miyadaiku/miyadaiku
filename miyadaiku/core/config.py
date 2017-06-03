@@ -40,11 +40,11 @@ defaults = dict(
     indexpage_group_template='page_index.html',
     indexpage_group_template2='page_index.html',
 
-    indexpage_filename_templ='{stem}.html',
-    indexpage_filename_templ2='{stem}_{cur_page}.html',
+    indexpage_filename_templ='{{stem}}.html',
+    indexpage_filename_templ2='{{stem}}_{{cur_page}}.html',
 
-    indexpage_group_filename_templ='index_{groupby}_{value}.html',
-    indexpage_group_filename_templ2='index_{groupby}_{value}_{cur_page}.html',
+    indexpage_group_filename_templ='index_{{groupby}}_{{value}}.html',
+    indexpage_group_filename_templ2='index_{{groupby}}_{{value}}_{{cur_page}}.html',
     
     indexpage_max_articles=3,
     indexpage_orphan=1,

@@ -278,10 +278,12 @@ class IndexPage(Content):
             else:
                 filename_templ = self._get_metadata('indexpage_filename_templ2')
 
-        kwargs = self.get_render_args(self)
-        ret = filename_templ.format(
-            groupby=self.metadata.groupby, value=value, cur_page=npage, stem=stem, ext=ext, **kwargs)
-            
+        filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
+        template = self.site.jinjaenv.from_string(filename_templ)
+        ret = template.render(
+            groupby=self.metadata.groupby, value=value, cur_page=npage,
+            stem=stem, ext=ext,**self.get_render_args(self))
+
         return urllib.parse.quote(ret)
     
     def path_from_page(self, page_from, value, npage):
