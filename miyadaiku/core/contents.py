@@ -16,7 +16,7 @@ from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
 
 logger = logging.getLogger(__name__)
 
-from . import utils, rst
+from . import utils, rst, html, md
 from . output import Output
 from . import YAML_ENCODING
 
@@ -38,9 +38,118 @@ class ContentArgProxy:
 
         return getattr(self.content, name)
 
+class ContentsArgProxy:
+    def __init__(self, site, page_content, content):
+        self.site, self.page_content, self.content = (site, page_content, content)
+
+    def __getitem__(self, key):
+        content = self.site.contents.get_content(key, self.content)
+        return ContentArgProxy(self.site, self.page_content, content)
+
+    def __getattr__(self, name):
+        return getattr(self.site.contents, name)
+
+
+class ConfigArgProxy:
+    def __init__(self, site, page_content, content):
+        self.site, self.page_content, self.content = (site, page_content, content)
+
+    def __getitem__(self, key):
+        return self.site.config.get(self.page_content.dirname, key)
+
+    def __getattr__(self, name):
+        return self.site.config.get(self.page_content.dirname, name)
+
+
+class Content:
+    _use_abs_path = False
+
+    def __init__(self, site, dirname, name, metadata, body):
+        self.site = site
+        self.dirname = utils.dirname_to_tuple(dirname)
+        self.name = name
+        self.metadata = _metadata(metadata)
+        self.body = body
+
+        self.metadata['stat'] = None
+        path = self.metadata.get('srcpath', None)
+        if path:
+            try:
+                self.metadata['stat'] = os.stat(path)
+            except IOError:
+                pass
+
+    _omit=object()
+    def get_metadata(self, name, default=_omit):
+        if name in self.metadata:
+            return getattr(self.metadata, name)
+
+        if default is self._omit:
+            return self.site.config.get(self.dirname, name)
+        else:
+            return self.site.config.get(self.dirname, name, default)
+
+    def __getattr__(self, name):
+        _omit=object()
+        ret = self.get_metadata(name, default=_omit)
+        if ret is _omit:
+            raise AttributeError(f"Invalid attr name: {name}")
+        return ret
+
+    def _to_filename(self, name):
+        return name
+
+    @property
+    def title(self):
+        return self.get_metadata('title', None) or os.path.splitext(self.name)[0]
+
+    @property
+    def filename(self):
+        filename = self.get_metadata('filename', None)
+        if not filename:
+            filename = self._to_filename(self.name)
+        return filename
+
+    @property
+    def stem(self):
+        if not self.name:
+            return ''
+        d, name = posixpath.split(self.name)
+        return posixpath.splitext(name)[0]
+
+    @property
+    def ext(self):
+        if not self.name:
+            return ''
+        d, name = posixpath.split(self.name)
+        return posixpath.splitext(name)[1]
+
+    @property
+    def url(self):
+        site_url = self.get_metadata('site_url')
+        dir = '/'.join(self.dirname)
+        ret = urllib.parse.urljoin(site_url, dir)
+        return urllib.parse.urljoin(ret, self.filename)
+
+    @property
+    def timezone_name(self):
+        return self.get_metadata('timezone', '')
+
+    @property
+    def timezone(self):
+        return pytz.timezone(self.timezone_name)
+
+    @property
+    def date(self):
+        date = self.get_metadata('date', None)
+        if not date:
+            return 
+        tz = self.timezone
+        return date.astimezone(tz)
+
     def get_content(self, target):
         if isinstance(target, str):
-            content = self.site.contents.get_content(target, self.content)
+            content = self.site.contents.get_content(target, self)
         elif isinstance(target, ContentArgProxy):
             content = target.content
         elif isinstance(target, Content):
@@ -66,103 +175,6 @@ class ContentArgProxy:
 
         text = markupsafe.escape(text or '')
         return markupsafe.Markup(f"<a href='{self.path_to(target)}'>{text}</a>")
-
-
-class ContentsArgProxy:
-    def __init__(self, site, page_content, content):
-        self.site, self.page_content, self.content = (site, page_content, content)
-
-    def __getitem__(self, key):
-        content = self.site.contents.get_content(key, self.content)
-        return ContentArgProxy(self.site, self.page_content, content)
-
-    def __getattr__(self, name):
-        return getattr(self.site.contents, name)
-
-
-class ConfigArgProxy:
-    def __init__(self, site, page_content, content):
-        self.site, self.page_content, self.content = (site, page_content, content)
-
-    def __getitem__(self, key):
-        return self.site.config.get(self.page_content.dirname, key)
-
-    def __getattr__(self, name):
-        return self.site.config.get(self.page_content.dirname, name)
-
-class Content:
-    _use_abs_path = False
-
-    def __init__(self, site, dirname, name, metadata, body):
-        self.site = site
-        self.dirname = utils.dirname_to_tuple(dirname)
-        self.name = name
-        self.metadata = _metadata(metadata)
-        self.body = body
-
-        self.metadata['stat'] = None
-        path = self.metadata.get('path', None)
-        if path:
-            try:
-                self.metadata['stat'] = os.stat(path)
-            except IOError:
-                pass
-
-    _omit=object()
-    def get_metadata(self, name, default=_omit):
-        if name in self.metadata:
-            return getattr(self.metadata, name)
-
-        if default is self._omit:
-            return self.site.config.get(self.dirname, name)
-        else:
-            return self.site.config.get(self.dirname, name, default)
-
-
-
-    def __getattr__(self, name):
-        _omit=object()
-        ret = self.get_metadata(name, default=_omit)
-        if ret is _omit:
-            raise AttributeError(f"Invalid attr name: {name}")
-        return ret
-
-    def _to_filename(self, name):
-        return name
-
-    @property
-    def title(self):
-        return self.get_metadata('title', None) or os.path.splitext(self.name)[0]
-
-    @property
-    def filename(self):
-        filename = self.get_metadata('filename', None)
-        if not filename:
-            filename = self._to_filename(self.name)
-        return urllib.parse.quote(filename)
-
-    @property
-    def url(self):
-        site_url = self.get_metadata('site_url')
-        dir = '/'.join(self.dirname)
-        ret = urllib.parse.urljoin(site_url, dir)
-        return urllib.parse.urljoin(ret, self.filename)
-
-    @property
-    def timezone_name(self):
-        return self.get_metadata('timezone', '')
-
-    @property
-    def timezone(self):
-        return pytz.timezone(self.timezone_name)
-
-    @property
-    def date(self):
-        date = self.get_metadata('date', None)
-        if not date:
-            return 
-        tz = self.timezone
-        return date.astimezone(tz)
 
     def get_outputs(self):
         return []
@@ -211,15 +223,18 @@ class HTMLContent(Content):
     def prop_get_abstract(self, page_content):
         html = self._get_html(page_content)
         soup = BeautifulSoup(html, 'html.parser')
-        article_abstract_length = self.article_abstract_length
+        abstract_length = self.abstract_length
+        
+        if abstract_length == 0:
+            return soup
         
         slen = 0
         gen = soup.recursiveChildGenerator()
         for c in gen:
             if isinstance(c, NavigableString):
                 curlen = len(c.strip())
-                slen += len(c.strip())
-                if slen + curlen > article_abstract_length:
+                slen += curlen
+                if slen + curlen > abstract_length:
                     last_c = c
                     break
                 slen += curlen
@@ -231,7 +246,7 @@ class HTMLContent(Content):
                 c.next_sibling.extract()
             c = c.parent
         
-        last_c.string.replace_with(last_c[:article_abstract_length-curlen])
+        last_c.string.replace_with(last_c[:abstract_length-curlen])
         return HTMLValue(soup)
     
     def prop_get_html(self, page_content):
@@ -273,7 +288,7 @@ class Article(HTMLContent):
 class IndexPage(Content):
     def filename_to_page(self, values, npage):
         value = '_'.join(values)
-        stem, ext = os.path.splitext(self.name)
+        value = re.sub(r'[%/\\: \t]', lambda m:f'%{ord(m[0]):02x}', value)
 
         if getattr(self, 'groupby', None):
             if npage == 1:
@@ -290,12 +305,12 @@ class IndexPage(Content):
         template = self.site.jinjaenv.from_string(filename_templ)
         ret = template.render(
             groupby=getattr(self, 'groupby', None), value=value, cur_page=npage,
-            stem=stem, ext=ext,**self.get_render_args(self))
+            **self.get_render_args(self))
 
-        return urllib.parse.quote(ret)
+        return ret
     
-    def path_from_page(self, page_from, value, npage):
-        filename = urllib.parse.quote(self.filename_to_page(value, npage))
+    def path_from_page(self, page_from, values, npage):
+        filename = self.filename_to_page(values, npage)
         to = f"/{'/'.join(self.dirname)}/{filename}"
 
         if page_from._use_abs_path:
@@ -315,7 +330,13 @@ class IndexPage(Content):
         templatename1 = self.indexpage_template
         templatename2 = self.indexpage_template2
         outputs = []
-        groups = self.site.contents.group_items(getattr(self, 'groupby', None), {'article'})
+
+        filters = getattr(self, 'filters', {})
+        filters['type'] = {'article'}
+        filters['draft'] = {False}
+
+        groups = self.site.contents.group_items(
+            getattr(self, 'groupby', None), filters=filters)
 
         for names, group in groups:
             num = len(group)
@@ -324,6 +345,9 @@ class IndexPage(Content):
             if rest <= page_orphan:
                 if num_pages > 1:
                     num_pages -= 1
+
+            if self.indexpage_max_num_pages:
+                num_pages = min(num_pages, self.indexpage_max_num_pages)
 
             templatename = templatename1
             for page in range(0, num_pages):
@@ -386,10 +410,13 @@ class FeedPage(Content):
             link=self.site_url,
             feed_url=self.url,
             description='')
+        
+        filters = getattr(self, 'filters', {})
+        filters['type'] = {'article'}
+        contents = [c for c in self.site.contents.get_contents(
+            filters=filters)]
 
-        contents = [c for c in self.site.contents.get_contents({'article'}) if c.date]
-
-        num_articles = int(self.rss_num_articles)
+        num_articles = int(self.feed_num_articles)
         for c in contents[:num_articles]:
             title = c.title
             link = c.url
@@ -422,17 +449,36 @@ class Contents:
         dirname, filename = utils.abs_path(key, base.dirname if base else ())
         return self._contents[(dirname, filename)]
 
-    def get_contents(self, types=None, subdirs=None, base=None):
-        if not types:
-            contents = [c for c in self._contents.values()]
-        else:
-            contents = [c for c in self._contents.values() if c.type in types]
+    def get_contents(self, subdirs=None, base=None, filters=None):
+        contents = [c for c in self._contents.values()]
+
+        if filters:
+            def f(content):
+                for k, v in filters.items():
+                    if not hasattr(content, k):
+                        return False
+                    prop = getattr(content, k)
+                    if isinstance(prop, str):
+                        if prop not in v:
+                            return False
+                    elif isinstance(prop, collections.abc.Collection):
+                        for e in prop:
+                            if e in v:
+                                break
+                        else:
+                            return False
+                    else:
+                        if prop not in v:
+                            return False
+                return True
+
+            contents = [c for c in self._contents.values() if f(c)]
 
         if subdirs:
             cur = base.dirname if base else None
             subdirs = [utils.abs_dir(d, cur) for d in subdirs]
             contents = filter(lambda c:any(c.dirname[:len(d)] == d for d in subdirs), contents)
-
+        
         recs = []
         for c in contents:
             d = c.date
@@ -445,33 +491,35 @@ class Contents:
         recs.sort(reverse=True, key=lambda r:(r[0], r[1].title))
         return [c for (ts, c) in recs]
 
-    def group_items(self, group, types=None, subdirs=None, base=None):
+    def group_items(self, group, subdirs=None, base=None, filters=None):
         if not group:
-            return [(('',), list(self.get_contents(types, subdirs, base)))]
+            return [(('',), list(self.get_contents(subdirs, base, filters)))]
 
         d = collections.defaultdict(list)
-        for c in self.get_contents(types, subdirs, base):
+        for c in self.get_contents(subdirs, base, filters):
             g = getattr(c, group, None)
 
             if g:
                 if isinstance(g, str):
                     d[(g,)].append(c)
-                else:
+                elif isinstance(g, collections.abc.Collection):
                     for e in g:
                         d[(e,)].append(c)
+                else:
+                    d[(g,)].append(c)
 
         return sorted(d.items())
 
     @property
     def categories(self):
-        contents = self.get_contents({'article'})
+        contents = self.get_contents(filters={'type':{'article'}})
         categories = (getattr(c, 'category', None) for c in contents)
         return sorted(set(c for c in categories if c))
 
     @property
     def tags(self):
         tags = set()
-        for c in self.get_contents({'article'}):
+        for c in self.get_contents(filters={'type':{'article'}}):
             t = getattr(c, 'tags', None)
             if t:
                 tags.update(t)
@@ -498,7 +546,7 @@ def content_class(type):
 class bin_loader:
     def from_file(site, path, dirname, filename):
         body = path.read_bytes()
-        metadata = {'path': path, 'type': 'binary'}
+        metadata = {'srcpath': path, 'type': 'binary'}
 
         return content_class(metadata['type'])(site, dirname, filename, metadata, body)
 
@@ -510,7 +558,12 @@ class bin_loader:
 class rst_loader:
     def from_file(site, path, dirname, filename):
         metadata, body = rst.load(path)
-        metadata['path'] = path
+        metadata['srcpath'] = path
+        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+
+    def from_byte(site, dirname, filename, bin):
+        src = bin.decode('utf-8')
+        metadata, body = rst.load_string(src)
         return content_class(metadata['type'])(site, dirname, filename, metadata, body)
 
 
@@ -520,21 +573,47 @@ class yaml_loader:
         metadata = yaml.load(text)
         if not metadata:
             metadata = {}
-        metadata['path'] = path
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body=None)
+        metadata['srcpath'] = path
+        return content_class(metadata['type'])(site, dirname, filename, metadata, body=text)
 
     def from_byte(site, dirname, filename, bin):
         text = bin.decode(YAML_ENCODING)
         metadata = yaml.load(text)
         if not metadata:
             metadata = {}
-        return content_class(metadata['type'])(site, dirname, filename, metadata, bin)
+        return content_class(metadata['type'])(site, dirname, filename, metadata, text)
+
+
+class html_loader:
+    def from_file(site, path, dirname, filename):
+        metadata, body = html.load(path)
+        metadata['srcpath'] = path
+        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+
+    def from_byte(site, dirname, filename, bin):
+        src = bin.decode('utf-8')
+        metadata, body = html.load_string(src)
+        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+
+
+class md_loader:
+    def from_file(site, path, dirname, filename):
+        metadata, body = md.load(path)
+        metadata['srcpath'] = path
+        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+
+    def from_byte(site, dirname, filename, bin):
+        src = bin.decode('utf-8')
+        metadata, body = md.load_string(src)
+        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
 
 
 LOADERS = {
     ".rst": rst_loader,
     ".yml": yaml_loader,
     ".yaml": yaml_loader,
+    ".html": html_loader,
+    ".md": md_loader,
 }
 
 

@@ -25,14 +25,13 @@ defaults = dict(
     lang='en',
     charset='utf-8',
     timezone=default_timezone,
-
+    draft = False,
     site_url = 'http://localhost:8888',
     site_title = '(FIXME-site_title)',
     
     article_template='page_article.html',
-    filename_templ='{content.name}.html',
 
-    article_abstract_length = 500,
+    abstract_length = 500,
 
     indexpage_template='page_index.html',
     indexpage_template2='page_index.html',
@@ -40,16 +39,24 @@ defaults = dict(
     indexpage_group_template='page_index.html',
     indexpage_group_template2='page_index.html',
 
-    indexpage_filename_templ='{{stem}}.html',
-    indexpage_filename_templ2='{{stem}}_{{cur_page}}.html',
+    indexpage_filename_templ='{{page.stem}}.html',
+    indexpage_filename_templ2='{{page.stem}}_{{cur_page}}.html',
 
-    indexpage_group_filename_templ='index_{{groupby}}_{{value}}.html',
-    indexpage_group_filename_templ2='index_{{groupby}}_{{value}}_{{cur_page}}.html',
+    indexpage_group_filename_templ='{{page.stem}}_{{groupby}}_{{value}}.html',
+    indexpage_group_filename_templ2='{{page.stem}}_{{groupby}}_{{value}}_{{cur_page}}.html',
     
+    indexpage_max_num_pages=0,
     indexpage_max_articles=3,
     indexpage_orphan=1,
 
-    rss_num_articles=10,
+    feed_type='atom',
+    feed_num_articles=10,
+
+    title='',
+    date=None,
+    category='',
+    tags=(),
+
 )
 
 

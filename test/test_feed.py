@@ -33,7 +33,7 @@ feedtype: rss
     site.write()
 
     nums = [re.search(r'\d', p.stem+'_1')[0] for p in sitedir.joinpath('output').glob('index*')]
-    p = sitedir.joinpath('output') / 'feed.rdf'
+    p = sitedir.joinpath('outputs') / 'feed.rdf'
     print(p.read_text())
 
         

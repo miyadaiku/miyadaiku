@@ -1,6 +1,7 @@
 import sys
 import pathlib
 import importlib
+import os
 
 from . import config
 from . import contents
@@ -11,11 +12,12 @@ CONFIG_FILE = 'config.yml'
 CONTENTS_DIR = 'contents'
 FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
-OUTPUT_DIR = 'output'
+OUTPUTS_DIR = 'outputs'
 
 class Site:
     def __init__(self, path):
-        self.path = path.expanduser().resolve()
+        p = os.path.abspath(os.path.expanduser(path))
+        self.path = pathlib.Path(p)
         cfgfile = path / CONFIG_FILE
         self.config = config.Config(cfgfile if cfgfile.exists() else None)
 
@@ -45,7 +47,7 @@ class Site:
                 self.output.add(output)
 
     def write(self):
-        self.output.write(self.path / OUTPUT_DIR)
+        self.output.write(self.path / OUTPUTS_DIR)
 
 
 # def run():
