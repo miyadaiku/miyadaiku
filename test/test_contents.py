@@ -39,7 +39,7 @@ def test_group_items():
     conts.add(a3)
     conts.add(a4)
 
-    ret = dict(conts.group_items('category', {'article'}, subdirs=[()]))
+    ret = dict(conts.group_items('category', filters={'type':{'article'}}, subdirs=[()]))
 
     assert len(ret[('a',)]) == 2
     assert len(ret[('b',)]) == 1

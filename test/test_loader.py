@@ -27,4 +27,5 @@ def test_packageloader():
     contents.load_package(site, 'package1', 'contents')
     all = list(site.contents.get_contents())
 
-    assert len(all) == 4
+    assert len(all) == 5
+    assert site.contents.get_content('/dir1/test.rst').body.strip() == '<p>package1/dir1/test.rst</p>'

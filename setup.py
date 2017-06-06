@@ -11,7 +11,8 @@ os.chdir(DIR)
 
 requires = [
     "docutils", "pyyaml", "jinja2", "python-dateutil", "pygments",
-    "pytz", "tzlocal", "happylogging", "beautifulsoup4", "feedgenerator"
+    "pytz", "tzlocal", "happylogging", "beautifulsoup4", "feedgenerator",
+    "markdown",
 ]
 
 

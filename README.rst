@@ -16,3 +16,4 @@ Miyadaiku is a static site generator.
 
 - Other dependencies such as jQuery or Bootstrap can be managed as Python packages too.
 
+- Hierarchical contents property.

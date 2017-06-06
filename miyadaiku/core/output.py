@@ -1,4 +1,5 @@
-import os
+import os, pathlib
+
 class Output:
     def __init__(self, dirname, name, stat, body):
         self.dirname = dirname
@@ -10,8 +11,17 @@ class Output:
         dir = path.joinpath(*self.dirname)
         if not dir.is_dir():
             dir.mkdir(parents=True)
-        dest = (dir / self.name)
-        dest.write_bytes(self.body)
+        
+        name = self.name.strip('/\\')
+        dest = os.path.expanduser((dir / name))
+        dest = os.path.normpath(dest)
+
+        s = str(path)
+        if not dest.startswith(s) or dest[len(s)] not in '\\/':
+            raise ValueError(f"Invalid file name: {self.name}")
+
+        destfile = pathlib.Path(dest)
+        destfile.write_bytes(self.body)
 
         if self.stat:
             os.utime(dest, (self.stat.st_atime, self.stat.st_mtime))

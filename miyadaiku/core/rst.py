@@ -65,7 +65,8 @@ class _RstDirective(Directive):
         except Exception as e:
             raise MarkupError(str(e))
 
-        options['type'] = self.CONTENT_TYPE
+        if 'type' not in options:
+            options['type'] = self.CONTENT_TYPE
 
         cur = getattr(self.state.document, "article_metadata", {})
         cur.update(options)
@@ -115,6 +116,17 @@ def jinja_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
 
 roles.register_local_role('jinja', jinja_role)
 
+class rawhtmllit(docutils.nodes.Inline, docutils.nodes.TextElement):
+    pass
+
+def rawhtml_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
+    node = rawhtmllit(rawtext, docutils.utils.unescape(text, 1), **options)
+    node.source, node.line = inliner.reporter.get_source_and_line(lineno)
+    return [node], []
+
+
+roles.register_local_role('raw', jinja_role)
+
 
 settings = {
     'input_encoding': 'utf-8',
@@ -139,20 +151,28 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
     def depart_jinjalit(self, node):
         pass
 
+    def visit_rawhtmllit(self, node):
+        self.body.append(node.astext())
+        # Keep non-HTML raw text out of output:
+        raise docutils.nodes.SkipNode
 
-def load(path):
+    def depart_rawhtmllitlit(self, node):
+        pass
+
+
+def _make_pub(source_class):
     pub = docutils.core.Publisher(
-        source_class=docutils.io.FileInput,
+        source_class=source_class,
         destination_class=docutils.io.StringOutput)
 
     pub.set_components("standalone", "restructuredtext", "html5")
     pub.process_programmatic_settings(None, settings, None)
-    pub.set_source(source_path=os.fspath(path))
     pub.writer.translator_class = HTMLTranslator
 
-    pub.parser.state_classes
+    return pub
 
 
+def _parse(pub):
     pub.publish(enable_exit_status=True)
 
     parts = pub.writer.parts
@@ -171,3 +191,17 @@ def load(path):
             break
 
     return metadata, parts.get('body')
+
+
+def load(path):
+    pub = _make_pub(docutils.io.FileInput)
+    pub.set_source(source_path=os.fspath(path))
+    return _parse(pub)
+
+def load_string(string):
+    pub = _make_pub(docutils.io.StringInput)
+    pub.set_source(source=string)
+    return _parse(pub)
+
+
+
