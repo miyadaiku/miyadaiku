@@ -1,13 +1,12 @@
 import os, sys
 import pathlib
 from setuptools import setup, find_packages
+from miyadaiku.common import setuputils
 
 if sys.version_info < (3,6):
     raise RuntimeError('Miyadaiku requires Python later than 3.6')
 
 DIR = pathlib.Path(__file__).resolve().parent
-os.chdir(DIR)
-
 
 requires = [
     "docutils", "pyyaml", "jinja2", "python-dateutil", "pygments",
@@ -22,18 +21,6 @@ entry_points = {
         'miyadaiku-build = miyadaiku.scripts.muneage:main'
     ]
 }
-
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
-
-
-def list_packages(root):
-    yield root
-    for dirpath, dirnames, filenames in os.walk(root):
-        for d in dirnames:
-            if not d.startswith('_'):
-                path = os.path.join(dirpath, d).replace(os.path.sep, '.')
-                yield path
 
 setup(
     name="miyadaiku",
@@ -50,11 +37,11 @@ setup(
         "Operating System :: OS Independent",
     ],
     description='Miyadaiku - Flexible static site generator for Jinja2 artists',
-    long_description=read('README.rst'),
+    long_description=setuputils.read_file(DIR, 'README.rst'),
     entry_points=entry_points,
-    packages=list(list_packages('miyadaiku')),
+    packages=list(setuputils.list_packages(DIR, 'miyadaiku')),
     package_data={
-        '': ['*.rst', '*.md', '*.html', '*.css', '*.js', '*.yml', '*.png', '*.jpg', '*.jpeg'],
+        '': setuputils.SETUP_FILE_EXTS,
     },
     install_requires=requires,
     include_package_data=True,
