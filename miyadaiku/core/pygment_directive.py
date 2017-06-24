@@ -46,21 +46,34 @@ from pygments.formatters import HtmlFormatter
 # The default formatter
 DEFAULT = HtmlFormatter(noclasses=INLINESTYLES)
 
-# Add name -> formatter pairs for every variant you want to use
-VARIANTS = {
-    'linenos': HtmlFormatter(noclasses=INLINESTYLES, linenos=True),
-}
-
-
+import html
 from docutils import nodes
 from docutils.parsers.rst import directives, Directive
 
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name, TextLexer
+import pygments.formatters.html
 
 import logging
 logger = logging.getLogger(__name__)
 
+pygments.formatters.html._escape_html_table[ord(
+        '{')] = '&#123;'
+pygments.formatters.html._escape_html_table[ord(
+        '}')] = '&#125;'
+
+
+# Add name -> formatter pairs for every variant you want to use
+VARIANTS = {
+    'linenos': HtmlFormatter(noclasses=INLINESTYLES, linenos=True),
+}
+
+TEMPL = """
+<div class="code-block">
+{parsed}
+{caption}
+</div>
+"""
 
 class Pygments(Directive):
     """ Source code syntax hightlighting.
@@ -68,7 +81,10 @@ class Pygments(Directive):
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = True
-    option_spec = dict([(key, directives.flag) for key in VARIANTS])
+    option_spec = {
+        'linenos': directives.flag,
+        'caption': directives.unchanged,
+    }
     has_content = True
 
     def run(self):
@@ -81,8 +97,13 @@ class Pygments(Directive):
             logger.warn(f'no lexer for alias {self.arguments[0]!r} found')
 
         # take an arbitrary option if more than one is given
-        formatter = self.options and VARIANTS[list(self.options)[0]] or DEFAULT
+        formatter = self.options.get('linenos', DEFAULT)
         parsed = highlight(u'\n'.join(self.content), lexer, formatter)
+        caption = self.options.get('caption', '')
+        caption = pygments.formatters.html.escape_html(caption)
+        if caption:
+            caption = f'''<div class="code-block-caption">{caption}</div>'''
+        parsed = TEMPL.format(parsed=parsed, caption=caption)
         return [nodes.raw('', parsed, format='html')]
 
 directives.register_directive('code-block', Pygments)

@@ -7,9 +7,13 @@ DIR = Path(__file__).parent
 def test_load():
     metadata, text = rst.load(DIR / 'test1.rst')
     assert text.strip() == '''<p>{}</p>
-<div class="highlight"><pre><span></span>:jinja:`&#123;&#123;&#125;&#125;`
-</pre></div>'''
 
+<div class="code-block">
+<div class="highlight"><pre><span></span>:jinja:`&#123;&#123;&#125;&#125;`
+</pre></div>
+
+<div class="code-block-caption">caption</div>
+</div>'''
 
 def test_date(tmpdir):
     f = tmpdir.join('file1.rst')

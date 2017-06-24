@@ -4,6 +4,8 @@ import pathlib
 import locale
 import pkg_resources
 import tzlocal
+import dateutil
+import datetime
 
 from . import utils
 from . import YAML_ENCODING
@@ -21,7 +23,7 @@ default_timezone = tzlocal.get_localzone().zone
 
 default_theme = 'miyadaiku.themes.base'
 defaults = dict(
-    themes=(default_theme,),
+    themes=[default_theme,],
     lang='en',
     charset='utf-8',
     timezone=default_timezone,
@@ -35,9 +37,6 @@ defaults = dict(
 
     indexpage_template='page_index.html',
     indexpage_template2='page_index.html',
-
-    indexpage_group_template='page_index.html',
-    indexpage_group_template2='page_index.html',
 
     indexpage_filename_templ='{{page.stem}}.html',
     indexpage_filename_templ2='{{page.stem}}_{{cur_page}}.html',
@@ -115,7 +114,7 @@ class Config:
             if configs:
                 for config in configs:
                     if name in config:
-                        return config[name]
+                        return format_value(name, config[name])
 
             if not dirname:
                 if name in defaults:
@@ -128,6 +127,10 @@ class Config:
                         f"Invalid config name: {dirname}:{name}")
 
             dirname = dirname[:-1]
+
+    def getbool(self, dirname, name, default=_omit):
+        ret = self.get(dirname, name, default)
+        return to_bool(ret)
 
 
 def load_config(path):
@@ -147,3 +150,22 @@ def to_bool(s):
         return False
 
     raise ValueError(f'Invalid boolean string: {s}')
+
+def format_value(name, value):
+    if not isinstance(value, str):
+        return value
+    value = value.strip()
+    if name == 'draft':
+        return self.getbool(value)
+    elif name == 'tags':
+        return list(filter(None, (t.strip() for t in value.split(','))))
+    elif name == 'date':
+        if value:
+            ret = dateutil.parser.parse(value)
+            if isinstance(ret, datetime.time):
+                raise ValueError(f'String does not contain a date: {value!r}')
+            return ret
+    elif name == 'order':
+        return int(value)
+    return value
+

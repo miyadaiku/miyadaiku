@@ -36,7 +36,7 @@
       <ul>
         {% for category in contents.categories %}
           <li>
-            <a href="{{ contents['/index_category.yml'].path_from_page(page, [category], 1) }}">
+            <a href="{{ contents['/index_category.yml'].path_to_indexpage([category], 1, page_from=page) }}">
               {{ category }}
             </a>
           </li>
@@ -48,7 +48,7 @@
       <ul>
         {% for tag in contents.tags %}
           <li>
-            <a href="{{ contents['/index_tag.yml'].path_from_page(page, [tag], 1) }}">
+            <a href="{{ contents['/index_tag.yml'].path_to_indexpage([tag], 1, page_from=page) }}">
               {{ tag }}
             </a>
           </li>

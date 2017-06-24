@@ -14,14 +14,14 @@
   <div class="index-pagination">
     {% if cur_page != 1 %}
       <a class="index-navi"
-         href="{{page.path_from_page(page, group_names, cur_page-1)}}">&larr;</a>
+         href="{{page.path_to_indexpage(group_names, cur_page-1)}}">&larr;</a>
     {% else %}
       <span class="index-navi disabled-link">&larr;</span>
     {% endif %}
     
     {% if not is_last %}
       <a class="index-navi"
-         href="{{ page.path_from_page(page, group_names, cur_page+1) }}">&rarr;</a>
+         href="{{ page.path_to_indexpage(group_names, cur_page+1) }}">&rarr;</a>
     {% else %}
       <span class="index-navi disabled-link">&rarr;</span>
     {% endif %}

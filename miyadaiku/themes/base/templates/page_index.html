@@ -1,7 +1,6 @@
 
 {% extends "base.html" %}
 
-
 {% block body %}
 <div>
   <h1>
@@ -18,10 +17,10 @@
   <hr>
   <div>
     {% if cur_page != 1 %}
-      <a href="{{page.path_from_page(page, group_names, cur_page-1)}}">Prev page</a>
+      <a href="{{page.path_to_indexpage(group_names, cur_page-1)}}">Prev page</a>
     {% endif %}
     {% if not is_last %}
-      <a href="{{page.path_from_page(page, group_names, cur_page+1)}}">Next page</a>
+      <a href="{{page.path_to_indexpage(group_names, cur_page+1)}}">Next page</a>
     {% endif %}
   </div>
 

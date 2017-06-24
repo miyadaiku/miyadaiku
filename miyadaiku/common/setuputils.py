@@ -1,7 +1,11 @@
 import os
 import sys
+import shutil
+import glob
 from wheel import bdist_wheel
 import distutils.dist
+from distutils.core import Command
+
 
 SETUP_FILE_EXTS = [
     '*.rst', '*.md', '*.html', '*.css', '*.js', '*.yml', '*.png',
@@ -22,13 +26,44 @@ def read_file(packagedir, fname):
     return open(os.path.join(packagedir, fname)).read()
 
 
+distutils.dist.Distribution.exec_func= None
+class exec_func(Command):
+    description = 'Execute function'
+    user_options = []
+    boolean_options = []
+    
+    def initialize_options(self):
+        pass
 
-distutils.dist.Distribution.external_init= None
+    def finalize_options(self):
+        pass
 
-class bdist_wheel_ext(bdist_wheel.bdist_wheel):
     def run(self):
-        if self.distribution.external_init:
-            ret = os.system(self.distribution.external_init)
-            if ret:
-                raise RuntimeError(f'Command failed: {self.distribution.external_init!a}')
-        return super().run()
+        if self.distribution.exec_func:
+            self.distribution.exec_func(self.distribution)
+
+
+distutils.dist.Distribution.copy_files= None
+
+class copy_files(Command):
+    description = 'Execute function'
+    user_options = []
+    boolean_options = []
+    
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        if not self.distribution.copy_files:
+            return
+
+        for srcdir, specs, destdir in self.distribution.copy_files:
+            for spec in specs:
+                srcfiles = glob.glob(os.path.join(srcdir, spec))
+                for fname in srcfiles:
+                    print(f'copy {fname} -> {destdir}')
+                    shutil.copy(fname, destdir)
+

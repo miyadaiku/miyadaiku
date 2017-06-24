@@ -16,7 +16,7 @@ from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
 
 logger = logging.getLogger(__name__)
 
-from . import utils, rst, html, md
+from . import utils, rst, html, md, config
 from . output import Output
 from . import YAML_ENCODING
 
@@ -82,7 +82,7 @@ class Content:
     _omit=object()
     def get_metadata(self, name, default=_omit):
         if name in self.metadata:
-            return getattr(self.metadata, name)
+            return config.format_value(name, getattr(self.metadata, name))
 
         if default is self._omit:
             return self.site.config.get(self.dirname, name)
@@ -309,7 +309,10 @@ class IndexPage(Content):
 
         return ret
     
-    def path_from_page(self, page_from, values, npage):
+    def path_to_indexpage(self, values, npage, page_from=None):
+        if not page_from:
+            page_from = self
+    
         filename = self.filename_to_page(values, npage)
         to = f"/{'/'.join(self.dirname)}/{filename}"
 

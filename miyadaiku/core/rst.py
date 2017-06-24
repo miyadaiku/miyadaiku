@@ -11,65 +11,15 @@ from docutils.writers.html5_polyglot import HTMLTranslator
 from docutils.parsers.rst import Directive, directives, roles
 from docutils.parsers.rst.states import MarkupError, Body
 
-import pygments.formatters.html
 from . import pygment_directive
-
-pygments.formatters.html._escape_html_table[ord(
-        '{')] = '&#123;'
-pygments.formatters.html._escape_html_table[ord(
-        '}')] = '&#125;'
-
-class Metadata:
-    def type_str(v):
-        return v.strip()
-    title = category = template = filename = type_str
-    template2 = type_str
-
-    def date(v):
-        v = v.strip()
-        if v:
-            ret = dateutil.parser.parse(v)
-            if isinstance(ret, datetime.time):
-                raise ValueError(f'String does not contain a date: {v!r}')
-            return ret
-        
-    def tags(v):
-        return [t.strip() for t in v.split(',')]
-
-    def draft(v):
-        v = v.strip().lower()
-        if not v:
-            return False
-
-        if v in {'yes', 'true'}:
-            return True
-        elif v in {'no', 'false'}:
-            return False
-
-        raise ValueError("Invalid boolean value: %s" % v)
-
-def format_metadata(d):
-    ret = {}
-    for k, v in d.items():
-        f = getattr(Metadata, k, None)
-        if f:
-            v = f(v)
-        ret[k] = v
-    return ret
-
 
 class _RstDirective(Directive):
     def run(self):
-        try:
-            options = format_metadata(self.options)
-        except Exception as e:
-            raise MarkupError(str(e))
-
-        if 'type' not in options:
-            options['type'] = self.CONTENT_TYPE
+        if 'type' not in self.options:
+            self.options['type'] = self.CONTENT_TYPE
 
         cur = getattr(self.state.document, "article_metadata", {})
-        cur.update(options)
+        cur.update(self.options)
         self.state.document.article_metadata = cur
         return []
 
@@ -88,7 +38,9 @@ class ArticleDirective(_RstDirective):
                    'category': directives.unchanged,
                    'tags': directives.unchanged,
                    'template': directives.unchanged,
-                   'filename': directives.unchanged,})
+                   'filename': directives.unchanged,
+                   'rst_initial_header_level': directives.unchanged
+                  })
 
 
 directives.register_directive('article', ArticleDirective)
@@ -143,6 +95,10 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
     docutils.writers.html5_polyglot.HTMLTranslator.special_characters[ord(
         '}')] = '&#125;'
 
+    def __init__(self, document):
+        super().__init__(document)
+#        self.initial_header_level = 2
+    
     def visit_jinjalit(self, node):
         self.body.append(node.astext())
         # Keep non-HTML raw text out of output:
