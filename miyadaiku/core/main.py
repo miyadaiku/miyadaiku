@@ -2,11 +2,14 @@ import sys
 import pathlib
 import importlib
 import os
+import logging
 
 from . import config
 from . import contents
 from . import jinjaenv
 from . import output
+
+logger = logging.getLogger(__name__)
 
 CONFIG_FILE = 'config.yml'
 CONTENTS_DIR = 'contents'
@@ -41,6 +44,7 @@ class Site:
 
     def build(self):
         for cont in self.contents.get_contents():
+            logger.info(f'Building {cont.url}')
             outputs = cont.get_outputs()
 
             for output in outputs:

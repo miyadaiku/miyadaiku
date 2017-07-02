@@ -30,7 +30,7 @@ defaults = dict(
     draft = False,
     site_url = 'http://localhost:8888',
     site_title = '(FIXME-site_title)',
-    
+    filename_templ = '{{page.stem}}{{page.ext}}',
     article_template='page_article.html',
 
     abstract_length = 500,
@@ -41,8 +41,8 @@ defaults = dict(
     indexpage_filename_templ='{{page.stem}}.html',
     indexpage_filename_templ2='{{page.stem}}_{{cur_page}}.html',
 
-    indexpage_group_filename_templ='{{page.stem}}_{{groupby}}_{{value}}.html',
-    indexpage_group_filename_templ2='{{page.stem}}_{{groupby}}_{{value}}_{{cur_page}}.html',
+    indexpage_group_filename_templ='{{page.stem}}_{{page.groupby}}_{{value}}.html',
+    indexpage_group_filename_templ2='{{page.stem}}_{{page.groupby}}_{{value}}_{{cur_page}}.html',
     
     indexpage_max_num_pages=0,
     indexpage_max_articles=3,

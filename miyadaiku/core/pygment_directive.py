@@ -70,8 +70,8 @@ VARIANTS = {
 
 TEMPL = """
 <div class="code-block">
-{parsed}
 {caption}
+{parsed}
 </div>
 """
 

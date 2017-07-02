@@ -96,8 +96,13 @@ class Content:
             raise AttributeError(f"Invalid attr name: {name}")
         return ret
 
-    def _to_filename(self, name):
-        return name
+    def _to_filename(self):
+        filename_templ = self.filename_templ
+        filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
+        template = self.site.jinjaenv.from_string(filename_templ)
+        ret = template.render(**self.get_render_args(self))
+        assert ret
+        return ret
 
     @property
     def title(self):
@@ -107,21 +112,29 @@ class Content:
     def filename(self):
         filename = self.get_metadata('filename', None)
         if not filename:
-            filename = self._to_filename(self.name)
+            filename = self._to_filename()
         return filename
 
     @property
     def stem(self):
-        if not self.name:
+        stem = self.get_metadata('stem', None)
+        if stem is not None:
+            return stem
+        name = self.name
+        if not name:
             return ''
-        d, name = posixpath.split(self.name)
+        d, name = posixpath.split(name)
         return posixpath.splitext(name)[0]
 
     @property
     def ext(self):
-        if not self.name:
+        ext = self.get_metadata('ext', None)
+        if ext is not None:
+            return ext
+        name = self.name
+        if not name:
             return ''
-        d, name = posixpath.split(self.name)
+        d, name = posixpath.split(name)
         return posixpath.splitext(name)[1]
 
     @property
@@ -150,31 +163,30 @@ class Content:
     def get_content(self, target):
         if isinstance(target, str):
             content = self.site.contents.get_content(target, self)
-        elif isinstance(target, ContentArgProxy):
-            content = target.content
-        elif isinstance(target, Content):
-            content = target
         else:
             raise ValueError(f'Cannot convert to path: {target}')
         return content
 
-    def path_to(self, target):
-        content = self.get_content(target)
-        
+    def path_to(self, target, hash=None):
+        if isinstance(target, str):
+            target = self.get_content(target)
+        hash = f'#{markupsafe.escape(hash)}' if hash else ''
         if self._use_abs_path:
-            return content.url
+            return target.url+hash
         else:
             here = f"/{'/'.join(self.dirname)}/"
-            to = f"/{'/'.join(content.dirname)}/{content.filename}"
-            return posixpath.relpath(to, here)
+            to = f"/{'/'.join(target.dirname)}/{target.filename}"
+            return posixpath.relpath(to, here)+hash
 
-    def link_to(self, target, text=None):
-        content = self.get_content(target)
+    def link_to(self, target, text=None, hash=None):
+        if isinstance(target, str):
+            target = self.get_content(target)
         if not text:
-            text = content.title
+            text = target.title
 
         text = markupsafe.escape(text or '')
-        return markupsafe.Markup(f"<a href='{self.path_to(target)}'>{text}</a>")
+        path = markupsafe.escape(self.path_to(target, hash=hash))
+        return markupsafe.Markup(f"<a href='{path}'>{text}</a>")
 
     def get_outputs(self):
         return []
@@ -207,9 +219,12 @@ class HTMLValue(markupsafe.Markup):
 
 
 class HTMLContent(Content):
-    def _to_filename(self, name):
-        n, e = os.path.splitext(name)
-        return f'{n}.html'
+    @property
+    def ext(self):
+        ext = self.get_metadata('ext', None)
+        if ext is not None:
+            return ext
+        return '.html'
 
     def _get_html(self, page_content):
         html = ""
@@ -286,6 +301,13 @@ class Article(HTMLContent):
 
 
 class IndexPage(Content):
+    @property
+    def ext(self):
+        ext = self.get_metadata('ext', None)
+        if ext is not None:
+            return ext
+        return '.html'
+
     def filename_to_page(self, values, npage):
         value = '_'.join(values)
         value = re.sub(r'[%/\\: \t]', lambda m:f'%{ord(m[0]):02x}', value)
@@ -304,7 +326,7 @@ class IndexPage(Content):
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
         template = self.site.jinjaenv.from_string(filename_templ)
         ret = template.render(
-            groupby=getattr(self, 'groupby', None), value=value, cur_page=npage,
+            value=value, cur_page=npage,
             **self.get_render_args(self))
 
         return ret
@@ -323,7 +345,7 @@ class IndexPage(Content):
             here = f"/{'/'.join(page_from.dirname)}/"
             return posixpath.relpath(to, here)
         
-    def _to_filename(self, name):
+    def _to_filename(self):
         return self.filename_to_page([''], 1)
 
     def get_outputs(self):
@@ -385,18 +407,15 @@ class IndexPage(Content):
 class FeedPage(Content):
     _use_abs_path = True
 
-    def _to_filename(self, name):
-        n, e = os.path.splitext(name)
-
+    @property
+    def ext(self):
         feedtype = self.feedtype
         if feedtype == 'atom':
-            ext = 'xml'
+            return '.xml'
         elif feedtype == 'rss':
-            ext = 'rdf'
+            return '.rdf'
         else:
             raise ValueError(f"Invarid feed type: {feedtype}")
-
-        return f'{n}.{ext}'
 
     def get_outputs(self):
 
@@ -416,6 +435,7 @@ class FeedPage(Content):
         
         filters = getattr(self, 'filters', {})
         filters['type'] = {'article'}
+        filters['draft'] = {False}
         contents = [c for c in self.site.contents.get_contents(
             filters=filters)]
 

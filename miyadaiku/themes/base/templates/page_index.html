@@ -10,7 +10,7 @@
   <div>
     {% for article in articles %}
       <h2><a href="{{page.path_to(article)}}">{{ article.title }}</a></h2>
-      <div>{{ article.html}}</div>
+      <div>{{ article.abstract }}</div>
     {% endfor %}
   </div>
 

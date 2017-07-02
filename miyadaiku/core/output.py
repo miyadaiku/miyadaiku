@@ -2,6 +2,7 @@ import os, pathlib
 
 class Output:
     def __init__(self, dirname, name, stat, body):
+        assert name
         self.dirname = dirname
         self.name = name
         self.body = body

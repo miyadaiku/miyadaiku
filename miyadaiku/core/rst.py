@@ -1,3 +1,4 @@
+import re
 import os
 import datetime
 import dateutil.parser
@@ -68,16 +69,21 @@ def jinja_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
 
 roles.register_local_role('jinja', jinja_role)
 
-class rawhtmllit(docutils.nodes.Inline, docutils.nodes.TextElement):
-    pass
+class JinjaDirective(Directive):
+    required_arguments = 0
+    optional_arguments = 0
+    has_content = True
 
-def rawhtml_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
-    node = rawhtmllit(rawtext, docutils.utils.unescape(text, 1), **options)
-    node.source, node.line = inliner.reporter.get_source_and_line(lineno)
-    return [node], []
+    def run(self):
+        text = '\n'.join(self.content)
+        node = jinjalit(text, docutils.utils.unescape(text, 1))
+        node.source, node.line = self.state_machine.get_source_and_line(self.lineno)
+        return [node]
 
 
-roles.register_local_role('raw', jinja_role)
+directives.register_directive('jinja', JinjaDirective)
+
+
 
 
 settings = {
@@ -99,20 +105,26 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
         super().__init__(document)
 #        self.initial_header_level = 2
     
+
+    def visit_comment(self, node,
+                      sub=re.compile('-(?=-)').sub):
+        """Escape double-dashes in comment text."""
+        s = '<!-- %s -->\n' % sub('- ', node.astext())
+
+        # escape jinja tag also
+        s = s.replace('{', '&#123;')
+        s = s.replace('}', '&#125;')
+
+        self.body.append(s)
+        # Content already processed:
+        raise docutils.nodes.SkipNode
+
     def visit_jinjalit(self, node):
         self.body.append(node.astext())
         # Keep non-HTML raw text out of output:
         raise docutils.nodes.SkipNode
 
     def depart_jinjalit(self, node):
-        pass
-
-    def visit_rawhtmllit(self, node):
-        self.body.append(node.astext())
-        # Keep non-HTML raw text out of output:
-        raise docutils.nodes.SkipNode
-
-    def depart_rawhtmllitlit(self, node):
         pass
 
 

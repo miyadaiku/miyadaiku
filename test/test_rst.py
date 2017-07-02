@@ -9,11 +9,23 @@ def test_load():
     assert text.strip() == '''<p>{}</p>
 
 <div class="code-block">
+<div class="code-block-caption">caption</div>
 <div class="highlight"><pre><span></span>:jinja:`&#123;&#123;&#125;&#125;`
 </pre></div>
 
-<div class="code-block-caption">caption</div>
 </div>'''
+
+
+def test_load2(tmpdir):
+    f = tmpdir.join('file1.rst')
+    f.write('''
+..  {{ page.site_title }} --
+   
+''')
+
+    metadata, text = rst.load(f)
+    assert text == "<!-- &#123;&#123; page.site_title &#125;&#125; - - -->\n"
+
 
 def test_date(tmpdir):
     f = tmpdir.join('file1.rst')
@@ -26,4 +38,19 @@ def test_date(tmpdir):
 
     metadata, text = rst.load(f)
     print(metadata, text)
+
+def test_jinjadirective(tmpdir):
+    f = tmpdir.join('file1.rst')
+    f.write('''
+.. jinja::
+   {{<a><b>}}
+   <a><b>
+
+:jinja:`{{abc}}`
+''')
+
+    metadata, text = rst.load(f)
+    assert text == '''{{<a><b>}}
+<a><b><p>{{abc}}</p>
+'''
 
