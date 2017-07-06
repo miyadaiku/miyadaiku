@@ -167,25 +167,25 @@ class Content:
             raise ValueError(f'Cannot convert to path: {target}')
         return content
 
-    def path_to(self, target, hash=None):
+    def path_to(self, target, fragment=None):
         if isinstance(target, str):
             target = self.get_content(target)
-        hash = f'#{markupsafe.escape(hash)}' if hash else ''
+        fragment = f'#{markupsafe.escape(fragment)}' if fragment else ''
         if self._use_abs_path:
-            return target.url+hash
+            return target.url+fragment
         else:
             here = f"/{'/'.join(self.dirname)}/"
             to = f"/{'/'.join(target.dirname)}/{target.filename}"
-            return posixpath.relpath(to, here)+hash
+            return posixpath.relpath(to, here)+fragment
 
-    def link_to(self, target, text=None, hash=None):
+    def link_to(self, target, text=None, fragment=None):
         if isinstance(target, str):
             target = self.get_content(target)
         if not text:
             text = target.title
 
         text = markupsafe.escape(text or '')
-        path = markupsafe.escape(self.path_to(target, hash=hash))
+        path = markupsafe.escape(self.path_to(target, fragment=fragment))
         return markupsafe.Markup(f"<a href='{path}'>{text}</a>")
 
     def get_outputs(self):
