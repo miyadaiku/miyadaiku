@@ -25,7 +25,7 @@ class Site:
         self.config = config.Config(cfgfile if cfgfile.exists() else None)
 
         if props:
-            self.config.add('/', props)
+            self.config.add('/', props, tail=False)
 
         self.contents = contents.Contents()
 

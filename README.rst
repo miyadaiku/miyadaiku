@@ -2,18 +2,18 @@
 Miyadaiku - Flexible static site generator for Jinja2 artists
 =========================================================================
 
-Miyadaiku is a static site generator.
+Miyadaiku is a flexible static site generator for Jinja2 artists.
 
-- Contents are written in reStructuredText and YAML. Markdown, HTML, Jupyter Notebook will be supported soon.
+- Contents are written in reStructuredText, Markdown, HTML and YAML. 
 
 - Generate index pages and Atom/RSS feeds for Blog sites.
 
-- Use themes to customize site.
-
-- Themes are writtem in Jinja2, and are installed as Python package from PyPI.
+- Hierarchical contents property.
 
 - Jinja2 templates can be embedded in contents files.
 
-- Other dependencies such as jQuery or Bootstrap can be managed as Python packages too.
+- Theme system to generate site.
 
-- Hierarchical contents property.
+- Themes are writtem in Jinja2, and are installed from PyPI as Python package.
+
+- Other dependencies such as jQuery or Bootstrap can be managed as Python packages too.

@@ -24,7 +24,7 @@ entry_points = {
 
 setup(
     name="miyadaiku",
-    version="0.0.7",
+    version="0.0.8",
     author="Atsuo Ishimoto",
     license="MIT",
     classifiers=[

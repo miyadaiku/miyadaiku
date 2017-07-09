@@ -101,7 +101,7 @@ def _load_theme_configs(themes):
 
 
 class Config:
-    def __init__(self, path):
+    def __init__(self, path, props=None):
         self._configs = collections.defaultdict(list)
         self.themes = []
 
@@ -117,9 +117,12 @@ class Config:
 
             ignore.extend(list(d.get('ignore', [])))
                 
-    def add(self, dirname, cfg):
+    def add(self, dirname, cfg, tail=True):
         dirname = utils.dirname_to_tuple(dirname)
-        self._configs[dirname].append(cfg)
+        if tail:
+            self._configs[dirname].append(cfg)
+        else:
+            self._configs[dirname].insert(0, cfg)
 
     _omit = object()
 
