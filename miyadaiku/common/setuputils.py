@@ -9,7 +9,7 @@ from distutils.core import Command
 
 SETUP_FILE_EXTS = [
     '*.rst', '*.md', '*.html', '*.css', '*.js', '*.yml', '*.png',
-    '*.jpg', '*.jpeg']
+    '*.jpg', '*.jpeg', '*.otf', '*.eot', '*.svg', '*.ttf', '*.woff', '*.woff2', ]
 
 def list_packages(packagedir, root):
     yield root
