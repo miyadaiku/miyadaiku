@@ -49,6 +49,14 @@ class ContentsArgProxy:
     def __getattr__(self, name):
         return getattr(self.site.contents, name)
 
+    def get_contents(self, *args, **kwargs):
+        ret = self.site.contents.get_contents(*args, **kwargs)
+        return [ContentArgProxy(self.site, self.page_content, content) for content in ret]
+
+    def group_items(self, *args, **kwargs):
+        ret = self.site.contents.group_items(*args, **kwargs)
+        ret = [(v, [ContentArgProxy(self.site, self.page_content, content) for content in c]) for v, c in ret]
+        return ret
 
 class ConfigArgProxy:
     def __init__(self, site, page_content, content):

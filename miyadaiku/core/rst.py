@@ -40,7 +40,6 @@ class ArticleDirective(_RstDirective):
                    'tags': directives.unchanged,
                    'template': directives.unchanged,
                    'filename': directives.unchanged,
-                   'rst_initial_header_level': directives.unchanged
                   })
 
 
@@ -51,7 +50,10 @@ class SnippetDirective(_RstDirective):
     CONTENT_TYPE = 'snippet'
     required_arguments = 0
     optional_arguments = 0
-    option_spec = {'title': directives.unchanged}
+
+    # use defaultdict to pass undefined arguments.
+    option_spec = collections.defaultdict(lambda :directives.unchanged,
+                  {'title': directives.unchanged})
 
 
 directives.register_directive('snippet', SnippetDirective)
