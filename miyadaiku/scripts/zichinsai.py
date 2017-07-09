@@ -1,3 +1,4 @@
+import re
 import sys
 import locale
 import argparse
@@ -14,11 +15,11 @@ parser = argparse.ArgumentParser(description='Start new miyadaiku document.')
 parser.add_argument('directory', help='directory name')
 
 
-
 def main():
     happylogging.initlog(filename='-', level='DEBUG')
 
     args = parser.parse_args()
+
     d = pathlib.Path(args.directory)
     if d.exists():
         print(f'{str(d)!r} already exists', file=sys.stderr)
@@ -33,7 +34,10 @@ def main():
     lang = lang or "en"
     charset = "utf-8"
 
-    yaml = f"""
+    yaml = f"""# Miyadaiku config file
+
+# Base URL of the site
+site_url: http://localhost:8888/
 
 # Title of the site
 site_title: FIXME - site title
@@ -48,8 +52,8 @@ charset: {charset}
 timezone: {tz}
 
 # List of site theme
-themes:
-  - miyadaiku.themes.base
+# themes:
+#   - miyadaiku.themes.sample.blog
 
 """
 

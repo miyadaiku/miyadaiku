@@ -6,23 +6,38 @@ import pkg_resources
 import tzlocal
 import dateutil
 import datetime
+import fnmatch
 
 from . import utils
 from . import YAML_ENCODING
 from . import main
 
 default_timezone = tzlocal.get_localzone().zone
-
-#      import pytz
-#     >>> eastern = pytz.timezone('US/Eastern')
-
-# Convert the datetime:
-
-#     >>> dt.astimezone(eastern)
-
-
 default_theme = 'miyadaiku.themes.base'
+
+ignore = [
+'*.exe',
+'*.o',
+'*.so',
+'*.pyc',
+'*.egg-info',
+'*.bak',
+'*.swp',
+'*.~*',
+'dist',
+'build',
+
+'.DS_Store',
+'._*',
+'.Spotlight-V100',
+'.Trashes',
+'ehthumbs.db',
+'Thumbs.db',
+]
+
 defaults = dict(
+    ignore=ignore,
+
     themes=[default_theme,],
     lang='en',
     charset='utf-8',
@@ -89,6 +104,7 @@ class Config:
     def __init__(self, path):
         self._configs = collections.defaultdict(list)
         self.themes = []
+
         # read root config
         if path:
             d = yaml.load(path.read_text(encoding=YAML_ENCODING)) or {}
@@ -98,6 +114,8 @@ class Config:
             for theme, cfg in _load_theme_configs(themes):
                 self.themes.append(theme)
                 self.add((), cfg)
+
+            ignore.extend(list(d.get('ignore', [])))
                 
     def add(self, dirname, cfg):
         dirname = utils.dirname_to_tuple(dirname)
@@ -131,6 +149,11 @@ class Config:
     def getbool(self, dirname, name, default=_omit):
         ret = self.get(dirname, name, default)
         return to_bool(ret)
+
+    def is_ignored(self, name):
+        for p in ignore:
+            if fnmatch.fnmatch(name, p):
+                return True
 
 
 def load_config(path):

@@ -272,9 +272,11 @@ class HTMLContent(Content):
         for c in soup.recursiveChildGenerator():
             if re.match(r'h\d', c.name or ''):
                 id = f'h_{"_".join(self.dirname)}_{self.name}_{n}'
+                id = re.sub(r'[^a-zA-Z0-9_]', lambda m:f'_{ord(m[0]):02x}', id)
                 n += 1
-                a = soup.new_tag('a', id=id, **{'class':'header_anchor'})
+                a = soup.new_tag('a', id='a_'+id, **{'class':'header_anchor'})
                 c.insert_before(a)
+                c['id'] = id
                 headers.append((id, c.name, c.text))
 
         ret = HTMLValue(soup)
@@ -654,6 +656,9 @@ def load_directory(site, path, loader=None):
     for p in utils.walk(path):
         name = os.path.relpath(p, path)
         dirname, filename = os.path.split(name)
+        if site.config.is_ignored(filename):
+            continue
+
         _loader = loader
         if not _loader:
             _loader = getContentLoader(p.suffix)

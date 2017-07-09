@@ -18,11 +18,14 @@ TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
 
 class Site:
-    def __init__(self, path):
+    def __init__(self, path, props=None):
         p = os.path.abspath(os.path.expanduser(path))
         self.path = pathlib.Path(p)
         cfgfile = path / CONFIG_FILE
         self.config = config.Config(cfgfile if cfgfile.exists() else None)
+
+        if props:
+            self.config.add('/', props)
 
         self.contents = contents.Contents()
 
