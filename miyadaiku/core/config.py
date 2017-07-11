@@ -50,6 +50,8 @@ defaults = dict(
 
     abstract_length = 500,
 
+    use_abs_path = True,
+
     indexpage_template='page_index.html',
     indexpage_template2='page_index.html',
 

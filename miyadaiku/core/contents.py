@@ -70,8 +70,6 @@ class ConfigArgProxy:
 
 
 class Content:
-    _use_abs_path = False
-
     def __init__(self, site, dirname, name, metadata, body):
         self.site = site
         self.dirname = utils.dirname_to_tuple(dirname)
@@ -175,25 +173,25 @@ class Content:
             raise ValueError(f'Cannot convert to path: {target}')
         return content
 
-    def path_to(self, target, fragment=None):
+    def path_to(self, target, fragment=None, abs_path=False):
         if isinstance(target, str):
             target = self.get_content(target)
         fragment = f'#{markupsafe.escape(fragment)}' if fragment else ''
-        if self._use_abs_path:
+        if abs_path or self.use_abs_path:
             return target.url+fragment
         else:
             here = f"/{'/'.join(self.dirname)}/"
             to = f"/{'/'.join(target.dirname)}/{target.filename}"
             return posixpath.relpath(to, here)+fragment
 
-    def link_to(self, target, text=None, fragment=None):
+    def link_to(self, target, text=None, fragment=None, abs_path=False):
         if isinstance(target, str):
             target = self.get_content(target)
         if not text:
             text = target.title
 
         text = markupsafe.escape(text or '')
-        path = markupsafe.escape(self.path_to(target, fragment=fragment))
+        path = markupsafe.escape(self.path_to(target, fragment=fragment, abs_path=abs_path))
         return markupsafe.Markup(f"<a href='{path}'>{text}</a>")
 
     def get_outputs(self):
@@ -341,14 +339,14 @@ class IndexPage(Content):
 
         return ret
     
-    def path_to_indexpage(self, values, npage, page_from=None):
+    def path_to_indexpage(self, values, npage, page_from=None, abs_path=False):
         if not page_from:
             page_from = self
     
         filename = self.filename_to_page(values, npage)
         to = f"/{'/'.join(self.dirname)}/{filename}"
 
-        if page_from._use_abs_path:
+        if abs_path or page_from.use_abs_path:
             site_url = self.site_url
             return urllib.parse.urljoin(site_url, to)
         else:
@@ -415,7 +413,7 @@ class IndexPage(Content):
 
 
 class FeedPage(Content):
-    _use_abs_path = True
+    use_abs_path = True
 
     @property
     def ext(self):
