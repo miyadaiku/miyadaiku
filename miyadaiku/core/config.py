@@ -50,7 +50,7 @@ defaults = dict(
 
     abstract_length = 500,
 
-    use_abs_path = True,
+    use_abs_path = False,
 
     indexpage_template='page_index.html',
     indexpage_template2='page_index.html',
@@ -183,7 +183,11 @@ def format_value(name, value):
     if not isinstance(value, str):
         return value
     value = value.strip()
-    if name == 'draft':
+    if name == 'site_url':
+        if value.endswith('/'):
+            return value
+        return value + '/'
+    elif name == 'draft':
         return self.getbool(value)
     elif name == 'tags':
         return list(filter(None, (t.strip() for t in value.split(','))))

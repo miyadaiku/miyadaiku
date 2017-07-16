@@ -146,9 +146,8 @@ class Content:
     @property
     def url(self):
         site_url = self.get_metadata('site_url')
-        dir = '/'.join(self.dirname)
-        ret = urllib.parse.urljoin(site_url, dir)
-        return urllib.parse.urljoin(ret, self.filename)
+        path = self.get_output_path()
+        return urllib.parse.urljoin(site_url, path)
 
     @property
     def timezone_name(self):
@@ -166,6 +165,9 @@ class Content:
         tz = self.timezone
         return date.astimezone(tz)
 
+    def get_output_path(self, *args, **kwargs):
+        return f"{'/'.join(self.dirname)}/{self.filename}"
+
     def get_content(self, target):
         if isinstance(target, str):
             content = self.site.contents.get_content(target, self)
@@ -173,7 +175,7 @@ class Content:
             raise ValueError(f'Cannot convert to path: {target}')
         return content
 
-    def path_to(self, target, fragment=None, abs_path=False):
+    def path_to(self, target, fragment=None, abs_path=False, *args, **kwargs):
         if isinstance(target, str):
             target = self.get_content(target)
         fragment = f'#{markupsafe.escape(fragment)}' if fragment else ''
@@ -181,18 +183,22 @@ class Content:
             return target.url+fragment
         else:
             here = f"/{'/'.join(self.dirname)}/"
-            to = f"/{'/'.join(target.dirname)}/{target.filename}"
+            to = '/' + target.get_output_path(*args, **kwargs)
             return posixpath.relpath(to, here)+fragment
 
-    def link_to(self, target, text=None, fragment=None, abs_path=False):
+    def link_to(self, target, text=None, fragment=None, abs_path=False, attrs=None, *args, **kwargs):
         if isinstance(target, str):
             target = self.get_content(target)
         if not text:
             text = target.title
 
         text = markupsafe.escape(text or '')
-        path = markupsafe.escape(self.path_to(target, fragment=fragment, abs_path=abs_path))
-        return markupsafe.Markup(f"<a href='{path}'>{text}</a>")
+        s_attrs = []
+        if attrs:
+            for k, v in attrs.items():
+                s_attrs.append(f"{markupsafe.escape(k)}='{markupsafe.escape(v)}'")
+        path = markupsafe.escape(self.path_to(target, fragment=fragment, abs_path=abs_path, *args, **kwargs))
+        return markupsafe.Markup(f"<a href='{path}' { ' '.join(s_attrs) }>{text}</a>")
 
     def get_outputs(self):
         return []
@@ -339,19 +345,24 @@ class IndexPage(Content):
 
         return ret
     
-    def path_to_indexpage(self, values, npage, page_from=None, abs_path=False):
-        if not page_from:
-            page_from = self
-    
+    def get_output_path(self, values=(), npage=None, *args, **kwargs):
+        if not npage:
+            npage = 1
         filename = self.filename_to_page(values, npage)
-        to = f"/{'/'.join(self.dirname)}/{filename}"
+        return f"{'/'.join(self.dirname)}/{filename}"
 
-        if abs_path or page_from.use_abs_path:
-            site_url = self.site_url
-            return urllib.parse.urljoin(site_url, to)
-        else:
-            here = f"/{'/'.join(page_from.dirname)}/"
-            return posixpath.relpath(to, here)
+#    def path_to_indexpage(self, values, npage, page_from=None, abs_path=False):
+#        if not page_from:
+#            page_from = self
+#    
+#        to = self.get_output_path(values, npage)
+#        if abs_path or page_from.use_abs_path:
+#            site_url = self.site_url
+#            return urllib.parse.urljoin(site_url, to)
+#        else:
+#            here = f"/{'/'.join(page_from.dirname)}/"
+#            to = f"/{to}"
+#            return posixpath.relpath(to, here)
         
     def _to_filename(self):
         return self.filename_to_page([''], 1)

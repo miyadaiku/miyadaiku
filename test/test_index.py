@@ -35,4 +35,3 @@ indexpage_max_articles: 4
     assert set(int(d) for d in nums) == set([1,2,3,4,5])
     for p in sitedir.joinpath('outputs').glob('index*'):
         print(p.read_text())
-    
