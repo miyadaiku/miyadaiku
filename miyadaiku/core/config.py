@@ -16,41 +16,41 @@ default_timezone = tzlocal.get_localzone().zone
 default_theme = 'miyadaiku.themes.base'
 
 ignore = [
-'*.exe',
-'*.o',
-'*.so',
-'*.pyc',
-'*.egg-info',
-'*.bak',
-'*.swp',
-'*.~*',
-'dist',
-'build',
+    '*.exe',
+    '*.o',
+    '*.so',
+    '*.pyc',
+    '*.egg-info',
+    '*.bak',
+    '*.swp',
+    '*.~*',
+    'dist',
+    'build',
 
-'.DS_Store',
-'._*',
-'.Spotlight-V100',
-'.Trashes',
-'ehthumbs.db',
-'Thumbs.db',
+    '.DS_Store',
+    '._*',
+    '.Spotlight-V100',
+    '.Trashes',
+    'ehthumbs.db',
+    'Thumbs.db',
 ]
 
 defaults = dict(
     ignore=ignore,
 
-    themes=[default_theme,],
+    themes=[default_theme, ],
     lang='en',
     charset='utf-8',
     timezone=default_timezone,
-    draft = False,
-    site_url = 'http://localhost:8888',
-    site_title = '(FIXME-site_title)',
-    filename_templ = '{{page.stem}}{{page.ext}}',
+    draft=False,
+    site_url='http://localhost:8888',
+    site_title='(FIXME-site_title)',
+    filename_templ='{{page.stem}}{{page.ext}}',
     article_template='page_article.html',
 
-    abstract_length = 500,
+    abstract_length=500,
 
-    use_abs_path = False,
+    use_abs_path=False,
 
     indexpage_template='page_index.html',
     indexpage_template2='page_index.html',
@@ -60,7 +60,7 @@ defaults = dict(
 
     indexpage_group_filename_templ='{{page.stem}}_{{page.groupby}}_{{value}}.html',
     indexpage_group_filename_templ2='{{page.stem}}_{{page.groupby}}_{{value}}_{{cur_page}}.html',
-    
+
     indexpage_max_num_pages=0,
     indexpage_max_articles=3,
     indexpage_orphan=1,
@@ -83,7 +83,7 @@ def _load_theme_config(package):
         cfg = {}
     else:
         cfg = yaml.load(s.decode(YAML_ENCODING))
-    
+
     if not cfg:
         cfg = {}
     return cfg
@@ -111,14 +111,14 @@ class Config:
         if path:
             d = yaml.load(path.read_text(encoding=YAML_ENCODING)) or {}
             self.add((), d)
-            
-            themes = list(d.get('themes', [])) + [default_theme] 
+
+            themes = list(d.get('themes', [])) + [default_theme]
             for theme, cfg in _load_theme_configs(themes):
                 self.themes.append(theme)
                 self.add((), cfg)
 
             ignore.extend(list(d.get('ignore', [])))
-                
+
     def add(self, dirname, cfg, tail=True):
         dirname = utils.dirname_to_tuple(dirname)
         if tail:
@@ -179,6 +179,7 @@ def to_bool(s):
 
     raise ValueError(f'Invalid boolean string: {s}')
 
+
 def format_value(name, value):
     if not isinstance(value, str):
         return value
@@ -188,7 +189,7 @@ def format_value(name, value):
             return value
         return value + '/'
     elif name == 'draft':
-        return self.getbool(value)
+        return to_bool(value)
     elif name == 'tags':
         return list(filter(None, (t.strip() for t in value.split(','))))
     elif name == 'date':
@@ -200,4 +201,3 @@ def format_value(name, value):
     elif name == 'order':
         return int(value)
     return value
-

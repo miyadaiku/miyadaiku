@@ -2,6 +2,7 @@ import re
 import datetime
 import dateutil.parser
 
+
 def date(v):
     v = v.strip()
     if v:
@@ -9,9 +10,11 @@ def date(v):
         if isinstance(ret, datetime.time):
             raise ValueError(f'String does not contain a date: {v!r}')
         return ret
-    
+
+
 def tags(v):
     return [t.strip() for t in v.split(',')]
+
 
 def draft(v):
     v = v.strip().lower()
@@ -28,6 +31,7 @@ def draft(v):
 
 def load(path):
     return load_string(path.read_text(encoding='utf-8'))
+
 
 def load_string(string):
     meta = {}
@@ -57,4 +61,3 @@ def load_string(string):
         meta['type'] = 'article'
 
     return meta, '\n'.join(lines[n:])
-    

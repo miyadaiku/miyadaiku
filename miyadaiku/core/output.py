@@ -1,4 +1,6 @@
-import os, pathlib
+import os
+import pathlib
+
 
 class Output:
     def __init__(self, dirname, name, stat, body):
@@ -12,7 +14,7 @@ class Output:
         dir = path.joinpath(*self.dirname)
         if not dir.is_dir():
             dir.mkdir(parents=True)
-        
+
         name = self.name.strip('/\\')
         dest = os.path.expanduser((dir / name))
         dest = os.path.normpath(dest)
@@ -27,6 +29,7 @@ class Output:
         if self.stat:
             os.utime(dest, (self.stat.st_atime, self.stat.st_mtime))
             os.chmod(dest, self.stat.st_mode)
+
 
 class Outputs:
     def __init__(self):

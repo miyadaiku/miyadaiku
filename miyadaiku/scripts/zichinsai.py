@@ -26,7 +26,7 @@ def main():
         sys.exit(1)
 
     tz = tzlocal.get_localzone().zone
-    
+
     locale.setlocale(locale.LC_ALL, '')
     lang = locale.getlocale()[0]
     if lang:
@@ -66,4 +66,3 @@ timezone: {tz}
 
 if __name__ == '__main__':
     main()
-

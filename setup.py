@@ -1,9 +1,10 @@
-import os, sys
+import os
+import sys
 import pathlib
 from setuptools import setup, find_packages
 from miyadaiku.common import setuputils
 
-if sys.version_info < (3,6):
+if sys.version_info < (3, 6):
     raise RuntimeError('Miyadaiku requires Python later than 3.6')
 
 DIR = pathlib.Path(__file__).resolve().parent

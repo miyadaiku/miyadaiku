@@ -6,7 +6,6 @@ SITE = DIR / 'site1'
 
 
 def test_config():
-    package = "package1"
     cfg = config.Config(DIR / 'config1.yml')
     assert cfg.get((), 'prop1') == 'prop1vaue'
     assert cfg.get((), 'package1_prop1') == 'package1_prop1_value'

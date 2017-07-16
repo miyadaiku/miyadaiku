@@ -12,7 +12,8 @@ locale.setlocale(locale.LC_ALL, '')
 
 parser = argparse.ArgumentParser(description='Build miyadaiku project.')
 parser.add_argument('directory', help='directory name')
-parser.add_argument('--define', '-d', action='append', metavar='property=value', help='Set default property value.')
+parser.add_argument('--define', '-d', action='append', metavar='property=value',
+                    help='Set default property value.')
 
 
 def main():
@@ -32,8 +33,7 @@ def main():
 
     site.build()
     site.write()
-    
+
 
 if __name__ == '__main__':
     main()
-

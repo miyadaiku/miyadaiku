@@ -38,13 +38,8 @@
 # Options
 # ~~~~~~~
 
-# Set to True if you want inline CSS styles instead of classes
-INLINESTYLES = False
 
 from pygments.formatters import HtmlFormatter
-
-# The default formatter
-DEFAULT = HtmlFormatter(noclasses=INLINESTYLES)
 
 import html
 from docutils import nodes
@@ -57,10 +52,17 @@ import pygments.formatters.html
 import logging
 logger = logging.getLogger(__name__)
 
+
+# Set to True if you want inline CSS styles instead of classes
+INLINESTYLES = False
+
+# The default formatter
+DEFAULT = HtmlFormatter(noclasses=INLINESTYLES)
+
 pygments.formatters.html._escape_html_table[ord(
-        '{')] = '&#123;'
+    '{')] = '&#123;'
 pygments.formatters.html._escape_html_table[ord(
-        '}')] = '&#125;'
+    '}')] = '&#125;'
 
 
 # Add name -> formatter pairs for every variant you want to use
@@ -74,6 +76,7 @@ TEMPL = """
 {parsed}
 </div>
 """
+
 
 class Pygments(Directive):
     """ Source code syntax hightlighting.
@@ -105,5 +108,6 @@ class Pygments(Directive):
             caption = f'''<div class="code-block-caption">{caption}</div>'''
         parsed = TEMPL.format(parsed=parsed, caption=caption)
         return [nodes.raw('', parsed, format='html')]
+
 
 directives.register_directive('code-block', Pygments)

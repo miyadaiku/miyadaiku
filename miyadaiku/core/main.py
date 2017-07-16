@@ -17,6 +17,7 @@ FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
 
+
 class Site:
     def __init__(self, path, props=None):
         p = os.path.abspath(os.path.expanduser(path))
@@ -35,7 +36,7 @@ class Site:
 
         contents.load_directory(self, path / CONTENTS_DIR)
         contents.load_directory(self, path / FILES_DIR, contents.bin_loader)
-        
+
         for theme in self.config.themes:
             mod = importlib.import_module(theme)
             f = getattr(mod, 'load_package', None)
@@ -50,8 +51,8 @@ class Site:
             logger.info(f'Building {cont.url}')
             outputs = cont.get_outputs()
 
-            for output in outputs:
-                self.output.add(output)
+            for o in outputs:
+                self.output.add(o)
 
     def write(self):
         self.output.write(self.path / OUTPUTS_DIR)

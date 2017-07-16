@@ -1,5 +1,6 @@
 import os
-from jinja2 import TemplateNotFound, Environment, PrefixLoader, FileSystemLoader, ChoiceLoader, PackageLoader, select_autoescape, StrictUndefined
+from jinja2 import (TemplateNotFound, Environment, PrefixLoader, FileSystemLoader,
+                    ChoiceLoader, PackageLoader, select_autoescape, StrictUndefined)
 
 
 class PackagesLoader(PrefixLoader):

@@ -8,11 +8,11 @@ import docutils.core
 import docutils.nodes
 import docutils.writers.html5_polyglot
 import docutils.utils
-from docutils.writers.html5_polyglot import HTMLTranslator
 from docutils.parsers.rst import Directive, directives, roles
 from docutils.parsers.rst.states import MarkupError, Body
 
 from . import pygment_directive
+
 
 class _RstDirective(Directive):
     def run(self):
@@ -32,15 +32,15 @@ class ArticleDirective(_RstDirective):
     optional_arguments = 0
 
     # use defaultdict to pass undefined arguments.
-    option_spec = collections.defaultdict(lambda :directives.unchanged,
-                  {'title': directives.unchanged,
-                   'draft': directives.unchanged,
-                   'date': directives.unchanged,
-                   'category': directives.unchanged,
-                   'tags': directives.unchanged,
-                   'template': directives.unchanged,
-                   'filename': directives.unchanged,
-                  })
+    option_spec = collections.defaultdict(lambda: directives.unchanged,
+                                          {'title': directives.unchanged,
+                                           'draft': directives.unchanged,
+                                           'date': directives.unchanged,
+                                           'category': directives.unchanged,
+                                           'tags': directives.unchanged,
+                                           'template': directives.unchanged,
+                                           'filename': directives.unchanged,
+                                           })
 
 
 directives.register_directive('article', ArticleDirective)
@@ -52,8 +52,8 @@ class SnippetDirective(_RstDirective):
     optional_arguments = 0
 
     # use defaultdict to pass undefined arguments.
-    option_spec = collections.defaultdict(lambda :directives.unchanged,
-                  {'title': directives.unchanged})
+    option_spec = collections.defaultdict(lambda: directives.unchanged,
+                                          {'title': directives.unchanged})
 
 
 directives.register_directive('snippet', SnippetDirective)
@@ -71,6 +71,7 @@ def jinja_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
 
 roles.register_local_role('jinja', jinja_role)
 
+
 class JinjaDirective(Directive):
     required_arguments = 0
     optional_arguments = 0
@@ -86,14 +87,12 @@ class JinjaDirective(Directive):
 directives.register_directive('jinja', JinjaDirective)
 
 
-
-
 settings = {
     'input_encoding': 'utf-8',
     'syntax_highlight': 'short',
     'embed_stylesheet': False,
-#    'doctitle_xform': False,
-#    'initial_header_level': 1,
+    #    'doctitle_xform': False,
+    #    'initial_header_level': 1,
 }
 
 
@@ -106,7 +105,6 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
     def __init__(self, document):
         super().__init__(document)
 #        self.initial_header_level = 2
-    
 
     def visit_comment(self, node,
                       sub=re.compile('-(?=-)').sub):
@@ -168,10 +166,8 @@ def load(path):
     pub.set_source(source_path=os.fspath(path))
     return _parse(pub)
 
+
 def load_string(string):
     pub = _make_pub(docutils.io.StringInput)
     pub.set_source(source=string)
     return _parse(pub)
-
-
-

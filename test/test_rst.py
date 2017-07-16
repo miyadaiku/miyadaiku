@@ -20,7 +20,7 @@ def test_load2(tmpdir):
     f = tmpdir.join('file1.rst')
     f.write('''
 ..  {{ page.site_title }} --
-   
+
 ''')
 
     metadata, text = rst.load(f)
@@ -39,6 +39,7 @@ def test_date(tmpdir):
     metadata, text = rst.load(f)
     print(metadata, text)
 
+
 def test_jinjadirective(tmpdir):
     f = tmpdir.join('file1.rst')
     f.write('''
@@ -53,4 +54,3 @@ def test_jinjadirective(tmpdir):
     assert text == '''{{<a><b>}}
 <a><b><p>{{abc}}</p>
 '''
-

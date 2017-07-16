@@ -1,0 +1,25 @@
+[flake8]
+max-line-length = 120
+ignore = 
+    #E115 expected an indented block (comment)
+    E115,
+    # E265 block comment should start with '# '
+    E265,
+    # E301: expected 1 blank line, found 0
+    E301,
+    # E302: expected 2 blank lines, found
+    E302,
+    # E303: too many blank lines
+    E303,
+    # E305 expected 2 blank lines after class or function definition
+    E305,
+    # E702 multiple statements on one line (semicolon)
+    E702,
+    # E731 do not assign a lambda expression, use a def
+    E731,
+    # F401 
+    F401,
+    # F403  unable to detect undefined name
+    F403,
+    # F405 may be undefine
+    F405

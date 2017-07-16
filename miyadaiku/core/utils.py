@@ -3,6 +3,7 @@ import pathlib
 import unicodedata
 import pkg_resources
 import posixpath
+import re
 
 def walk(path):
     articles = []
@@ -18,7 +19,7 @@ def walk(path):
 def walk_package(package, dir):
     if dir.endswith('/'):
         dir = dir[:-1]
-    
+
     if not pkg_resources.resource_isdir(package, dir):
         return
 
@@ -29,6 +30,7 @@ def walk_package(package, dir):
             yield from walk_package(package, p)
         else:
             yield p
+
 
 def abs_path(relpath, dirtuple=None):
     if not isinstance(relpath, str):
@@ -55,6 +57,7 @@ def abs_dir(d, dirtuple=None):
     else:
         d = dirname_to_tuple(d)
     return d
+
 
 def format_dirname(dirname):
     return dirname.replace('\\', '/').strip('/')

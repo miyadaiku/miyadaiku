@@ -14,11 +14,12 @@ from bs4.element import NavigableString
 import pytz
 from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
 
-logger = logging.getLogger(__name__)
-
 from . import utils, rst, html, md, config
 from . output import Output
 from . import YAML_ENCODING
+
+logger = logging.getLogger(__name__)
+
 
 
 class _metadata(dict):
@@ -38,6 +39,7 @@ class ContentArgProxy:
 
         return getattr(self.content, name)
 
+
 class ContentsArgProxy:
     def __init__(self, site, page_content, content):
         self.site, self.page_content, self.content = (site, page_content, content)
@@ -55,8 +57,10 @@ class ContentsArgProxy:
 
     def group_items(self, *args, **kwargs):
         ret = self.site.contents.group_items(*args, **kwargs)
-        ret = [(v, [ContentArgProxy(self.site, self.page_content, content) for content in c]) for v, c in ret]
+        ret = [(v, [ContentArgProxy(self.site, self.page_content, content)
+                    for content in c]) for v, c in ret]
         return ret
+
 
 class ConfigArgProxy:
     def __init__(self, site, page_content, content):
@@ -85,7 +89,8 @@ class Content:
             except IOError:
                 pass
 
-    _omit=object()
+    _omit = object()
+
     def get_metadata(self, name, default=_omit):
         if name in self.metadata:
             return config.format_value(name, getattr(self.metadata, name))
@@ -96,7 +101,7 @@ class Content:
             return self.site.config.get(self.dirname, name, default)
 
     def __getattr__(self, name):
-        _omit=object()
+        _omit = object()
         ret = self.get_metadata(name, default=_omit)
         if ret is _omit:
             raise AttributeError(f"Invalid attr name: {name}")
@@ -161,7 +166,7 @@ class Content:
     def date(self):
         date = self.get_metadata('date', None)
         if not date:
-            return 
+            return
         tz = self.timezone
         return date.astimezone(tz)
 
@@ -180,11 +185,11 @@ class Content:
             target = self.get_content(target)
         fragment = f'#{markupsafe.escape(fragment)}' if fragment else ''
         if abs_path or self.use_abs_path:
-            return target.url+fragment
+            return target.url + fragment
         else:
             here = f"/{'/'.join(self.dirname)}/"
             to = '/' + target.get_output_path(*args, **kwargs)
-            return posixpath.relpath(to, here)+fragment
+            return posixpath.relpath(to, here) + fragment
 
     def link_to(self, target, text=None, fragment=None, abs_path=False, attrs=None, *args, **kwargs):
         if isinstance(target, str):
@@ -197,7 +202,8 @@ class Content:
         if attrs:
             for k, v in attrs.items():
                 s_attrs.append(f"{markupsafe.escape(k)}='{markupsafe.escape(v)}'")
-        path = markupsafe.escape(self.path_to(target, fragment=fragment, abs_path=abs_path, *args, **kwargs))
+        path = markupsafe.escape(self.path_to(target, fragment=fragment,
+                                              abs_path=abs_path, *args, **kwargs))
         return markupsafe.Markup(f"<a href='{path}' { ' '.join(s_attrs) }>{text}</a>")
 
     def get_outputs(self):
@@ -221,9 +227,9 @@ class BinContent(Content):
         super().__init__(site, dirname, name, metadata, body)
 
     def get_outputs(self):
-        return [Output(dirname=self.dirname, name=self.name, 
-                stat=self.stat,
-                body=self.body)]
+        return [Output(dirname=self.dirname, name=self.name,
+                       stat=self.stat,
+                       body=self.body)]
 
 
 class HTMLValue(markupsafe.Markup):
@@ -246,15 +252,15 @@ class HTMLContent(Content):
                 **self.get_render_args(page_content)
             )
         return html
-    
+
     def prop_get_abstract(self, page_content):
         html = self._get_html(page_content)
         soup = BeautifulSoup(html, 'html.parser')
         abstract_length = self.abstract_length
-        
+
         if abstract_length == 0:
             return soup
-        
+
         slen = 0
         gen = soup.recursiveChildGenerator()
         for c in gen:
@@ -267,15 +273,15 @@ class HTMLContent(Content):
                 slen += curlen
         else:
             return HTMLValue(soup)
-                        
+
         while c:
             while c.next_sibling:
                 c.next_sibling.extract()
             c = c.parent
-        
-        last_c.string.replace_with(last_c[:abstract_length-curlen])
+
+        last_c.string.replace_with(last_c[:abstract_length - curlen])
         return HTMLValue(soup)
-    
+
     def prop_get_html(self, page_content):
         html = self._get_html(page_content)
         soup = BeautifulSoup(html, 'html.parser')
@@ -284,9 +290,9 @@ class HTMLContent(Content):
         for c in soup.recursiveChildGenerator():
             if re.match(r'h\d', c.name or ''):
                 id = f'h_{"_".join(self.dirname)}_{self.name}_{n}'
-                id = re.sub(r'[^a-zA-Z0-9_]', lambda m:f'_{ord(m[0]):02x}', id)
+                id = re.sub(r'[^a-zA-Z0-9_]', lambda m: f'_{ord(m[0]):02x}', id)
                 n += 1
-                a = soup.new_tag('a', id='a_'+id, **{'class':'header_anchor'})
+                a = soup.new_tag('a', id='a_' + id, **{'class': 'header_anchor'})
                 c.insert_before(a)
                 c['id'] = id
                 headers.append((id, c.name, c.text))
@@ -324,7 +330,7 @@ class IndexPage(Content):
 
     def filename_to_page(self, values, npage):
         value = '_'.join(values)
-        value = re.sub(r'[%/\\: \t]', lambda m:f'%{ord(m[0]):02x}', value)
+        value = re.sub(r'[%/\\: \t]', lambda m: f'%{ord(m[0]):02x}', value)
 
         if getattr(self, 'groupby', None):
             if npage == 1:
@@ -344,7 +350,7 @@ class IndexPage(Content):
             **self.get_render_args(self))
 
         return ret
-    
+
     def get_output_path(self, values=(), npage=None, *args, **kwargs):
         if not npage:
             npage = 1
@@ -354,7 +360,7 @@ class IndexPage(Content):
 #    def path_to_indexpage(self, values, npage, page_from=None, abs_path=False):
 #        if not page_from:
 #            page_from = self
-#    
+#
 #        to = self.get_output_path(values, npage)
 #        if abs_path or page_from.use_abs_path:
 #            site_url = self.site_url
@@ -363,7 +369,7 @@ class IndexPage(Content):
 #            here = f"/{'/'.join(page_from.dirname)}/"
 #            to = f"/{to}"
 #            return posixpath.relpath(to, here)
-        
+
     def _to_filename(self):
         return self.filename_to_page([''], 1)
 
@@ -384,8 +390,8 @@ class IndexPage(Content):
 
         for names, group in groups:
             num = len(group)
-            num_pages = ((num-1) // n_per_page) + 1
-            rest = num - ((num_pages-1) * n_per_page)
+            num_pages = ((num - 1) // n_per_page) + 1
+            rest = num - ((num_pages - 1) * n_per_page)
             if rest <= page_orphan:
                 if num_pages > 1:
                     num_pages -= 1
@@ -395,23 +401,23 @@ class IndexPage(Content):
 
             templatename = templatename1
             for page in range(0, num_pages):
-                is_last = (page == (num_pages-1))
+                is_last = (page == (num_pages - 1))
 
                 f = page * n_per_page
                 t = num if is_last else f + n_per_page
 
                 articles = [ContentArgProxy(self.site, self, article)
-                    for article in group[f:t]]
+                            for article in group[f:t]]
 
                 template = self.site.jinjaenv.get_template(templatename)
                 args = self.get_render_args(self)
 
                 body = template.render(
-                    group_names=names, cur_page=page+1, is_last=is_last,
+                    group_names=names, cur_page=page + 1, is_last=is_last,
                     num_pages=num_pages, articles=articles,
                     **args)
-                
-                filename = self.filename_to_page(names, page+1)
+
+                filename = self.filename_to_page(names, page + 1)
                 output = Output(dirname=self.dirname, name=filename,
                                 stat=self.stat,
                                 body=body.encode('utf-8'))
@@ -451,7 +457,7 @@ class FeedPage(Content):
             link=self.site_url,
             feed_url=self.url,
             description='')
-        
+
         filters = getattr(self, 'filters', {})
         filters['type'] = {'article'}
         filters['draft'] = {False}
@@ -460,7 +466,6 @@ class FeedPage(Content):
 
         num_articles = int(self.feed_num_articles)
         for c in contents[:num_articles]:
-            title = c.title
             link = c.url
             description = c.prop_get_abstract(self)
 
@@ -470,7 +475,7 @@ class FeedPage(Content):
                 unique_id=get_tag_uri(link, c.date),
                 description=description,
                 pubdate=c.date,
-                )
+            )
 
         body = feed.writeString('utf-8').encode('utf-8')
         return [Output(dirname=self.dirname, name=self.filename,
@@ -519,8 +524,8 @@ class Contents:
         if subdirs:
             cur = base.dirname if base else None
             subdirs = [utils.abs_dir(d, cur) for d in subdirs]
-            contents = filter(lambda c:any(c.dirname[:len(d)] == d for d in subdirs), contents)
-        
+            contents = filter(lambda c: any(c.dirname[:len(d)] == d for d in subdirs), contents)
+
         recs = []
         for c in contents:
             d = c.date
@@ -530,7 +535,7 @@ class Contents:
                 ts = 0
             recs.append((ts, c))
 
-        recs.sort(reverse=True, key=lambda r:(r[0], r[1].title))
+        recs.sort(reverse=True, key=lambda r: (r[0], r[1].title))
         return [c for (ts, c) in recs]
 
     def group_items(self, group, subdirs=None, base=None, filters=None):
@@ -554,14 +559,14 @@ class Contents:
 
     @property
     def categories(self):
-        contents = self.get_contents(filters={'type':{'article'}})
+        contents = self.get_contents(filters={'type': {'article'}})
         categories = (getattr(c, 'category', None) for c in contents)
         return sorted(set(c for c in categories if c))
 
     @property
     def tags(self):
         tags = set()
-        for c in self.get_contents(filters={'type':{'article'}}):
+        for c in self.get_contents(filters={'type': {'article'}}):
             t = getattr(c, 'tags', None)
             if t:
                 tags.update(t)
@@ -580,6 +585,7 @@ CONTENT_CLASSES = {
     'feed': FeedPage,
     'config': load_config,
 }
+
 
 def content_class(type):
     return CONTENT_CLASSES[type]
@@ -693,7 +699,7 @@ def get_content_from_package(site, package, srcpath, destname=None, loader=None)
     if destname is None:
         destname = srcpath
 
-    destdir, filename  = posixpath.split(destname)
+    destdir, filename = posixpath.split(destname)
     ext = os.path.splitext(filename)[1]
 
     _loader = loader
@@ -709,7 +715,6 @@ def load_package(site, package, path, loader=None):
         path = path + '/'
 
     for filename in utils.walk_package(package, path):
-        s = pkg_resources.resource_string(package, filename)
         name = filename[len(path):]
 
         content = get_content_from_package(site, package, filename, name, loader)

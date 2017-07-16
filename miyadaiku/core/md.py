@@ -3,7 +3,7 @@ import datetime
 import dateutil.parser
 import markdown
 from markdown import util, preprocessors
-
+import markdown.extensions.codehilite
 
 
 def date(v):
@@ -13,9 +13,11 @@ def date(v):
         if isinstance(ret, datetime.time):
             raise ValueError(f'String does not contain a date: {v!r}')
         return ret
-    
+
+
 def tags(v):
     return [t.strip() for t in v.split(',')]
+
 
 def draft(v):
     v = v.strip().lower()
@@ -35,8 +37,6 @@ class Ext(markdown.Extension):
         md.preprocessors.add('jinja',
                              JinjaPreprocessor(md),
                              "<normalize_whitespace")
-
-
 
 
 class JinjaPreprocessor(preprocessors.Preprocessor):
@@ -67,7 +67,6 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
 
         self.markdown.meta = meta
 
-
         text = "\n".join(lines[n:])
 
         while True:
@@ -79,15 +78,15 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
                                    placeholder,
                                    text[m.end():])
 
-        text = text.translate({ord('{'):'&#123;', ord('}'):'&#125;'})
+        text = text.translate({ord('{'): '&#123;', ord('}'): '&#125;'})
         return text.split("\n")
 
 
-import markdown.extensions.codehilite
 
 
 def load(path):
     return load_string(path.read_text(encoding='utf-8'))
+
 
 def load_string(string):
     extensions = [
@@ -99,4 +98,3 @@ def load_string(string):
     md = markdown.Markdown(extensions=extensions)
     html = md.convert(string)
     return md.meta, html
-

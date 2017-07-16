@@ -1,5 +1,6 @@
 import os
 
+
 def setup_list_packages(packagedir, root):
     yield root
 
@@ -13,4 +14,3 @@ def setup_list_packages(packagedir, root):
 
 def setup_read_file(packagedir, fname):
     return open(os.path.join(packagedir, fname)).read()
-

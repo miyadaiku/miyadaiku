@@ -4,12 +4,12 @@ from testutil import sitedir
 import datetime
 
 
-def test_load(sitedir):
+def test_load(sitedir):  # NOQA
     sitedir.joinpath('a.md').write_text('''
 title: title
 tags: a,b,c
 draft: false
-date: 2017-1-1	
+date: 2017-1-1
 
 adfas
 :jinja:`{{ancdef}}`
@@ -22,5 +22,5 @@ adfas
     assert metadata['type'] == 'article'
     assert metadata['title'] == 'title'
     assert metadata['draft'] is False
-    assert metadata['tags'] == ['a','b','c']
-    assert metadata['date'] == datetime.datetime(2017, 1,1)
+    assert metadata['tags'] == ['a', 'b', 'c']
+    assert metadata['date'] == datetime.datetime(2017, 1, 1)

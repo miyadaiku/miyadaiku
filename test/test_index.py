@@ -4,11 +4,12 @@ import pathlib
 from miyadaiku.core import main
 from testutil import sitedir
 
-def test_index(sitedir):
+
+def test_index(sitedir): # NOQA
     sitedir.joinpath('config.yml').write_text('')
 
     content = sitedir / 'contents'
-    
+
     for i in range(20):
         src = '''
 .. article::
@@ -31,7 +32,7 @@ indexpage_max_articles: 4
     site.build()
     site.write()
 
-    nums = [re.search(r'\d', p.stem+'_1')[0] for p in sitedir.joinpath('outputs').glob('index*')]
-    assert set(int(d) for d in nums) == set([1,2,3,4,5])
+    nums = [re.search(r'\d', p.stem + '_1')[0] for p in sitedir.joinpath('outputs').glob('index*')]
+    assert set(int(d) for d in nums) == set([1, 2, 3, 4, 5])
     for p in sitedir.joinpath('outputs').glob('index*'):
         print(p.read_text())
