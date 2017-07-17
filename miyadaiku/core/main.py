@@ -61,7 +61,11 @@ class Site:
                 self.output.add(o)
 
     def write(self):
-        shutil.rmtree(self.path / OUTPUTS_DIR)
+        try:
+            shutil.rmtree(self.path / OUTPUTS_DIR)
+        except FileNotFoundError:
+            pass
+
         self.output.write(self.path / OUTPUTS_DIR)
 
     def render(self, template, **kwargs):
