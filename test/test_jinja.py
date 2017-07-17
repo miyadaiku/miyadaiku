@@ -3,7 +3,8 @@ import pytest
 import pathlib
 from miyadaiku.core import main
 
-def test_feed(sitedir): # NOQA
+
+def test_feed(sitedir):  # NOQA
     sitedir.joinpath('config.yml').write_text('')
 
     content = sitedir / 'contents'
@@ -11,7 +12,7 @@ def test_feed(sitedir): # NOQA
 
 .. jinja::
 
-   {{ macros.image(page, page, alt='<>a"\lt', link=page.path_to(page)) }}
+   {{ macros.image(page, alt='<>a"\lt', link=page.path_to(page)) }}
 
 """)
 
@@ -21,4 +22,3 @@ def test_feed(sitedir): # NOQA
 
     p = sitedir.joinpath('outputs') / 'test.html'
     print(p.read_text())
-

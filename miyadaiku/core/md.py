@@ -82,8 +82,6 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
         return text.split("\n")
 
 
-
-
 def load(path):
     return load_string(path.read_text(encoding='utf-8'))
 

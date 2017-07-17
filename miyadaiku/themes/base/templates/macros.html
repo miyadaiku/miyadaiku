@@ -1,4 +1,4 @@
-{% macro image(page, src, alt='', _class='', style='', width='', link='', link_class='') -%}
+{% macro image(src, alt='', _class='', style='', width='', link='', link_class='') -%}
 
 {% if link %}
 <a href={{link}}
@@ -6,11 +6,11 @@
 >
 {% endif %}
 
-<img src='{{ page.path_to(src) }}'
-     {% if alt %} alt={{alt}} {% endif %}
-     {% if _class %} class={{_class}} {% endif %}
-     {% if style %} class={{style}} {% endif %}
-     {% if width %} width={{width}} {% endif %}
+<img src='{{ src.path() }}'
+     {% if alt %} alt={{ alt }} {% endif %}
+     {% if _class %} class={{ _class }} {% endif %}
+     {% if style %} style={{ style }} {% endif %}
+     {% if width %} width={{ width }} {% endif %}
  >
 
 {% if link %}

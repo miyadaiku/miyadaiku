@@ -3,7 +3,8 @@ import pytest
 import pathlib
 from miyadaiku.core import main
 
-def test_feed(sitedir): # NOQA
+
+def test_feed(sitedir):  # NOQA
     sitedir.joinpath('config.yml').write_text('')
 
     content = sitedir / 'contents'
@@ -33,4 +34,3 @@ feedtype: rss
 
     p = sitedir.joinpath('outputs') / 'feed.rdf'
     print(p.read_text())
-

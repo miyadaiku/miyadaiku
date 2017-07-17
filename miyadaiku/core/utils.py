@@ -5,6 +5,7 @@ import pkg_resources
 import posixpath
 import re
 
+
 def walk(path):
     articles = []
     path = path.expanduser().resolve()

@@ -28,6 +28,7 @@ s = '''
 {{ str(type(mm)) }}
 '''
 
+
 def create_env(themes, path):
     loaders = [PackagesLoader()]
     if path:
@@ -50,7 +51,7 @@ def create_env(themes, path):
     return env
 
 #
-#def render(env, conf, templatename, globals, **kwargs):
+# def render(env, conf, templatename, globals, **kwargs):
 #    template = env.get_template(templatename, globals=globals)
 #    return template.render(
 #        **kwargs

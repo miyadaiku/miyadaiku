@@ -77,6 +77,7 @@ def test_get_abstract():
     ss = a.prop_get_abstract(a)
     print(ss)
 
+
 def test_categories():
     site = main.Site(Path('.'))
 

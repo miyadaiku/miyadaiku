@@ -21,7 +21,6 @@ from . import YAML_ENCODING
 logger = logging.getLogger(__name__)
 
 
-
 class _metadata(dict):
     def __getattr__(self, name):
         return self.get(name, None)
@@ -38,6 +37,17 @@ class ContentArgProxy:
             return f(self.page_content)
 
         return getattr(self.content, name)
+
+    def load(self, target):
+        ret = self.content.get_content(target)
+        return ContentArgProxy(self.site, self.page_content, ret)
+
+    def path(self, *args, **kwargs):
+        return self.page_content.path_to(self, *args, **kwargs)
+
+    def link(self, *args, **kwargs):
+        return self.page_content.link_to(self, *args, **kwargs)
+
 
 
 class ContentsArgProxy:
@@ -178,7 +188,7 @@ class Content:
         if isinstance(target, str):
             content = self.site.contents.get_content(target, self)
         else:
-            raise ValueError(f'Cannot convert to path: {target}')
+            return target
         return content
 
     def path_to(self, target, fragment=None, abs_path=False, *args, **kwargs):
@@ -344,8 +354,8 @@ class IndexPage(Content):
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
         template = self.site.jinjaenv.from_string(filename_templ)
         ret = self.site.render(template,
-            value=value, cur_page=npage,
-            **self.get_render_args(self))
+                               value=value, cur_page=npage,
+                               **self.get_render_args(self))
 
         return ret
 
@@ -411,9 +421,9 @@ class IndexPage(Content):
                 args = self.get_render_args(self)
 
                 body = self.site.render(template,
-                    group_names=names, cur_page=page + 1, is_last=is_last,
-                    num_pages=num_pages, articles=articles,
-                    **args)
+                                        group_names=names, cur_page=page + 1, is_last=is_last,
+                                        num_pages=num_pages, articles=articles,
+                                        **args)
 
                 filename = self.filename_to_page(names, page + 1)
                 output = Output(dirname=self.dirname, name=filename,
