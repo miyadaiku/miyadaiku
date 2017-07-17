@@ -1,6 +1,5 @@
 from pathlib import Path
 from miyadaiku.core import md
-from testutil import sitedir
 import datetime
 
 

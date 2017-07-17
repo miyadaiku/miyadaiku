@@ -1,0 +1,19 @@
+{% macro image(page, src, alt='', _class='', style='', width='', link='', link_class='') -%}
+
+{% if link %}
+<a href={{link}}
+   {% if link_class %} class={{ link_class }} {% endif %}
+>
+{% endif %}
+
+<img src='{{ page.path_to(src) }}'
+     {% if alt %} alt={{alt}} {% endif %}
+     {% if _class %} class={{_class}} {% endif %}
+     {% if style %} class={{style}} {% endif %}
+     {% if width %} width={{width}} {% endif %}
+ >
+
+{% if link %}
+</a>
+{% endif %}
+{%- endmacro %}

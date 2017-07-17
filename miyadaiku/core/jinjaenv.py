@@ -23,6 +23,11 @@ class PackagesLoader(PrefixLoader):
         raise TypeError('this loader cannot iterate over all templates')
 
 
+s = '''
+{% import "macros.html" as mm %}
+{{ str(type(mm)) }}
+'''
+
 def create_env(themes, path):
     loaders = [PackagesLoader()]
     if path:
@@ -36,11 +41,17 @@ def create_env(themes, path):
         loader=ChoiceLoader(loaders),
         autoescape=select_autoescape(['html', 'xml'])
     )
+
+    env.globals['repr'] = repr
+    env.globals['type'] = type
+    env.globals['str'] = str
+    env.globals['dir'] = dir
+
     return env
 
-
-def render(env, conf, templatename, **kwargs):
-    template = env.get_template(templatename)
-    return template.render(
-        **kwargs
-    )
+#
+#def render(env, conf, templatename, globals, **kwargs):
+#    template = env.get_template(templatename, globals=globals)
+#    return template.render(
+#        **kwargs
+#    )

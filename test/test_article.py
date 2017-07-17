@@ -23,4 +23,4 @@ def test_indexpage():
     article = contents.IndexPage(site, '', 'test', {}, {})
     outputs = article.get_outputs()
 
-    assert len(outputs) == 3
+    assert len(outputs) == 2

@@ -62,7 +62,7 @@ defaults = dict(
     indexpage_group_filename_templ2='{{page.stem}}_{{page.groupby}}_{{value}}_{{cur_page}}.html',
 
     indexpage_max_num_pages=0,
-    indexpage_max_articles=3,
+    indexpage_max_articles=5,
     indexpage_orphan=1,
 
     feed_type='atom',

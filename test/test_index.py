@@ -2,7 +2,6 @@ import re
 import pytest
 import pathlib
 from miyadaiku.core import main
-from testutil import sitedir
 
 
 def test_index(sitedir): # NOQA

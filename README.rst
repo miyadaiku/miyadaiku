@@ -8,12 +8,12 @@ Miyadaiku is a flexible static site generator for Jinja2 artists.
 
 - Generate index pages and Atom/RSS feeds for Blog sites.
 
-- Hierarchical contents property.
+- Jinja2 templates can be written in your contents files.
 
-- Jinja2 templates can be embedded in contents files.
+- Hierarchical contents property.
 
 - Theme system to generate site.
 
-- Themes are writtem in Jinja2, and are installed from PyPI as Python package.
+- Themes are managed as Python package. You can install themes from PyPI with pip.
 
 - Other dependencies such as jQuery or Bootstrap can be managed as Python packages too.

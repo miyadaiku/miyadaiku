@@ -111,7 +111,8 @@ class Content:
         filename_templ = self.filename_templ
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
         template = self.site.jinjaenv.from_string(filename_templ)
-        ret = template.render(**self.get_render_args(self))
+        ret = self.site.render(template, **self.get_render_args(self))
+
         assert ret
         return ret
 
@@ -248,9 +249,7 @@ class HTMLContent(Content):
         html = ""
         if self.body:
             template = self.site.jinjaenv.from_string(self.body)
-            html = template.render(
-                **self.get_render_args(page_content)
-            )
+            html = self.site.render(template, **self.get_render_args(page_content))
         return html
 
     def prop_get_abstract(self, page_content):
@@ -312,8 +311,7 @@ class Article(HTMLContent):
 
         templatename = self.article_template
         template = self.site.jinjaenv.get_template(templatename)
-        body = template.render(
-            **self.get_render_args(self))
+        body = self.site.render(template, **self.get_render_args(self))
 
         return [Output(dirname=self.dirname, name=self.filename,
                        stat=self.stat,
@@ -345,7 +343,7 @@ class IndexPage(Content):
 
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
         template = self.site.jinjaenv.from_string(filename_templ)
-        ret = template.render(
+        ret = self.site.render(template,
             value=value, cur_page=npage,
             **self.get_render_args(self))
 
@@ -412,7 +410,7 @@ class IndexPage(Content):
                 template = self.site.jinjaenv.get_template(templatename)
                 args = self.get_render_args(self)
 
-                body = template.render(
+                body = self.site.render(template,
                     group_names=names, cur_page=page + 1, is_last=is_last,
                     num_pages=num_pages, articles=articles,
                     **args)

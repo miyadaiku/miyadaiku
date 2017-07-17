@@ -2,8 +2,6 @@ import re
 import pytest
 import pathlib
 from miyadaiku.core import main
-from testutil import sitedir
-
 
 def test_feed(sitedir): # NOQA
     sitedir.joinpath('config.yml').write_text('')
@@ -33,7 +31,6 @@ feedtype: rss
     site.build()
     site.write()
 
-    nums = [re.search(r'\d', p.stem + '_1')[0] for p in sitedir.joinpath('output').glob('index*')]
-    assert nums
     p = sitedir.joinpath('outputs') / 'feed.rdf'
     print(p.read_text())
+

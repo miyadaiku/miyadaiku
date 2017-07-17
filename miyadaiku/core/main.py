@@ -29,13 +29,10 @@ class Site:
             self.config.add('/', props, tail=False)
 
         self.contents = contents.Contents()
+        self.output = output.Outputs()
 
         self.jinjaenv = jinjaenv.create_env(
             self.config.themes, path / TEMPLATES_DIR)
-        self.output = output.Outputs()
-
-        contents.load_directory(self, path / CONTENTS_DIR)
-        contents.load_directory(self, path / FILES_DIR, contents.bin_loader)
 
         for theme in self.config.themes:
             mod = importlib.import_module(theme)
@@ -43,8 +40,16 @@ class Site:
             if f:
                 f(self)
 
+        contents.load_directory(self, path / CONTENTS_DIR)
+        contents.load_directory(self, path / FILES_DIR, contents.bin_loader)
+
+        for theme in self.config.themes:
             contents.load_package(self, theme, CONTENTS_DIR)
             contents.load_package(self, theme, FILES_DIR, contents.bin_loader)
+
+    def add_template_module(self, name, templatename):
+        template = self.jinjaenv.get_template(templatename)
+        self.jinjaenv.globals[name] = template.module
 
     def build(self):
         for cont in self.contents.get_contents():
@@ -55,7 +60,11 @@ class Site:
                 self.output.add(o)
 
     def write(self):
+        shutil.rmtree(self.path / OUTPUTS_DIR)
         self.output.write(self.path / OUTPUTS_DIR)
+
+    def render(self, template, **kwargs):
+        return template.render(**kwargs)
 
 
 # def run():
