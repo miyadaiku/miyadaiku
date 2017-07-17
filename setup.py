@@ -25,13 +25,13 @@ entry_points = {
 
 setup(
     name="miyadaiku",
-    version="0.0.9",
+    version="0.0.10",
     author="Atsuo Ishimoto",
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 3 - Alpha",
         "Environment :: Console",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
