@@ -8,7 +8,7 @@ Miyadaiku is a flexible static site generator for Jinja2 artists.
 
 - Generate index pages and Atom/RSS feeds for Blog sites.
 
-- Jinja2 templates can be written in your contents files.
+- Jinja2 templates can be written in your reST/Markdown files.
 
 - Hierarchical contents property.
 
