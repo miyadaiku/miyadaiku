@@ -37,7 +37,7 @@ defaults = dict(
     ignore=ignore,
 
     themes=[default_theme, ],
-    lang='en',
+    lang='en-US',
     charset='utf-8',
     timezone=default_timezone,
     draft=False,
@@ -71,6 +71,12 @@ defaults = dict(
     category='',
     tags=(),
 
+    og_type='article',
+    og_title='',
+    og_image='',
+    og_description='',
+
+    ga_tracking_id='',
 )
 
 

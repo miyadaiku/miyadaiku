@@ -29,9 +29,7 @@ def main():
 
     locale.setlocale(locale.LC_ALL, '')
     lang = locale.getlocale()[0]
-    if lang:
-        lang = lang.split('_')[0].lower()[:2]
-    lang = lang or "en"
+    lang = (lang or "en-US").replace('_', '-')
     charset = "utf-8"
 
     yaml = f"""# Miyadaiku config file

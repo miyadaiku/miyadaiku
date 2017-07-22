@@ -6,4 +6,5 @@ import pathlib
 def sitedir(tmpdir):
     d = tmpdir.mkdir('site')
     d.mkdir('contents')
+    d.mkdir('templates')
     return pathlib.Path(str(d))

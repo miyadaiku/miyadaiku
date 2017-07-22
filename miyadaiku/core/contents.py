@@ -31,10 +31,11 @@ class ContentArgProxy:
         self.site, self.page_content, self.content = site, page_content, content
 
     def __getattr__(self, name):
-        prop = f'prop_get_{name}'
-        f = getattr(self.content, prop, None)
-        if f:
-            return f(self.page_content)
+        if not hasattr(self.content, name):
+            prop = f'prop_get_{name}'
+            f = getattr(self.content, prop, None)
+            if f:
+                return f(self.page_content)
 
         return getattr(self.content, name)
 
@@ -181,6 +182,12 @@ class Content:
         tz = self.timezone
         return date.astimezone(tz)
 
+    def prop_get_abstract(self, page_content):
+        return ""
+
+    def prop_get_html(self, page_content):
+        return ""
+
     def get_output_path(self, *args, **kwargs):
         return f"{'/'.join(self.dirname)}/{self.filename}"
 
@@ -262,13 +269,14 @@ class HTMLContent(Content):
             html = self.site.render(template, **self.get_render_args(page_content))
         return html
 
-    def prop_get_abstract(self, page_content):
+    def prop_get_abstract(self, page_content, abstract_length=None):
         html = self._get_html(page_content)
         soup = BeautifulSoup(html, 'html.parser')
-        abstract_length = self.abstract_length
+        if abstract_length is None:
+            abstract_length = self.abstract_length
 
         if abstract_length == 0:
-            return soup
+            return HTMLValue(soup)
 
         slen = 0
         gen = soup.recursiveChildGenerator()
@@ -475,13 +483,13 @@ class FeedPage(Content):
         num_articles = int(self.feed_num_articles)
         for c in contents[:num_articles]:
             link = c.url
-            description = c.prop_get_abstract(self)
+            description = c.prop_get_abstract(self, self.abstract_length)
 
             feed.add_item(
-                title=c.title,
+                title=str(c.title),
                 link=link,
                 unique_id=get_tag_uri(link, c.date),
-                description=description,
+                description=str(description),
                 pubdate=c.date,
             )
 
