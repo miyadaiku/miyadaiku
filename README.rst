@@ -10,7 +10,7 @@ Miyadaiku is a flexible static site generator for Jinja2 artists.
 
 - Jinja2 templates can be written in your reST/Markdown files.
 
-- Hierarchical contents property.
+- Hierarchical contents property. Each directory can have default property values for documents. These property values are also applied to sub-directories.
 
 - Theme system to generate site.
 
