@@ -1,19 +1,46 @@
 {% macro image(src, alt='', _class='', style='', width='', link='', link_class='') -%}
 
-{% if link %}
-<a href={{link}}
-   {% if link_class %} class={{ link_class }} {% endif %}
->
-{% endif %}
+  {% if link %}
+    <a href={{link}}
+      {% if link_class %} class={{ link_class }} {% endif %}
+    >
+  {% endif %}
 
-<img src='{{ src.path() }}'
+  {% if isinstance(src, str) %}
+    {% set src=site.contents.get_content(src) %}
+  {% endif %}
+
+  <img src='{{ src.path() }}'
      {% if alt %} alt={{ alt }} {% endif %}
      {% if _class %} class={{ _class }} {% endif %}
      {% if style %} style={{ style }} {% endif %}
      {% if width %} width={{ width }} {% endif %}
- >
+   >
 
-{% if link %}
-</a>
-{% endif %}
+  {% if link %}
+    </a>
+  {% endif %}
+{%- endmacro %}
+
+
+{% macro google_analytics(page=None) -%}
+
+  {% if page %}
+    {% set code=page.ga_tracking_id %}
+  {% else %}
+    {% set code=site.config.get('/', 'ga_tracking_id') %}
+  {% endif %}
+
+  <script>
+    (function (i, s, o, g, r, a, m) {
+      i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', '{{ code }}', 'auto');
+    ga('send', 'pageview');
+ </script>
+
 {%- endmacro %}

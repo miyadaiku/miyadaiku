@@ -16,9 +16,7 @@ default_timezone = tzlocal.get_localzone().zone
 default_theme = 'miyadaiku.themes.base'
 
 ignore = [
-    '*.exe',
     '*.o',
-    '*.so',
     '*.pyc',
     '*.egg-info',
     '*.bak',
@@ -107,17 +105,19 @@ class Config:
         self._configs = collections.defaultdict(list)
         self.themes = []
 
+        themes = [default_theme]
         # read root config
         if path:
             d = yaml.load(path.read_text(encoding=YAML_ENCODING)) or {}
             self.add((), d)
 
-            themes = list(d.get('themes', [])) + [default_theme]
-            for theme, cfg in _load_theme_configs(themes):
-                self.themes.append(theme)
-                self.add((), cfg)
+            themes = list(d.get('themes', [])) + themes
 
             ignore.extend(list(d.get('ignore', [])))
+
+        for theme, cfg in _load_theme_configs(themes):
+            self.themes.append(theme)
+            self.add((), cfg)
 
     def add(self, dirname, cfg, tail=True):
         dirname = utils.dirname_to_tuple(dirname)

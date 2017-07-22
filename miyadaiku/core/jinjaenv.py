@@ -29,7 +29,7 @@ s = '''
 '''
 
 
-def create_env(themes, path):
+def create_env(site, themes, path):
     loaders = [PackagesLoader()]
     if path:
         loaders.append(FileSystemLoader(os.fspath(path)))
@@ -43,11 +43,12 @@ def create_env(themes, path):
         autoescape=select_autoescape(['html', 'xml'])
     )
 
+    env.globals['site'] = site
     env.globals['repr'] = repr
     env.globals['type'] = type
     env.globals['str'] = str
     env.globals['dir'] = dir
-
+    env.globals['isinstance'] = isinstance
     return env
 
 #

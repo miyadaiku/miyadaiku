@@ -33,7 +33,7 @@ class Site:
         self.output = output.Outputs()
 
         self.jinjaenv = jinjaenv.create_env(
-            self.config.themes, path / TEMPLATES_DIR)
+            self, self.config.themes, path / TEMPLATES_DIR)
 
         for theme in self.config.themes:
             mod = importlib.import_module(theme)

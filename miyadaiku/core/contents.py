@@ -501,7 +501,7 @@ class Contents:
             self._contents[key] = content
 
     def get_content(self, key, base=None):
-        dirname, filename = utils.abs_path(key, base.dirname if base else ())
+        dirname, filename = utils.abs_path(key, base.dirname if base else None)
         return self._contents[(dirname, filename)]
 
     def get_contents(self, subdirs=None, base=None, filters=None):
