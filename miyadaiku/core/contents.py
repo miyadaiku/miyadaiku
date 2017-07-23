@@ -85,12 +85,14 @@ class ConfigArgProxy:
 
 
 class Content:
+    _filename = None
     def __init__(self, site, dirname, name, metadata, body):
         self.site = site
         self.dirname = utils.dirname_to_tuple(dirname)
         self.name = name
         self.metadata = _metadata(metadata)
         self.body = body
+        self._html_cacche = {}
 
         self.metadata['stat'] = None
         path = self.metadata.get('srcpath', None)
@@ -133,10 +135,13 @@ class Content:
 
     @property
     def filename(self):
-        filename = self.get_metadata('filename', None)
-        if not filename:
-            filename = self._to_filename()
-        return filename
+        if self._filename:
+            return self._filename
+
+        self._filename = self.get_metadata('filename', None)
+        if not self._filename:
+            self._filename = self._to_filename()
+        return self._filename
 
     @property
     def stem(self):

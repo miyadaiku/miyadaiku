@@ -16,7 +16,7 @@ parser.add_argument('--define', '-d', action='append', metavar='property=value',
                     help='Set default property value.')
 
 
-def main():
+def _main():
     happylogging.initlog(filename='-', level='DEBUG')
     args = parser.parse_args()
 
@@ -34,6 +34,8 @@ def main():
     site.build()
     site.write()
 
+def main():
+    _main()
 
 if __name__ == '__main__':
     main()
