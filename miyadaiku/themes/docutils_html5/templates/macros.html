@@ -1,0 +1,6 @@
+
+
+{% macro load_css(page) -%}
+  <link rel="stylesheet" href="{{ page.path_to('/static/docutils_html5/minimal.css') }}">
+  <link rel="stylesheet" href="{{ page.path_to('/static/docutils_html5/plain.css') }}">
+{%- endmacro %}
