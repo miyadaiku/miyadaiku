@@ -106,8 +106,19 @@ def _load_theme_configs(themes):
         yield theme, cfg
 
 
+THEME_CONF_ENTRIES = [
+    'themes'
+]
+
+def remove_theme_confs(cfg):
+    ret = {}
+    for k, v in cfg.items():
+        if k not in THEME_CONF_ENTRIES:
+            ret[k] = v
+    return ret
+
 class Config:
-    def __init__(self, path, props=None):
+    def __init__(self, path):
         self._configs = collections.defaultdict(list)
         self.themes = []
 
@@ -123,9 +134,13 @@ class Config:
 
         for theme, cfg in _load_theme_configs(themes):
             self.themes.append(theme)
+
             self.add((), cfg)
 
     def add(self, dirname, cfg, tail=True):
+        cfg = remove_theme_confs(cfg)
+        if not cfg:
+            return
         dirname = utils.dirname_to_tuple(dirname)
         if tail:
             self._configs[dirname].append(cfg)
