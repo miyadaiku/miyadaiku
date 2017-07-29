@@ -23,3 +23,21 @@ adfas
     assert metadata['draft'] is False
     assert metadata['tags'] == ['a', 'b', 'c']
     assert metadata['date'] == datetime.datetime(2017, 1, 1)
+
+
+def test_load2(sitedir):  # NOQA
+    (sitedir / 'a.md').write_text('''a :jinja:`{{abc}}` b''')
+
+    metadata, text = md.load(sitedir/'a.md')
+    assert text == '<p>a {{abc}} b</p>'
+
+    (sitedir / 'a.md').write_text('''
+:jinja:`{{abc
+def}}`
+''')
+
+    metadata, text = md.load(sitedir/'a.md')
+    assert text == '''{{abc
+def}}'''
+
+

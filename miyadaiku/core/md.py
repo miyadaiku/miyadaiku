@@ -2,7 +2,7 @@ import re
 import datetime
 import dateutil.parser
 import markdown
-from markdown import util, preprocessors
+from markdown import util, preprocessors, postprocessors
 import markdown.extensions.codehilite
 
 
@@ -36,7 +36,7 @@ class Ext(markdown.Extension):
     def extendMarkdown(self, md, globals):
         md.preprocessors.add('jinja',
                              JinjaPreprocessor(md),
-                             "<normalize_whitespace")
+                             ">normalize_whitespace")
 
 
 class JinjaPreprocessor(preprocessors.Preprocessor):
@@ -70,16 +70,26 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
         text = "\n".join(lines[n:])
 
         while True:
-            m = re.search(r':jinja:`.*?(?<!\\)`', text)
+            m = re.search(r':jinja:`(.*?(?<!\\))`', text, re.DOTALL)
             if not m:
                 break
-            placeholder = self.markdown.htmlStash.store(m[0], safe=True)
-            text = '%s\n%s\n%s' % (text[:m.start()],
+            placeholder = self.markdown.htmlStash.store(m[1], safe=True)
+            text = '%s%s%s' % (text[:m.start()],
                                    placeholder,
-                                   text[m.end():])
+                                   text[m.end(0):])
 
         text = text.translate({ord('{'): '&#123;', ord('}'): '&#125;'})
         return text.split("\n")
+
+
+class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):
+    def isblocklevel(self, html):
+        if re.match(r'\{.*}$',  html.strip(), re.DOTALL):
+            return True
+        return super().isblocklevel(html)
+
+# patch postprocessors.RawHtmlPostprocessor
+postprocessors.RawHtmlPostprocessor = JinjaRawHtmlPostprocessor
 
 
 def load(path):
