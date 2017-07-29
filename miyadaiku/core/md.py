@@ -2,7 +2,7 @@ import re
 import datetime
 import dateutil.parser
 import markdown
-from markdown import util, preprocessors, postprocessors
+from markdown import util, preprocessors, postprocessors, blockprocessors
 import markdown.extensions.codehilite
 
 
@@ -38,6 +38,9 @@ class Ext(markdown.Extension):
                              JinjaPreprocessor(md),
                              ">normalize_whitespace")
 
+        md.parser.blockprocessors.add('target',
+                                      TargetProcessor(md.parser),
+                                      '_begin')
 
 class JinjaPreprocessor(preprocessors.Preprocessor):
     def run(self, lines):
@@ -68,12 +71,16 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
         self.markdown.meta = meta
 
         text = "\n".join(lines[n:])
-
         while True:
-            m = re.search(r':jinja:`(.*?(?<!\\))`', text, re.DOTALL)
+            m = re.search(r'(\\)?:jinja:`(.*?(?<!\\))`', text, re.DOTALL)
             if not m:
                 break
-            placeholder = self.markdown.htmlStash.store(m[1], safe=True)
+            if m[1]:
+                # escaped
+                placeholder = self.markdown.htmlStash.store(m[0], safe=True)
+            else:
+                placeholder = self.markdown.htmlStash.store(m[2], safe=True)
+
             text = '%s%s%s' % (text[:m.start()],
                                    placeholder,
                                    text[m.end(0):])
@@ -83,6 +90,15 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
 
 
 class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):
+    def run(self, text):
+        while True:
+            ret = super().run(text)
+            if ret == text:
+                # all stashes were restored
+                break
+            text = ret
+        return ret
+
     def isblocklevel(self, html):
         if re.match(r'\{.*}$',  html.strip(), re.DOTALL):
             return True
@@ -92,15 +108,35 @@ class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):
 postprocessors.RawHtmlPostprocessor = JinjaRawHtmlPostprocessor
 
 
+
+
+
+class TargetProcessor(blockprocessors.BlockProcessor):
+
+    RE = re.compile(r'^.. target::\s*([-a-zA-Z0-9_]+)\s*$')
+
+    def test(self, parent, block):
+        return self.RE.search(block)
+
+    def run(self, parent, blocks):
+        block = blocks.pop(0)
+        m = self.RE.match(block)
+        attrs = {
+            'class': 'header_target',
+            'id': m.group(1),
+        }
+        util.etree.SubElement(parent, 'div', attrib=attrs)
+
+
 def load(path):
     return load_string(path.read_text(encoding='utf-8'))
 
 
 def load_string(string):
     extensions = [
-        Ext(),
         markdown.extensions.codehilite.CodeHiliteExtension(guess_lang=False),
         'markdown.extensions.extra',
+        Ext(),
     ]
 
     md = markdown.Markdown(extensions=extensions)

@@ -33,7 +33,7 @@ def test_image(sitedir):
     site.write()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
-    assert 'src="img/img.png' in ret
+    assert 'img/img.png' in ret
 
 def test_og(sitedir):
     (sitedir / 'templates/page_article.html').write_text('''

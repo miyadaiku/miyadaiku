@@ -3,7 +3,7 @@ from miyadaiku.core import html
 import datetime
 
 
-def test_load(sitedir):   # NOQA
+def test_load(sitedir):
     sitedir.joinpath('a.html').write_text('''
 title: title
 tags: a,b,c

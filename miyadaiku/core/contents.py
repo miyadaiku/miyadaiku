@@ -1,4 +1,5 @@
 import re
+import secrets
 import os
 import posixpath
 import collections
@@ -92,8 +93,7 @@ class Content:
         self.name = name
         self.metadata = _metadata(metadata)
         self.body = body
-        self._html_cacche = {}
-
+        
         self.metadata['stat'] = None
         path = self.metadata.get('srcpath', None)
         if path:
@@ -187,6 +187,9 @@ class Content:
         tz = self.timezone
         return date.astimezone(tz)
 
+    def prop_get_headers(self, page_content):
+        return []
+
     def prop_get_abstract(self, page_content):
         return ""
 
@@ -218,7 +221,10 @@ class Content:
         if isinstance(target, str):
             target = self.get_content(target)
         if not text:
-            text = target.title
+            if fragment:
+                text = target.get_headertext(self, fragment)
+            if not text:
+                text = target.title
 
         text = markupsafe.escape(text or '')
         s_attrs = []
@@ -260,6 +266,13 @@ class HTMLValue(markupsafe.Markup):
 
 
 class HTMLContent(Content):
+    def __init__(self, site, dirname, name, metadata, body):
+        super().__init__(site, dirname, name, metadata, body)
+
+        self._html_cache = {}
+        self._header_cache = {}
+
+
     @property
     def ext(self):
         ext = self.get_metadata('ext', None)
@@ -267,12 +280,68 @@ class HTMLContent(Content):
             return ext
         return '.html'
 
+    def _set_header_id(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
+        n = 1
+        headers = []
+        id = None
+        for c in soup.recursiveChildGenerator():
+            if c.name and ('header_target' in (c.get('class', '') or [])):
+                id = c.get('id', None)
+
+            elif re.match(r'h\d', c.name or ''):
+                if not id:
+                    id = f'h_{"_".join(self.dirname)}_{self.name}_{n}'
+                    id = re.sub(r'[^a-zA-Z0-9_]', lambda m: f'_{ord(m[0]):02x}', id)
+
+                    n += 1
+                    a = soup.new_tag('div', id=id, **{'class': 'header_target'})
+                    c.insert_before(a)
+
+                headers.append((id, c.name, c.text))
+                id = None
+
+        return headers, str(soup)
+
     def _get_html(self, page_content):
-        html = ""
-        if self.body:
-            template = self.site.jinjaenv.from_string(self.body)
-            html = self.site.render(template, **self.get_render_args(page_content))
+        ret = self._html_cache.get(page_content, None)
+        if ret:
+            return ret
+
+        template = self.site.jinjaenv.from_string(self.body or '')
+        html = self.site.render(template, **self.get_render_args(page_content))
+        headers, html = self._set_header_id(html)
+
+        self._html_cache[page_content] = html
+        self._header_cache[page_content] = headers
         return html
+
+    def _get_headers(self, page_content):
+        ret = self._header_cache.get(page_content)
+        if ret is not None:
+            return ret
+
+        self._get_html(page_content)
+        return self._header_cache.get(page_content)
+
+    _in_get_headertext = False
+    def get_headertext(self, page_content, fragment):
+        if self._in_get_headertext:
+            return 'dummy'
+
+        self._in_get_headertext = True
+        try:
+            headers = self._get_headers(page_content)
+            for id, elem, text in headers:
+                if id == fragment:
+                    return text
+        finally:
+            self._in_get_headertext = False
+        return None
+
+    def prop_get_headers(self, page_content):
+        headers = self._get_headers(page_content)
+        return headers
 
     def prop_get_abstract(self, page_content, abstract_length=None):
         html = self._get_html(page_content)
@@ -306,21 +375,7 @@ class HTMLContent(Content):
 
     def prop_get_html(self, page_content):
         html = self._get_html(page_content)
-        soup = BeautifulSoup(html, 'html.parser')
-        n = 1
-        headers = []
-        for c in soup.recursiveChildGenerator():
-            if re.match(r'h\d', c.name or ''):
-                id = f'h_{"_".join(self.dirname)}_{self.name}_{n}'
-                id = re.sub(r'[^a-zA-Z0-9_]', lambda m: f'_{ord(m[0]):02x}', id)
-                n += 1
-                a = soup.new_tag('a', id='a_' + id, **{'class': 'header_anchor'})
-                c.insert_before(a)
-                c['id'] = id
-                headers.append((id, c.name, c.text))
-
-        ret = HTMLValue(soup)
-        ret.headers = headers
+        ret = HTMLValue(html)
         return ret
 
 

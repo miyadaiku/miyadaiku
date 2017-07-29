@@ -87,6 +87,21 @@ class JinjaDirective(Directive):
 directives.register_directive('jinja', JinjaDirective)
 
 
+class TargetDirective(JinjaDirective):
+    CONTENT_TYPE = 'target'
+    required_arguments = 1
+    has_content = False
+
+    def run(self):
+        text = f'<div class="header_target" id="{self.arguments[0]}"></div>'
+        node = jinjalit(text, docutils.utils.unescape(text, 1))
+        node.source, node.line = self.state_machine.get_source_and_line(self.lineno)
+        return [node]
+
+directives.register_directive('target', TargetDirective)
+
+
+
 settings = {
     'input_encoding': 'utf-8',
     'syntax_highlight': 'short',
@@ -126,7 +141,6 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
 
     def depart_jinjalit(self, node):
         pass
-
 
 def _make_pub(source_class):
     pub = docutils.core.Publisher(
