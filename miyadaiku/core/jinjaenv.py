@@ -1,7 +1,9 @@
 import os
 from jinja2 import (TemplateNotFound, Environment, PrefixLoader, FileSystemLoader,
-                    ChoiceLoader, PackageLoader, select_autoescape, StrictUndefined)
+                    ChoiceLoader, PackageLoader, select_autoescape, make_logging_undefined, Undefined, DebugUndefined)
+import logging
 
+logger = logging.getLogger(__name__)
 
 class PackagesLoader(PrefixLoader):
     delimiter = "!"
@@ -23,12 +25,6 @@ class PackagesLoader(PrefixLoader):
         raise TypeError('this loader cannot iterate over all templates')
 
 
-s = '''
-{% import "macros.html" as mm %}
-{{ str(type(mm)) }}
-'''
-
-
 def create_env(site, themes, path):
     loaders = [PackagesLoader()]
     if path:
@@ -38,7 +34,7 @@ def create_env(site, themes, path):
     loaders.append(PackageLoader('miyadaiku.themes.base'))
 
     env = Environment(
-        undefined=StrictUndefined,
+        undefined=make_logging_undefined(logger, DebugUndefined),
         loader=ChoiceLoader(loaders),
         autoescape=select_autoescape(['html', 'xml'])
     )

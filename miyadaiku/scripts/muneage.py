@@ -5,6 +5,7 @@ import os
 import pathlib
 import tzlocal
 import happylogging
+import logging
 
 from miyadaiku.core.main import Site
 
@@ -18,6 +19,7 @@ parser.add_argument('--define', '-d', action='append', metavar='property=value',
 
 def _main():
     happylogging.initlog(filename='-', level='DEBUG')
+    logging.warning.setcolor("RED")
     args = parser.parse_args()
 
     props = {}

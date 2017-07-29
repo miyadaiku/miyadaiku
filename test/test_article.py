@@ -24,3 +24,43 @@ def test_indexpage():
     outputs = article.get_outputs()
 
     assert len(outputs) == 2
+
+def test_header(sitedir):
+    content = sitedir / 'contents'
+    content.joinpath('index.rst').write_text('''
+
+.. target:: id1
+
+title1
+------------
+
+''')
+
+    site = main.Site(sitedir)
+    site.build()
+    p = site.contents.get_content('/index.rst')
+    assert p.prop_get_headers(p) == [('id1', 'h1', 'title1')]
+
+
+def test_header_text(sitedir):
+    content = sitedir / 'contents'
+    content.joinpath('index.rst').write_text('''
+
+---:jinja:`{{ page.link_to(page, fragment='id2') }}`---
+
+
+title111
+------------
+
+.. target:: id2
+
+title2
+-----------------
+
+''')
+
+    site = main.Site(sitedir)
+    site.build()
+    p = site.contents.get_content('/index.rst')
+    print(p._get_html(p))
+
