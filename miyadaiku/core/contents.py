@@ -50,6 +50,13 @@ class ContentArgProxy:
     def link(self, *args, **kwargs):
         return self.page_content.link_to(self, *args, **kwargs)
 
+    def path_to(self, target, *args, **kwargs):
+        target = self.load(target)
+        return self.page_content.path_to(target, *args, **kwargs)
+
+    def link_to(self, target, *args, **kwargs):
+        target = self.load(target)
+        return self.page_content.link_to(target, *args, **kwargs)
 
 
 class ContentsArgProxy:
@@ -62,6 +69,10 @@ class ContentsArgProxy:
 
     def __getattr__(self, name):
         return getattr(self.site.contents, name)
+
+    def get_content(self, *args, **kwargs):
+        ret = self.site.contents.get_content(*args, **kwargs)
+        return ContentArgProxy(self.site, self.page_content, ret)
 
     def get_contents(self, *args, **kwargs):
         ret = self.site.contents.get_contents(*args, **kwargs)
