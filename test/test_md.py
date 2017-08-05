@@ -28,7 +28,7 @@ adfas
 def test_inline(sitedir):
     (sitedir / 'a.md').write_text('''a :jinja:`{{abc}}` b''')
 
-    metadata, text = md.load(sitedir/'a.md')
+    metadata, text = md.load(sitedir / 'a.md')
     assert text == '<p>a {{abc}} b</p>'
 
 
@@ -37,7 +37,7 @@ def test_multiline(sitedir):
 :jinja:`{{abc
 def}}`
 ''')
-    metadata, text = md.load(sitedir/'a.md')
+    metadata, text = md.load(sitedir / 'a.md')
     assert text == '''{{abc
 def}}'''
 
@@ -46,8 +46,9 @@ def test_esc(sitedir):
     (sitedir / 'a.md').write_text('''
 \:jinja:`{{abcdef}}`
 ''')
-    metadata, text = md.load(sitedir/'a.md')
+    metadata, text = md.load(sitedir / 'a.md')
     print(text)
+
 
 def test_fence(sitedir):
     (sitedir / 'a.md').write_text('''
@@ -57,7 +58,7 @@ def test_fence(sitedir):
 ```
 ''')
 
-    metadata, text = md.load(sitedir/'a.md')
+    metadata, text = md.load(sitedir / 'a.md')
     print(text)
     assert text == '''<div class="codehilite"><pre><span></span>{{abcdef}}
 </pre></div>'''
@@ -68,7 +69,7 @@ def test_code(sitedir):
 
     :jinja:`{{abcdef}}`
 ''')
-    metadata, text = md.load(sitedir/'a.md')
+    metadata, text = md.load(sitedir / 'a.md')
     assert text == '''<div class="codehilite"><pre><span></span>{{abcdef}}
 </pre></div>'''
 
@@ -77,5 +78,5 @@ def test_target(sitedir):
     (sitedir / 'a.md').write_text('''
 .. target:: abcdefg
 ''')
-    metadata, text = md.load(sitedir/'a.md')
+    metadata, text = md.load(sitedir / 'a.md')
     assert text == '''<div class="header_target" id="abcdefg"></div>'''

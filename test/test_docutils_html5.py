@@ -1,6 +1,7 @@
 from pathlib import Path
 from miyadaiku.core import rst, contents, config, jinjaenv, output, main
 
+
 def test_docutils_html5(sitedir):
     sitedir.joinpath('config.yml').write_text('''
 themes:

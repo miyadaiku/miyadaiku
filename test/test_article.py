@@ -25,6 +25,7 @@ def test_indexpage():
 
     assert len(outputs) == 2
 
+
 def test_header(sitedir):
     content = sitedir / 'contents'
     content.joinpath('index.rst').write_text('''
@@ -63,4 +64,3 @@ title2
     site.build()
     p = site.contents.get_content('/index.rst')
     print(p._get_html(p))
-

@@ -42,6 +42,7 @@ class Ext(markdown.Extension):
                                       TargetProcessor(md.parser),
                                       '_begin')
 
+
 class JinjaPreprocessor(preprocessors.Preprocessor):
     def run(self, lines):
         meta = {}
@@ -82,8 +83,8 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
                 placeholder = self.markdown.htmlStash.store(m[2], safe=True)
 
             text = '%s%s%s' % (text[:m.start()],
-                                   placeholder,
-                                   text[m.end(0):])
+                               placeholder,
+                               text[m.end(0):])
 
         text = text.translate({ord('{'): '&#123;', ord('}'): '&#125;'})
         return text.split("\n")
@@ -100,15 +101,13 @@ class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):
         return ret
 
     def isblocklevel(self, html):
-        if re.match(r'\{.*}$',  html.strip(), re.DOTALL):
+        if re.match(r'\{.*}$', html.strip(), re.DOTALL):
             return True
         return super().isblocklevel(html)
 
+
 # patch postprocessors.RawHtmlPostprocessor
 postprocessors.RawHtmlPostprocessor = JinjaRawHtmlPostprocessor
-
-
-
 
 
 class TargetProcessor(blockprocessors.BlockProcessor):

@@ -38,8 +38,10 @@ def _main():
     site.build()
     site.write()
 
+
 def main():
     _main()
+
 
 if __name__ == '__main__':
     main()

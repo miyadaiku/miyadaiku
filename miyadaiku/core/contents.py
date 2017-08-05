@@ -98,13 +98,14 @@ class ConfigArgProxy:
 
 class Content:
     _filename = None
+
     def __init__(self, site, dirname, name, metadata, body):
         self.site = site
         self.dirname = utils.dirname_to_tuple(dirname)
         self.name = name
         self.metadata = _metadata(metadata)
         self.body = body
-        
+
         self.metadata['stat'] = None
         path = self.metadata.get('srcpath', None)
         if path:
@@ -283,7 +284,6 @@ class HTMLContent(Content):
         self._html_cache = {}
         self._header_cache = {}
 
-
     @property
     def ext(self):
         ext = self.get_metadata('ext', None)
@@ -336,6 +336,7 @@ class HTMLContent(Content):
         return self._header_cache.get(page_content)
 
     _in_get_headertext = False
+
     def get_headertext(self, page_content, fragment):
         if self._in_get_headertext:
             return 'dummy'
@@ -587,6 +588,12 @@ class Contents:
         contents = [c for c in self._contents.values()]
 
         if filters:
+            filters = filters.copy()
+            if 'draft' not in filters:
+                filters['draft'] = {False}
+            if 'type' not in filters:
+                filters['type'] = {'article'}
+
             def f(content):
                 for k, v in filters.items():
                     if not hasattr(content, k):

@@ -98,8 +98,8 @@ class TargetDirective(JinjaDirective):
         node.source, node.line = self.state_machine.get_source_and_line(self.lineno)
         return [node]
 
-directives.register_directive('target', TargetDirective)
 
+directives.register_directive('target', TargetDirective)
 
 
 settings = {
@@ -141,6 +141,7 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
 
     def depart_jinjalit(self, node):
         pass
+
 
 def _make_pub(source_class):
     pub = docutils.core.Publisher(

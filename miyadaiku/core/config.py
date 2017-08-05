@@ -110,12 +110,14 @@ THEME_CONF_ENTRIES = [
     'themes'
 ]
 
+
 def remove_theme_confs(cfg):
     ret = {}
     for k, v in cfg.items():
         if k not in THEME_CONF_ENTRIES:
             ret[k] = v
     return ret
+
 
 class Config:
     def __init__(self, path):

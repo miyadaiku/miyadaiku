@@ -1,6 +1,7 @@
 from pathlib import Path
 from miyadaiku.core import rst, contents, config, jinjaenv, output, main
 
+
 def test_ga(sitedir):
     content = sitedir / 'contents'
     content.joinpath('index.rst').write_text('''
@@ -19,6 +20,7 @@ title
     ret = sitedir.joinpath('outputs/index.html').read_text()
     assert "ga('create', '12345', 'auto')" in ret
 
+
 def test_image(sitedir):
     (sitedir / 'contents/img').mkdir()
     (sitedir / 'contents/img/img.png').write_text('')
@@ -34,6 +36,7 @@ def test_image(sitedir):
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
     assert 'img/img.png' in ret
+
 
 def test_og(sitedir):
     (sitedir / 'templates/page_article.html').write_text('''
@@ -61,4 +64,3 @@ body
     ret = sitedir.joinpath('outputs/index.html').read_text()
     print(ret)
     assert 'content="http://localhost:8888/img/img.png"' in ret
-

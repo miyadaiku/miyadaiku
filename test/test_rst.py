@@ -27,7 +27,6 @@ def test_load2(tmpdir):
     assert text == "<!-- &#123;&#123; page.site_title &#125;&#125; - - -->\n"
 
 
-
 def test_date(tmpdir):
     f = tmpdir.join('file1.rst')
     f.write('''
@@ -56,8 +55,9 @@ def test_jinjadirective(tmpdir):
 <a><b><p>{{abc}}</p>
 '''
 
+
 def test_xref(tmpdir):
-    f = (tmpdir/'file1.rst')
+    f = (tmpdir / 'file1.rst')
     f.write('''
 .. target:: anchor-name
 ''')
