@@ -77,6 +77,7 @@ defaults = dict(
     og_description='',
 
     ga_tracking_id='',
+    imports='',
 )
 
 
@@ -211,16 +212,27 @@ def format_value(name, value):
         if value.endswith('/'):
             return value
         return value + '/'
+
     elif name == 'draft':
         return to_bool(value)
+
     elif name == 'tags':
         return list(filter(None, (t.strip() for t in value.split(','))))
+
     elif name == 'date':
         if value:
             ret = dateutil.parser.parse(value)
             if isinstance(ret, datetime.time):
                 raise ValueError(f'String does not contain a date: {value!r}')
             return ret
+
     elif name == 'order':
         return int(value)
+
+    elif name == 'imports':
+        if value:
+            return [s.strip() for s in value.split(',')]
+        else:
+            return []
+
     return value

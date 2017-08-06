@@ -20,9 +20,6 @@ adfas
 
     assert metadata['type'] == 'article'
     assert metadata['title'] == 'title'
-    assert metadata['draft'] is False
-    assert metadata['tags'] == ['a', 'b', 'c']
-    assert metadata['date'] == datetime.datetime(2017, 1, 1)
 
 
 def test_inline(sitedir):

@@ -4,7 +4,7 @@ import os
 import posixpath
 import collections
 import pkg_resources
-from pathlib import Path
+from pathlib import Path, PosixPath
 import urllib.parse
 import yaml
 from jinja2 import Template
@@ -105,6 +105,7 @@ class Content:
         self.name = name
         self.metadata = _metadata(metadata)
         self.body = body
+        self._imports = None
 
         self.metadata['stat'] = None
         path = self.metadata.get('srcpath', None)
@@ -250,6 +251,17 @@ class Content:
     def get_outputs(self):
         return []
 
+    def _getimports(self):
+        if self._imports is None:
+            self._imports = {}
+            for name in self.get_metadata('imports'):
+                template = self.site.jinjaenv.get_template(name)
+                fname = name.split('!', 1)[-1]
+                modulename = PosixPath(fname).stem
+                self._imports[modulename] = template.module
+
+        return self._imports
+
     def get_render_args(self, page_content):
         content = ContentArgProxy(self.site, page_content, self)
         if page_content is self:
@@ -260,7 +272,10 @@ class Content:
         contents = ContentsArgProxy(self.site, page_content, self)
         config = ConfigArgProxy(self.site, page_content, self)
         kwargs = {'config': config, 'contents': contents, 'page': page, 'content': content}
-        return kwargs
+
+        imports = self._getimports()
+        imports.update(kwargs)
+        return imports
 
 
 class BinContent(Content):

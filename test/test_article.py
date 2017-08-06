@@ -64,3 +64,27 @@ title2
     site.build()
     p = site.contents.get_content('/index.rst')
     print(p._get_html(p))
+
+
+def test_module(sitedir):
+    templates = sitedir / 'templates'
+    (templates / 'macro.html').write_text('''
+{% macro test(s) -%}
+   macro test {{ s }}
+{%- endmacro %}
+''')
+
+    content = sitedir / 'contents'
+    (content / 'index.rst').write_text('''
+
+.. article::
+   :imports: macro.html
+
+:jinja:`{{ macro.test("hello") }}`
+''')
+
+    site = main.Site(sitedir)
+    site.build()
+    p = site.contents.get_content('/index.rst')
+    print(p._get_html(p))
+    assert 'macro test hello' in p._get_html(p)

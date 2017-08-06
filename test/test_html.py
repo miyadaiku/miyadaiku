@@ -16,8 +16,5 @@ date: 2017-1-1
     metadata, text = html .load(sitedir.joinpath('a.html'))
 
     assert metadata['title'] == 'title'
-    assert metadata['draft'] is False
-    assert metadata['tags'] == ['a', 'b', 'c']
-    assert metadata['date'] == datetime.datetime(2017, 1, 1)
 
     assert text == '<a>'

@@ -6,32 +6,6 @@ from markdown import util, preprocessors, postprocessors, blockprocessors
 import markdown.extensions.codehilite
 
 
-def date(v):
-    v = v.strip()
-    if v:
-        ret = dateutil.parser.parse(v)
-        if isinstance(ret, datetime.time):
-            raise ValueError(f'String does not contain a date: {v!r}')
-        return ret
-
-
-def tags(v):
-    return [t.strip() for t in v.split(',')]
-
-
-def draft(v):
-    v = v.strip().lower()
-    if not v:
-        return False
-
-    if v in {'yes', 'true'}:
-        return True
-    elif v in {'no', 'false'}:
-        return False
-
-    raise ValueError("Invalid boolean value: %s" % v)
-
-
 class Ext(markdown.Extension):
     def extendMarkdown(self, md, globals):
         md.preprocessors.add('jinja',
@@ -57,13 +31,6 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
             n += 1
 
             name, value = m[1].strip(), m[2].strip()
-            if name == 'date':
-                value = date(value)
-            elif name == 'tags':
-                value = tags(value)
-            elif name == 'draft':
-                value = draft(value)
-
             meta[name] = value
 
         if 'type' not in meta:
