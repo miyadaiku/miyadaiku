@@ -8,11 +8,11 @@ Miyadaiku is a flexible static site generator for Jinja2 artists.
 
 - Jinja2 templates to create HTML pages.
 
-- ReST/Markdown extensions to write Jinja2 in content files. Jinja2 tags can be used not only in template, but also in your contents.
+- Jinja2 tags can be used in your contents too. Miyadaiku provides ReST/Markdown extensions to write Jinja2 in content files. 
 
 - Hierarchical contents property. Each directory can have default property values for documents. These property values are also applied to contents of their sub-directories.
 
-- Theme system to generate site.
+- Theme system to share templates, CSS, Javascript, Image or any other contents files.
 
 - Themes are managed as Python package. You can install themes from PyPI with pip.
 
