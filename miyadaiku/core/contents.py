@@ -15,7 +15,7 @@ from bs4.element import NavigableString
 import pytz
 from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
 
-from . import utils, rst, html, md, config
+from . import utils, rst, html, md, config, ipynb
 from . output import Output
 from . import YAML_ENCODING
 
@@ -764,6 +764,17 @@ class md_loader:
         metadata, body = md.load_string(src)
         return content_class(metadata['type'])(site, dirname, filename, metadata, body)
 
+class ipynb_loader:
+    def from_file(site, path, dirname, filename):
+        metadata, body = ipynb.load(path)
+        metadata['srcpath'] = path
+        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+
+    def from_byte(site, dirname, filename, bin):
+        src = bin.decode('utf-8')
+        metadata, body = ipynb.load_string(src)
+        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+
 
 LOADERS = {
     ".rst": rst_loader,
@@ -771,6 +782,7 @@ LOADERS = {
     ".yaml": yaml_loader,
     ".html": html_loader,
     ".md": md_loader,
+    ".ipynb": ipynb_loader,
 }
 
 
