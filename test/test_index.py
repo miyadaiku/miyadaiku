@@ -35,3 +35,43 @@ indexpage_max_articles: 4
     assert set(int(d) for d in nums) == set([1, 2, 3, 4, 5])
     for p in sitedir.joinpath('outputs').glob('index*'):
         print(p.read_text())
+
+def test_group(sitedir):
+    sitedir.joinpath('config.yml').write_text('')
+
+    content = sitedir / 'contents'
+
+    for i in range(20):
+        src = '''
+.. article::
+   :date: 2017-01-01
+   :category: cat: 1
+
+%d.rst
+----------------
+
+article body
+''' % i
+
+        content.joinpath('%i.rst' % i).write_text(src)
+
+    content.joinpath('index.yml').write_text("""
+type: index
+indexpage_max_articles: 4
+groupby: category
+""")
+
+    site = main.Site(sitedir)
+    site.build()
+    site.write()
+
+    files = [p.stem for p in sitedir.joinpath('outputs').glob('index*')]
+    assert len(files) == 5
+    assert 'index_category_cat@3a@201' in files
+
+    nums = (re.search(r'_(\d)$', p) for p in files)
+    assert set(int(m[1]) for m in nums if m) == set([2, 3, 4, 5])
+
+    for p in sitedir.joinpath('outputs').glob('index*'):
+        print(p.read_text())
+

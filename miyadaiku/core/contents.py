@@ -463,7 +463,7 @@ class IndexPage(Content):
 
     def filename_to_page(self, values, npage):
         value = '_'.join(values)
-        value = re.sub(r'[%/\\: \t]', lambda m: f'%{ord(m[0]):02x}', value)
+        value = re.sub(r'[@/\\: \t]', lambda m: f'@{ord(m[0]):02x}', value)
 
         if getattr(self, 'groupby', None):
             if npage == 1:
@@ -546,7 +546,7 @@ class IndexPage(Content):
                 args = self.get_render_args(self)
 
                 body = self.site.render(template,
-                                        group_names=names, cur_page=page + 1, is_last=is_last,
+                                        group_values=names, cur_page=page + 1, is_last=is_last,
                                         num_pages=num_pages, articles=articles,
                                         **args)
 
