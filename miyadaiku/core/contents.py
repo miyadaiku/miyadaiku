@@ -679,7 +679,7 @@ class Contents:
 
     def group_items(self, group, subdirs=None, base=None, filters=None):
         if not group:
-            return [(('',), list(self.get_contents(subdirs, base, filters)))]
+            return [((), list(self.get_contents(subdirs, base, filters)))]
 
         d = collections.defaultdict(list)
         for c in self.get_contents(subdirs, base, filters):
