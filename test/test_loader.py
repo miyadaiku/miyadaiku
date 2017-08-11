@@ -21,6 +21,8 @@ def test_fileloader():
     all = list(site.contents.get_contents())
     assert len(all) == 3
 
+    rst = site.contents.get_content('/test.rst')
+    assert rst.abcdefg == 'hijklmn'
 
 def test_packageloader():
     site = main.Site(Path(''))
@@ -30,3 +32,6 @@ def test_packageloader():
     assert len(all) == 5
     assert site.contents.get_content(
         '/dir1/test.rst').body.strip() == '<p>package1/dir1/test.rst</p>'
+
+    rst = site.contents.get_content('/dir1/test.rst')
+    assert rst.abcdefg == 'hijklmn'
