@@ -3,6 +3,7 @@ import secrets
 import os
 import posixpath
 import collections
+import datetime
 import pkg_resources
 from pathlib import Path, PosixPath
 import urllib.parse
@@ -251,6 +252,9 @@ class Content:
     def get_outputs(self):
         return []
 
+    def pre_build(self):
+        pass
+
     def _getimports(self):
         if self._imports is None:
             self._imports = {}
@@ -404,6 +408,32 @@ class HTMLContent(Content):
         html = self._get_html(page_content)
         ret = HTMLValue(html)
         return ret
+
+    def _generate_metadata_file(self):
+        srcpath = self.metadata.get('srcpath', None)
+        if not srcpath:
+            return
+
+        if 'date' not in self.metadata:
+            if self.date:
+                return
+
+            tz = self.timezone
+            date = datetime.datetime.now().astimezone(tz).replace(microsecond=0)
+
+            yaml = f'''
+date: {date.isoformat(timespec='seconds')}
+'''
+
+            dir, fname = os.path.split(srcpath)
+            metafilename = Path(metadata_file_name(dir, fname))
+            metafilename.write_text(yaml, 'utf-8')
+
+            self.metadata['date'] = date
+
+    def pre_build(self):
+        if self.generate_metadata_file:
+            self._generate_metadata_file()
 
 
 class Snippet(HTMLContent):

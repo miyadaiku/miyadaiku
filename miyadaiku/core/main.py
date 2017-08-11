@@ -4,6 +4,12 @@ import importlib
 import os
 import logging
 import shutil
+import yaml
+import dateutil.parser
+
+def timestamp_constructor(loader, node):
+    return dateutil.parser.parse(node.value)
+yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
 
 from . import config
 from . import contents
@@ -17,6 +23,7 @@ CONTENTS_DIR = 'contents'
 FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
+
 
 
 class Site:
@@ -51,6 +58,11 @@ class Site:
     def add_template_module(self, name, templatename):
         template = self.jinjaenv.get_template(templatename)
         self.jinjaenv.globals[name] = template.module
+
+    def pre_build(self):
+        for cont in self.contents.get_contents():
+            logger.debug(f'Pre-building {cont.url}')
+            cont.pre_build()
 
     def build(self):
         for cont in self.contents.get_contents():

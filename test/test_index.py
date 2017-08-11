@@ -4,7 +4,7 @@ import pathlib
 from miyadaiku.core import main
 
 
-def test_index(sitedir):  # NOQA
+def test_index(sitedir):
     sitedir.joinpath('config.yml').write_text('')
 
     content = sitedir / 'contents'

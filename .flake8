@@ -13,6 +13,8 @@ ignore =
     E303,
     # E305 expected 2 blank lines after class or function definition
     E305,
+    # E402 module level import not at top of file
+    E402,
     # E702 multiple statements on one line (semicolon)
     E702,
     # E731 do not assign a lambda expression, use a def

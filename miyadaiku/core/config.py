@@ -78,6 +78,7 @@ defaults = dict(
 
     ga_tracking_id='',
     imports='',
+    generate_metadata_file=False,
 )
 
 

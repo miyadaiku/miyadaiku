@@ -1,6 +1,6 @@
 from pathlib import Path
 from miyadaiku.core import rst, contents, config, jinjaenv, output, main
-
+import yaml
 
 def test_article():
     site = main.Site(Path(''))
@@ -88,3 +88,20 @@ def test_module(sitedir):
     p = site.contents.get_content('/index.rst')
     print(p._get_html(p))
     assert 'macro test hello' in p._get_html(p)
+
+
+def test_metadatafile(sitedir):
+    content = sitedir / 'contents'
+    (content / 'index.rst').write_text('')
+
+    site = main.Site(sitedir)
+    site.config.add('/', dict(generate_metadata_file=True))
+    site.pre_build()
+
+    p = site.contents.get_content('/index.rst')
+    d = yaml.load((content / 'index.rst.metadata.yml').read_text())
+    assert p.date == d['date']
+
+    site2 = main.Site(sitedir)
+    p2 = site2.contents.get_content('/index.rst')
+    assert p2.date == d['date']
