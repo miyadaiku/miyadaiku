@@ -829,7 +829,7 @@ def getContentLoader(ext):
     return LOADERS.get(ext, bin_loader)
 
 
-METADATA_FILE_SUFFIX = '.metadata.yml'
+METADATA_FILE_SUFFIX = '.props.yml'
 
 
 def metadata_file_name(dirname, fname):
