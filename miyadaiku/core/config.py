@@ -70,7 +70,7 @@ defaults = dict(
     date=None,
     category='',
     tags=(),
-
+    order=0,
     og_type='article',
     og_title='',
     og_image='',
