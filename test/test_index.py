@@ -29,7 +29,6 @@ indexpage_max_articles: 4
 
     site = main.Site(sitedir)
     site.build()
-    site.write()
 
     nums = [re.search(r'\d', p.stem + '_1')[0] for p in sitedir.joinpath('outputs').glob('index*')]
     assert set(int(d) for d in nums) == set([1, 2, 3, 4, 5])
@@ -63,7 +62,6 @@ groupby: category
 
     site = main.Site(sitedir)
     site.build()
-    site.write()
 
     files = [p.stem for p in sitedir.joinpath('outputs').glob('index*')]
     assert len(files) == 5
@@ -74,4 +72,3 @@ groupby: category
 
     for p in sitedir.joinpath('outputs').glob('index*'):
         print(p.read_text())
-

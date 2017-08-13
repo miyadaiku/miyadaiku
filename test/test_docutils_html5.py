@@ -19,7 +19,6 @@ title
 
     site = main.Site(sitedir)
     site.build()
-    site.write()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
     assert "minimal.css" in ret

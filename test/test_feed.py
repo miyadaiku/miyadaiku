@@ -30,7 +30,6 @@ feedtype: rss
 
     site = main.Site(sitedir)
     site.build()
-    site.write()
 
     p = sitedir.joinpath('outputs') / 'feed.rdf'
     print(p.read_text())

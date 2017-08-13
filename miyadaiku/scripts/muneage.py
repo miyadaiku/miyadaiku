@@ -35,8 +35,8 @@ def _main():
     d = pathlib.Path(args.directory)
     site = Site(d, props)
 
+    site.pre_build()
     site.build()
-    site.write()
 
 
 def main():

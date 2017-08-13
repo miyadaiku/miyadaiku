@@ -634,6 +634,9 @@ class Contents:
         if key not in self._contents:
             self._contents[key] = content
 
+    def get_contents_keys(self):
+        return self._contents.keys()
+
     def get_content(self, key, base=None):
         dirname, filename = utils.abs_path(key, base.dirname if base else None)
         return self._contents[(dirname, filename)]

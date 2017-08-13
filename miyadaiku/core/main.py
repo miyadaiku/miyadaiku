@@ -6,6 +6,7 @@ import logging
 import shutil
 import yaml
 import dateutil.parser
+import concurrent.futures
 
 def timestamp_constructor(loader, node):
     return dateutil.parser.parse(node.value)
@@ -37,7 +38,6 @@ class Site:
             self.config.add('/', props, tail=False)
 
         self.contents = contents.Contents()
-        self.output = output.Outputs()
 
         self.jinjaenv = jinjaenv.create_env(
             self, self.config.themes, path / TEMPLATES_DIR)
@@ -64,20 +64,34 @@ class Site:
             logger.debug(f'Pre-building {cont.url}')
             cont.pre_build()
 
+
+    def _build_content(self, key):
+        cont = self.contents.get_content(key)
+        logger.info(f'Building {cont.url}')
+        outputs = cont.get_outputs()
+
+        output_path = self.path / OUTPUTS_DIR
+        for o in outputs:
+            o.write(output_path)
+
     def build(self):
-        for cont in self.contents.get_contents():
-            logger.info(f'Building {cont.url}')
-            outputs = cont.get_outputs()
+        global _site
+        _site = self
 
-            for o in outputs:
-                self.output.add(o)
+        if sys.platform == 'win32':
+            executer = concurrent.futures.ThreadPoolExecutor
+        else:
+            executer = concurrent.futures.ProcessPoolExecutor
 
-    def write(self):
-        self.output.write(self.path / OUTPUTS_DIR)
+        with executer() as e:
+            for key in self.contents.get_contents_keys():
+                e.submit(_submit_build, key)
 
     def render(self, template, **kwargs):
         return template.render(**kwargs)
 
+def _submit_build(key):
+    _site._build_content(key)
 
 # def run():
 #     dir = pathlib.Path(sys.argv[1])

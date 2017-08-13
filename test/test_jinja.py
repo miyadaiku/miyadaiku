@@ -18,7 +18,6 @@ def test_feed(sitedir):  # NOQA
 
     site = main.Site(sitedir)
     site.build()
-    site.write()
 
     p = (sitedir.joinpath('outputs') / 'test.html').read_text()
     assert """<img alt='&lt;&gt;a"\lt' src="test.html"/>""" in p

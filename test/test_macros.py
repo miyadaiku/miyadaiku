@@ -15,7 +15,6 @@ title
     site = main.Site(sitedir)
     site.config.add('/', {'ga_tracking_id': '12345'})
     site.build()
-    site.write()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
     assert "ga('create', '12345', 'auto')" in ret
@@ -32,7 +31,6 @@ def test_image(sitedir):
 
     site = main.Site(sitedir)
     site.build()
-    site.write()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
     assert 'img/img.png' in ret
@@ -59,7 +57,6 @@ body
 
     site = main.Site(sitedir)
     site.build()
-    site.write()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
     print(ret)
