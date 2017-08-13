@@ -338,8 +338,17 @@ class HTMLContent(Content):
         if ret:
             return ret
 
-        template = self.site.jinjaenv.from_string(self.body or '')
-        html = self.site.render(template, **self.get_render_args(page_content))
+        try:
+            template = self.site.jinjaenv.from_string(self.body or '')
+        except Exception:
+            logger.error(f'An error occured while compiling {self.url}')
+            raise
+
+        try:
+            html = self.site.render(template, **self.get_render_args(page_content))
+        except Exception:
+            logger.error(f'An error occured while rendering {self.url}')
+            raise
         headers, html = self._set_header_id(html)
 
         self._html_cache[page_content] = html
