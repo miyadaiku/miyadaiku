@@ -11,7 +11,11 @@ def walk(path):
     path = path.expanduser().resolve()
     for root, dirs, files in os.walk(path):
         root = pathlib.Path(root)
+        if root.stem.startswith('.'):
+            continue
         for file in files:
+            if file.startswith('.'):
+                continue
             articles.append(root / file)
 
     return articles
@@ -68,7 +72,8 @@ def dirname_to_tuple(dirname):
     if isinstance(dirname, tuple):
         return dirname
 
-    assert not dirname.startswith('.')
+    assert not dirname.startswith('./')
+    assert not dirname.startswith('../')
 
     dirname = format_dirname(dirname)
     if dirname:

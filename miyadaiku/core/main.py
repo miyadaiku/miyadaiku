@@ -88,7 +88,7 @@ class Site:
         def done(f):
             exc = f.exception()
             if exc and not isinstance(exc, miyadaiku.core.MiyadaikuBuildError):
-                print(exc)
+                print(type(exc), exc)
 
         if sys.platform == 'win32':
             executer = concurrent.futures.ThreadPoolExecutor
@@ -161,7 +161,13 @@ class Site:
 
 
 def _submit_build(key):
-    _site._build_content(key)
+    try:
+        _site._build_content(key)
+    except miyadaiku.core.MiyadaikuBuildError:
+        raise
+    except Exception as e:
+        logger.exception(f'Unhandled exception while building {key}')
+        raise
 
 # def run():
 #     dir = pathlib.Path(sys.argv[1])

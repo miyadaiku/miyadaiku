@@ -1,5 +1,9 @@
 import os
 import pathlib
+import time
+
+MKDIR_MAX_RETRY = 5
+MKDIR_WAIT = 0.05
 
 
 class Output:
@@ -12,8 +16,15 @@ class Output:
 
     def write(self, path):
         dir = path.joinpath(*self.dirname)
-        if not dir.is_dir():
-            dir.mkdir(parents=True)
+
+        for i in range(MKDIR_MAX_RETRY):
+            if dir.is_dir():
+                break
+            try:
+                dir.mkdir(parents=True)
+            except FileExistsError:
+                pass
+            time.sleep(MKDIR_WAIT)
 
         name = self.name.strip('/\\')
         dest = os.path.expanduser((dir / name))
