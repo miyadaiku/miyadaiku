@@ -419,9 +419,21 @@ class HTMLContent(Content):
         ret = HTMLValue(html)
         return ret
 
+
+
+class Snippet(HTMLContent):
+    def get_outputs(self):
+        return []
+
+
+class Article(HTMLContent):
+    def pre_build(self):
+        if self.generate_metadata_file:
+            self._generate_metadata_file()
+
     def _generate_metadata_file(self):
         srcpath = self.metadata.get('srcpath', None)
-        if not srcpath:
+        if srcpath is None:
             return
 
         if 'date' not in self.metadata:
@@ -441,17 +453,6 @@ date: {date.isoformat(timespec='seconds')}
 
             self.metadata['date'] = date
 
-    def pre_build(self):
-        if self.generate_metadata_file:
-            self._generate_metadata_file()
-
-
-class Snippet(HTMLContent):
-    def get_outputs(self):
-        return []
-
-
-class Article(HTMLContent):
     def get_outputs(self):
 
         templatename = self.article_template
