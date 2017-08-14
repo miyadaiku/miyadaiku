@@ -2,6 +2,7 @@ from pathlib import Path
 from miyadaiku.core import rst, contents, config, jinjaenv, output, main
 import yaml
 
+
 def test_article():
     site = main.Site(Path(''))
     article = contents.Article(site, '', 'test.rst', {}, '1234567890')

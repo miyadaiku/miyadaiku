@@ -9,6 +9,7 @@ from pathlib import Path, PosixPath
 import urllib.parse
 import yaml
 from jinja2 import Template
+import jinja2.exceptions
 import logging
 import markupsafe
 from bs4 import BeautifulSoup
@@ -16,6 +17,7 @@ from bs4.element import NavigableString
 import pytz
 from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
 
+import miyadaiku.core
 from . import utils, rst, html, md, config, ipynb
 from . output import Output
 from . import YAML_ENCODING
@@ -33,13 +35,19 @@ class ContentArgProxy:
         self.site, self.page_content, self.content = site, page_content, content
 
     def __getattr__(self, name):
-        if not hasattr(self.content, name):
-            prop = f'prop_get_{name}'
-            f = getattr(self.content, prop, None)
-            if f:
-                return f(self.page_content)
+        try:
+            if not hasattr(self.content, name):
+                prop = f'prop_get_{name}'
+                f = getattr(self.content, prop, None)
+                if f:
+                    return f(self.page_content)
 
-        return getattr(self.content, name)
+            return getattr(self.content, name)
+        except Exception as e:
+            if miyadaiku.core.DEBUG:
+                import traceback
+                traceback.print_exc()
+            raise
 
     def load(self, target):
         ret = self.content.get_content(target)
@@ -137,8 +145,8 @@ class Content:
     def _to_filename(self):
         filename_templ = self.filename_templ
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
-        template = self.site.jinjaenv.from_string(filename_templ)
-        ret = self.site.render(template, **self.get_render_args(self))
+        template = self.site.template_from_string(self, filename_templ)
+        ret = self.site.render(self, template, **self.get_render_args(self))
 
         assert ret
         return ret
@@ -338,17 +346,10 @@ class HTMLContent(Content):
         if ret:
             return ret
 
-        try:
-            template = self.site.jinjaenv.from_string(self.body or '')
-        except Exception:
-            logger.error(f'An error occured while compiling {self.url}')
-            raise
+        template = self.site.template_from_string(self, self.body or '')
 
-        try:
-            html = self.site.render(template, **self.get_render_args(page_content))
-        except Exception:
-            logger.error(f'An error occured while rendering {self.url}')
-            raise
+        html = self.site.render(self, template, **self.get_render_args(page_content))
+
         headers, html = self._set_header_id(html)
 
         self._html_cache[page_content] = html
@@ -455,7 +456,7 @@ class Article(HTMLContent):
 
         templatename = self.article_template
         template = self.site.jinjaenv.get_template(templatename)
-        body = self.site.render(template, **self.get_render_args(self))
+        body = self.site.render(self, template, **self.get_render_args(self))
 
         return [Output(dirname=self.dirname, name=self.filename,
                        stat=self.stat,
@@ -486,8 +487,8 @@ class IndexPage(Content):
                 filename_templ = self.indexpage_filename_templ2
 
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
-        template = self.site.jinjaenv.from_string(filename_templ)
-        ret = self.site.render(template,
+        template = self.site.template_from_string(self, filename_templ)
+        ret = self.site.render(self, template,
                                value=value, cur_page=npage,
                                **self.get_render_args(self))
 
@@ -554,7 +555,7 @@ class IndexPage(Content):
                 template = self.site.jinjaenv.get_template(templatename)
                 args = self.get_render_args(self)
 
-                body = self.site.render(template,
+                body = self.site.render(self, template,
                                         group_values=names, cur_page=page + 1, is_last=is_last,
                                         num_pages=num_pages, articles=articles,
                                         **args)

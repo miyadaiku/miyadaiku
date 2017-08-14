@@ -35,6 +35,7 @@ indexpage_max_articles: 4
     for p in sitedir.joinpath('outputs').glob('index*'):
         print(p.read_text())
 
+
 def test_group(sitedir):
     sitedir.joinpath('config.yml').write_text('')
 

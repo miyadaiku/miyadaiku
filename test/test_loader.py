@@ -24,6 +24,7 @@ def test_fileloader():
     rst = site.contents.get_content('/test.rst')
     assert rst.abcdefg == 'hijklmn'
 
+
 def test_packageloader():
     site = main.Site(Path(''))
     contents.load_package(site, 'package1', 'contents')

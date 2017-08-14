@@ -4,6 +4,7 @@ import pathlib
 
 import miyadaiku.core.main  # install pyyaml converter
 
+
 @pytest.fixture
 def sitedir(tmpdir):
     d = tmpdir.mkdir('site')

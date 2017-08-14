@@ -47,10 +47,3 @@ def create_env(site, themes, path):
     env.globals['dir'] = dir
     env.globals['isinstance'] = isinstance
     return env
-
-#
-# def render(env, conf, templatename, globals, **kwargs):
-#    template = env.get_template(templatename, globals=globals)
-#    return template.render(
-#        **kwargs
-#    )
