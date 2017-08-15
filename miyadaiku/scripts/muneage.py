@@ -18,7 +18,7 @@ parser.add_argument('--define', '-d', action='append', metavar='property=value',
                     help='Set default property value.')
 
 parser.add_argument('--debug', '-D', action='store_true', default=False,
-                    help="Don't use fork waker")
+                    help="Show debug message")
 
 
 def _main():
