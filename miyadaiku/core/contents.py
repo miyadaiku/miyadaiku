@@ -117,12 +117,13 @@ class Content:
         self._imports = None
 
         self.metadata['stat'] = None
-        path = self.metadata.get('srcpath', None)
-        if path:
-            try:
-                self.metadata['stat'] = os.stat(path)
-            except IOError:
-                pass
+        if 'package' not in metadata:
+            path = self.metadata.get('srcpath', None)
+            if path:
+                try:
+                    self.metadata['stat'] = os.stat(path)
+                except IOError:
+                    pass
 
     _omit = object()
 
@@ -420,7 +421,6 @@ class HTMLContent(Content):
         return ret
 
 
-
 class Snippet(HTMLContent):
     def get_outputs(self):
         return []
@@ -500,19 +500,6 @@ class IndexPage(Content):
             npage = 1
         filename = self.filename_to_page(values, npage)
         return f"{'/'.join(self.dirname)}/{filename}"
-
-#    def path_to_indexpage(self, values, npage, page_from=None, abs_path=False):
-#        if not page_from:
-#            page_from = self
-#
-#        to = self.get_output_path(values, npage)
-#        if abs_path or page_from.use_abs_path:
-#            site_url = self.site_url
-#            return urllib.parse.urljoin(site_url, to)
-#        else:
-#            here = f"/{'/'.join(page_from.dirname)}/"
-#            to = f"/{to}"
-#            return posixpath.relpath(to, here)
 
     def _to_filename(self):
         return self.filename_to_page([''], 1)
@@ -744,99 +731,128 @@ def content_class(type):
     return CONTENT_CLASSES[type]
 
 
-class bin_loader:
-    def from_file(site, path, dirname, filename, metadata):
-        body = path.read_bytes()
-        metadata.update({'srcpath': path, 'type': 'binary'})
-
+class FileLoader:
+    def _build_content(self, site, package, srcpath, dirname, filename, metadata, body):
         return content_class(metadata['type'])(site, dirname, filename, metadata, body)
 
-    def from_byte(site, dirname, filename, bin, metadata):
+    def from_file(self, site, srcpath, destpath):
+        metadata = {
+            'srcpath': srcpath,
+            'destpath': destpath,
+        }
+        metadatafile = metadata_file_name(*os.path.split(srcpath))
+        if os.path.exists(metadatafile):
+            text = open(metadatafile, encoding=YAML_ENCODING).read()
+            metadata.update(yaml.load(text) or {})
+
+        body = self._get_body_from_file(site, srcpath, destpath, metadata)
+        dirname, name = os.path.split(destpath)
+        return self._build_content(site, None, srcpath, dirname, name, metadata, body)
+
+    def from_package(self, site, package, srcpath, destpath):
+        metadata = {
+            'package': package,
+            'srcpath': srcpath,
+            'destpath': destpath,
+        }
+        metadatafile = metadata_file_name(*posixpath.split(srcpath))
+        if pkg_resources.resource_exists(package, metadatafile):
+            m = pkg_resources.resource_string(package, metadatafile)
+            if m:
+                metadata = yaml.load(m.decode(YAML_ENCODING)) or {}
+
+        body = self._get_body_from_package(site, package, srcpath, destpath, metadata)
+
+        dirname, name = os.path.split(destpath)
+        return self._build_content(site, package, srcpath, dirname, name, metadata, body)
+
+
+class BinaryLoader(FileLoader):
+    def _get_body_from_file(self, site, srcpath, destpath, metadata):
         metadata.update({'type': 'binary'})
-        return content_class(metadata['type'])(site, dirname, filename, metadata, bin)
+        return srcpath.read_bytes()
+
+    def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
+        metadata.update({'type': 'binary'})
+        return pkg_resources.resource_string(package, srcpath)
 
 
-class rst_loader:
-    def from_file(site, path, dirname, filename, metadata):
-        _metadata, body = rst.load(path)
+class RstLoader(FileLoader):
+    def _get_body_from_file(self, site, srcpath, destpath, metadata):
+        _metadata, body = rst.load(srcpath)
         metadata.update(_metadata)
-        metadata['srcpath'] = path
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+        return body
 
-    def from_byte(site, dirname, filename, bin, metadata):
-        src = bin.decode('utf-8')
+    def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
+        src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
         _metadata, body = rst.load_string(src)
         metadata.update(_metadata)
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+        return body
 
 
-class yaml_loader:
-    def from_file(site, path, dirname, filename, metadata):
-        text = path.read_text(encoding=YAML_ENCODING)
-        metadata = yaml.load(text)
-        if not metadata:
-            metadata = {}
-        metadata['srcpath'] = path
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body=text)
-
-    def from_byte(site, dirname, filename, bin, metadata):
-        text = bin.decode(YAML_ENCODING)
-        _metadata = yaml.load(text)
-        if not _metadata:
-            _metadata = {}
-        return content_class(_metadata['type'])(site, dirname, filename, _metadata, text)
-
-
-class html_loader:
-    def from_file(site, path, dirname, filename, metadata):
-        _metadata, body = html.load(path)
+class YamlLoader(FileLoader):
+    def _load(self, src, metadata):
+        _metadata = yaml.load(src) or {}
         metadata.update(_metadata)
-        metadata['srcpath'] = path
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
 
-    def from_byte(site, dirname, filename, bin, metadata):
-        src = bin.decode('utf-8')
+    def _get_body_from_file(self, site, srcpath, destpath, metadata):
+        src = srcpath.read_text(encoding=YAML_ENCODING)
+        self._load(src, metadata)
+
+    def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
+        src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
+        self._load(src, metadata)
+
+
+class HtmlLoader(FileLoader):
+    def _get_body_from_file(self, site, srcpath, destpath, metadata):
+        _metadata, body = html.load(srcpath)
+        metadata.update(_metadata)
+        return body
+
+    def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
+        src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
         _metadata, body = html.load_string(src)
         metadata.update(_metadata)
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+        return body
 
 
-class md_loader:
-    def from_file(site, path, dirname, filename, metadata):
-        _metadata, body = md.load(path)
+class MdLoader(FileLoader):
+    def _get_body_from_file(self, site, srcpath, destpath, metadata):
+        _metadata, body = md.load(srcpath)
         metadata.update(_metadata)
-        metadata['srcpath'] = path
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+        return body
 
-    def from_byte(site, dirname, filename, bin, metadata):
-        src = bin.decode('utf-8')
+    def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
+        src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
         _metadata, body = md.load_string(src)
+        return body
+
+
+class IpynbLoader(FileLoader):
+    def _get_body_from_file(self, site, srcpath, destpath, metadata):
+        _metadata, body = ipynb.load(srcpath)
         metadata.update(_metadata)
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+        return body
 
-
-class ipynb_loader:
-    def from_file(site, path, dirname, filename, metadata):
-        _metadata, body = ipynb.load(path)
-        metadata.update(_metadata)
-        metadata['srcpath'] = path
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
-
-    def from_byte(site, dirname, filename, bin, metadata):
-        src = bin.decode('utf-8')
+    def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
+        src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
         _metadata, body = ipynb.load_string(src)
         metadata.update(_metadata)
-        return content_class(metadata['type'])(site, dirname, filename, metadata, body)
+        return body
 
 
 LOADERS = {
-    ".rst": rst_loader,
-    ".yml": yaml_loader,
-    ".yaml": yaml_loader,
-    ".html": html_loader,
-    ".md": md_loader,
-    ".ipynb": ipynb_loader,
+    ".rst": RstLoader(),
+    ".yml": YamlLoader(),
+    ".yaml": YamlLoader(),
+    ".html": HtmlLoader(),
+    ".md": MdLoader(),
+    ".ipynb": IpynbLoader(),
 }
+
+
+bin_loader = BinaryLoader()
 
 
 def getContentLoader(ext):
@@ -870,42 +886,13 @@ def load_directory(site, path, loader=None):
             if not _loader:
                 _loader = getContentLoader(p.suffix)
 
-            metadata = {}
-            metadatafile = metadata_file_name(path / dirname, filename)
-            if os.path.exists(metadatafile):
-                text = open(metadatafile).read()
-                metadata = yaml.load(text) or {}
-
-            content = _loader.from_file(site, p, dirname, filename, metadata)
+            content = _loader.from_file(site, p, name)
             if content:
                 site.contents.add(content)
         except Exception as e:
             logger.exception(f'Error loading {p}')
             raise
     return
-
-
-def get_content_from_package(site, package, srcpath, destname, loader):
-    s = pkg_resources.resource_string(package, srcpath)
-
-    if destname is None:
-        destname = srcpath
-
-    destdir, filename = posixpath.split(destname)
-    ext = os.path.splitext(filename)[1]
-
-    metadata = {}
-    metadatafile = metadata_file_name(*posixpath.split(srcpath))
-    if pkg_resources.resource_exists(package, metadatafile):
-        m = pkg_resources.resource_string(package, metadatafile)
-        if m:
-            metadata = yaml.load(m.decode(YAML_ENCODING)) or {}
-
-    _loader = loader
-    if not _loader:
-        _loader = getContentLoader(ext)
-
-    return _loader.from_byte(site, destdir, filename, s, metadata)
 
 
 def load_package(site, package, path, loader=None):
@@ -918,8 +905,13 @@ def load_package(site, package, path, loader=None):
         if name.lower().endswith(METADATA_FILE_SUFFIX):
             continue
 
-        content = get_content_from_package(site, package, filename, name, loader)
-        if content is not None:
+        _loader = loader
+        if not _loader:
+            ext = os.path.splitext(filename)[1]
+            _loader = getContentLoader(ext)
+
+        content = _loader.from_package(site, package, filename, name)
+        if content:
             site.contents.add(content)
 
     return
