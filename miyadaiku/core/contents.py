@@ -296,9 +296,17 @@ class BinContent(Content):
         super().__init__(site, dirname, name, metadata, body)
 
     def get_outputs(self):
+        body = self.body
+        if not body:
+            package = self.metadata.get('package')
+            if package:
+                body = pkg_resources.resource_string(package, self.metadata['srcpath'])
+            else:
+                body = self.metadata['srcpath'].read_bytes()
+
         return [Output(dirname=self.dirname, name=self.name,
                        stat=self.stat,
-                       body=self.body)]
+                       body=body)]
 
 
 class HTMLValue(markupsafe.Markup):
@@ -770,11 +778,9 @@ class FileLoader:
 class BinaryLoader(FileLoader):
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
         metadata.update({'type': 'binary'})
-        return srcpath.read_bytes()
 
     def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
         metadata.update({'type': 'binary'})
-        return pkg_resources.resource_string(package, srcpath)
 
 
 class RstLoader(FileLoader):

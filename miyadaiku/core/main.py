@@ -69,7 +69,7 @@ class Site:
 
     def _build_content(self, key):
         cont = self.contents.get_content(key)
-        logger.info(f'Building {cont.url}')
+        logger.debug(f'Building {cont.url}')
         outputs = cont.get_outputs()
 
         output_path = self.path / OUTPUTS_DIR
@@ -85,8 +85,13 @@ class Site:
                 _submit_build(key)
             return
 
+        err = 0
         def done(f):
             exc = f.exception()
+            nonlocal err
+            if exc:
+                err = 1
+
             if exc and not isinstance(exc, miyadaiku.core.MiyadaikuBuildError):
                 print(type(exc), exc)
 
@@ -100,6 +105,7 @@ class Site:
                 f = e.submit(_submit_build, key)
                 f.add_done_callback(done)
 
+        return err
     def _get_template(self, basecontent, f, *args, **kwargs):
         try:
             return f(*args, **kwargs)

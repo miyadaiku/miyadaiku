@@ -22,11 +22,16 @@ parser.add_argument('--debug', '-D', action='store_true', default=False,
 
 
 def _main():
-    happylogging.initlog(filename='-', level='DEBUG')
-    logging.warning.setcolor("RED")
+    args = parser.parse_args()
+    miyadaiku.core.DEBUG = args.debug
+
+    lv = 'DEBUG' if miyadaiku.core.DEBUG else 'INFO'
+
+    happylogging.initlog(filename='-', level=lv)
+
+    logging.warning.setcolor("GREEN")
     logging.error.setcolor("RED")
     logging.exception.setcolor("RED")
-    args = parser.parse_args()
 
     props = {}
     for s in args.define or ():
@@ -36,18 +41,17 @@ def _main():
             sys.exit(1)
         props[d[0]] = d[1]
 
-    miyadaiku.core.DEBUG = args.debug
 
     d = pathlib.Path(args.directory)
     site = Site(d, props)
 
     site.pre_build()
-    site.build()
+    return site.build()
 
 
 def main():
-    _main()
-
+    code = _main()
+    sys.exit(code)
 
 if __name__ == '__main__':
     main()
