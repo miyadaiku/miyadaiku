@@ -858,27 +858,30 @@ def load_directory(site, path, loader=None):
         return
 
     for p in utils.walk(path):
-        name = os.path.relpath(p, path)
-        dirname, filename = os.path.split(name)
-        if site.config.is_ignored(filename):
-            continue
-        if filename.lower().endswith(METADATA_FILE_SUFFIX):
-            continue
+        try:
+            name = os.path.relpath(p, path)
+            dirname, filename = os.path.split(name)
+            if site.config.is_ignored(filename):
+                continue
+            if filename.lower().endswith(METADATA_FILE_SUFFIX):
+                continue
 
-        _loader = loader
-        if not _loader:
-            _loader = getContentLoader(p.suffix)
+            _loader = loader
+            if not _loader:
+                _loader = getContentLoader(p.suffix)
 
-        metadata = {}
-        metadatafile = metadata_file_name(path / dirname, filename)
-        if os.path.exists(metadatafile):
-            text = open(metadatafile).read()
-            metadata = yaml.load(text) or {}
+            metadata = {}
+            metadatafile = metadata_file_name(path / dirname, filename)
+            if os.path.exists(metadatafile):
+                text = open(metadatafile).read()
+                metadata = yaml.load(text) or {}
 
-        content = _loader.from_file(site, p, dirname, filename, metadata)
-        if content:
-            site.contents.add(content)
-
+            content = _loader.from_file(site, p, dirname, filename, metadata)
+            if content:
+                site.contents.add(content)
+        except Exception as e:
+            logger.exception(f'Error loading {p}')
+            raise
     return
 
 
