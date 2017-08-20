@@ -49,7 +49,8 @@ class ContentArgProxy:
                 traceback.print_exc()
             raise
 
-    def load(self, target):
+    _omit = object()
+    def load(self, target, default=_omit):
         ret = self.content.get_content(target)
         return ContentArgProxy(self.site, self.page_content, ret)
 
@@ -135,6 +136,9 @@ class Content:
             return self.site.config.get(self.dirname, name)
         else:
             return self.site.config.get(self.dirname, name, default)
+
+    def is_same(self, other):
+        return (self.dirname, self.name) == (other.dirname, other.name)
 
     def __getattr__(self, name):
         _omit = object()
@@ -633,6 +637,10 @@ class Contents:
 
     def get_contents_keys(self):
         return self._contents.keys()
+
+    def has_content(self, key, base=None):
+        dirname, filename = utils.abs_path(key, base.dirname if base else None)
+        return ((dirname, filename) in self._contents)
 
     def get_content(self, key, base=None):
         dirname, filename = utils.abs_path(key, base.dirname if base else None)

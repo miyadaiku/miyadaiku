@@ -81,8 +81,8 @@ TEMPL = """
 class Pygments(Directive):
     """ Source code syntax hightlighting.
     """
-    required_arguments = 1
-    optional_arguments = 0
+    required_arguments = 0
+    optional_arguments = 1
     final_argument_whitespace = True
     option_spec = {
         'linenos': directives.flag,
@@ -92,12 +92,17 @@ class Pygments(Directive):
 
     def run(self):
         self.assert_has_content()
-        try:
-            lexer = get_lexer_by_name(self.arguments[0])
-        except ValueError:
-            # no lexer found - use the text one instead of an exception
+        lexer = None
+
+        if self.arguments:
+            try:
+                lexer = get_lexer_by_name(self.arguments[0])
+            except ValueError:
+                # no lexer found - use the text one instead of an exception
+                logger.warn(f'no lexer for alias {self.arguments[0]!r} found')
+
+        if not lexer:
             lexer = TextLexer()
-            logger.warn(f'no lexer for alias {self.arguments[0]!r} found')
 
         # take an arbitrary option if more than one is given
         formatter = self.options.get('linenos', DEFAULT)
