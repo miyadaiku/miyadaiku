@@ -86,6 +86,7 @@ class Site:
             return
 
         err = 0
+
         def done(f):
             exc = f.exception()
             nonlocal err
@@ -106,6 +107,7 @@ class Site:
                 f.add_done_callback(done)
 
         return err
+
     def _get_template(self, basecontent, f, *args, **kwargs):
         try:
             return f(*args, **kwargs)

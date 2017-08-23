@@ -50,6 +50,7 @@ class ContentArgProxy:
             raise
 
     _omit = object()
+
     def load(self, target, default=_omit):
         ret = self.content.get_content(target)
         return ContentArgProxy(self.site, self.page_content, ret)
@@ -793,13 +794,13 @@ class BinaryLoader(FileLoader):
 
 class RstLoader(FileLoader):
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
-        _metadata, body = rst.load(srcpath)
+        _metadata, body = rst.load(srcpath, metadata)
         metadata.update(_metadata)
         return body
 
     def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
         src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
-        _metadata, body = rst.load_string(src)
+        _metadata, body = rst.load_string(src, metadata)
         metadata.update(_metadata)
         return body
 

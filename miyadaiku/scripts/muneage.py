@@ -41,7 +41,6 @@ def _main():
             sys.exit(1)
         props[d[0]] = d[1]
 
-
     d = pathlib.Path(args.directory)
     site = Site(d, props)
 
@@ -52,6 +51,7 @@ def _main():
 def main():
     code = _main()
     sys.exit(code)
+
 
 if __name__ == '__main__':
     main()

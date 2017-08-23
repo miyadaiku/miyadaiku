@@ -102,7 +102,7 @@ class TargetDirective(JinjaDirective):
 directives.register_directive('target', TargetDirective)
 
 
-settings = {
+RST_SETTINGS = {
     'input_encoding': 'utf-8',
     'syntax_highlight': 'short',
     'embed_stylesheet': False,
@@ -143,12 +143,18 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
         pass
 
 
-def _make_pub(source_class):
+def _make_pub(source_class, metadata):
     pub = docutils.core.Publisher(
         source_class=source_class,
         destination_class=docutils.io.StringOutput)
 
     pub.set_components("standalone", "restructuredtext", "html5")
+
+    settings = RST_SETTINGS.copy()
+    if metadata:
+        update = metadata.get('rst_config', {})
+        settings.update(update)
+
     pub.process_programmatic_settings(None, settings, None)
     pub.writer.translator_class = HTMLTranslator
 
@@ -176,13 +182,13 @@ def _parse(pub):
     return metadata, parts.get('body')
 
 
-def load(path):
-    pub = _make_pub(docutils.io.FileInput)
+def load(path, metadata=None):
+    pub = _make_pub(docutils.io.FileInput, metadata)
     pub.set_source(source_path=os.fspath(path))
     return _parse(pub)
 
 
-def load_string(string):
-    pub = _make_pub(docutils.io.StringInput)
+def load_string(string, metadata=None):
+    pub = _make_pub(docutils.io.StringInput, metadata)
     pub.set_source(source=string)
     return _parse(pub)
