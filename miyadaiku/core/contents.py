@@ -401,6 +401,10 @@ class HTMLContent(Content):
     def prop_get_abstract(self, page_content, abstract_length=None):
         html = self._get_html(page_content)
         soup = BeautifulSoup(html, 'html.parser')
+
+        for elem in soup(["head", "style", "script", "title"]):
+            elem.extract()
+
         if abstract_length is None:
             abstract_length = self.abstract_length
 
