@@ -25,7 +25,7 @@ entry_points = {
 
 setup(
     name="miyadaiku",
-    version="0.0.30",
+    version="0.0.31",
     author="Atsuo Ishimoto",
     url='https://miyadaiku.github.io/',
     license="MIT",
