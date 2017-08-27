@@ -10,7 +10,6 @@ def test_article():
 
     assert o.dirname == ()
     assert o.name == 'test.html'
-    print(o.body)
     assert b'1234567890' in o.body
 
 
@@ -41,7 +40,8 @@ title1
     site = main.Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
-    assert p.prop_get_headers(p, {}) == [('id1', 'h1', 'title1')]
+    context = contents._context(site, p)
+    assert p.prop_get_headers(context) == [('id1', 'h1', 'title1')]
 
 
 def test_header_text(sitedir):
@@ -64,7 +64,8 @@ title2
     site = main.Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
-    print(p._get_html(p, {}))
+    context = contents._context(site, p)
+    print(p._get_html(context))
 
 
 def test_module(sitedir):
@@ -87,8 +88,9 @@ def test_module(sitedir):
     site = main.Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
-    print(p._get_html(p, {}))
-    assert 'macro test hello' in p._get_html(p, {})
+    context = contents._context(site, p)
+    print(p._get_html(context))
+    assert 'macro test hello' in p._get_html(context)
 
 
 def test_metadatafile(sitedir):

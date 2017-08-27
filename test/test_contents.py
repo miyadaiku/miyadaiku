@@ -73,8 +73,8 @@ def test_get_abstract():
     body = f'<div>{s}<div>{s}<div>{s}<div>{s}</div><p>{s}</p></div></div></div>' * 10
 
     a = contents.Article(site, '', '1', {'type': 'article'}, body)
-
-    ss = a.prop_get_abstract(a, {})
+    context = contents._context(site, a)
+    ss = a.prop_get_abstract(context)
     print(ss)
 
 

@@ -1,6 +1,7 @@
 import os
 from jinja2 import (TemplateNotFound, Environment, PrefixLoader, FileSystemLoader,
-                    ChoiceLoader, PackageLoader, select_autoescape, make_logging_undefined, Undefined, DebugUndefined)
+                    ChoiceLoader, PackageLoader, select_autoescape, make_logging_undefined,
+                    Undefined, DebugUndefined, StrictUndefined)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ class PackagesLoader(PrefixLoader):
 
 EXTENSIONS = ['jinja2.ext.do']
 
+
 def create_env(site, themes, path):
     loaders = [PackagesLoader()]
     if path:
@@ -38,6 +40,7 @@ def create_env(site, themes, path):
 
     env = Environment(
         undefined=make_logging_undefined(logger, DebugUndefined),
+        #        undefined=make_logging_undefined(logger, StrictUndefined),
         loader=ChoiceLoader(loaders),
         autoescape=select_autoescape(['html', 'xml']),
         extensions=EXTENSIONS
