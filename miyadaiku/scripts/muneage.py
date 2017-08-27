@@ -20,6 +20,9 @@ parser.add_argument('--define', '-d', action='append', metavar='property=value',
 parser.add_argument('--debug', '-D', action='store_true', default=False,
                     help="Show debug message")
 
+parser.add_argument('--watch', '-w', action='store_true',
+                    help='Watch contents update.')
+
 
 def _main():
     args = parser.parse_args()
@@ -45,8 +48,9 @@ def _main():
     site = Site(d, props)
 
     site.pre_build()
-    return site.build()
+    code, deps = site.build()
 
+    return code
 
 def main():
     code = _main()

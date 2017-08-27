@@ -5,6 +5,7 @@ import os
 import logging
 import shutil
 import yaml
+import collections
 import dateutil.parser
 import concurrent.futures
 import jinja2.exceptions
@@ -69,23 +70,50 @@ class Site:
 
     def _build_content(self, key):
         cont = self.contents.get_content(key)
-        logger.debug(f'Building {cont.url}')
-        outputs = cont.get_outputs()
+        try:
+            logger.debug(f'Building {cont.url}')
+            outputs = cont.get_outputs()
 
-        output_path = self.path / OUTPUTS_DIR
-        for o in outputs:
-            o.write(output_path)
+            output_path = self.path / OUTPUTS_DIR
+
+
+            deps = collections.defaultdict(list)
+            for o in outputs:
+                created = o.write(output_path)
+
+                src = (o.context.page_content.dirname, o.context.page_content.name)
+                relpath = created.relative_to(output_path)
+                for ref in o.context.depends:
+                    if 'package' in ref.metadata:
+                        continue
+                    deps[(ref.dirname, ref.name)].append(
+                        (str(relpath), src))
+
+            return dict(deps)
+
+        except Exception as e:
+            if miyadaiku.core.DEBUG:
+                import traceback
+                traceback.print_exc()
+            exc = _site._translate_exc(cont, e)
+            #raise exc
+            return {}
 
     def build(self):
         global _site
         _site = self
 
+        deps = collections.defaultdict(list)
         if miyadaiku.core.DEBUG:
             for key in self.contents.get_contents_keys():
-                _submit_build(key)
-            return
+                ret = _submit_build(key)
+                for k, v in ret.items():
+                    deps[k].extend(v)
+
+            return 0, deps
 
         err = 0
+
 
         def done(f):
             exc = f.exception()
@@ -94,7 +122,11 @@ class Site:
                 err = 1
 
             if exc and not isinstance(exc, miyadaiku.core.MiyadaikuBuildError):
-                print(type(exc), exc)
+                return
+
+            ret = f.result()
+            for k, v in ret.items():
+                deps[k].extend(v)
 
         if sys.platform == 'win32':
             executer = concurrent.futures.ThreadPoolExecutor
@@ -106,15 +138,10 @@ class Site:
                 f = e.submit(_submit_build, key)
                 f.add_done_callback(done)
 
-        return err
+        return err, deps
 
-    def _get_template(self, basecontent, f, *args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except miyadaiku.core.MiyadaikuBuildError:
-            raise
-
-        except jinja2.exceptions.TemplateSyntaxError as e:
+    def _translate_exc(self, content, e):
+        if isinstance(e, jinja2.exceptions.TemplateSyntaxError):
             src = e.source.split('\n')
             f = max(0, e.lineno - 3)
             lines = []
@@ -126,24 +153,34 @@ class Site:
 
             lines = "\n".join(lines)
             logger.error(
-                f'An error occured while compiling {basecontent.url} {type(e)}'
+                f'An error occured while compiling {content} {type(e)}'
                 f'line: {e.lineno} msg: {str(e)}\n'
                 f'{lines}'
             )
 
             exc = miyadaiku.core.MiyadaikuBuildError(str(e))
-            exc.filename = basecontent.url
+            exc.filename = content.url
             exc.lineno = e.lineno
             exc.source = e.source
 
-            raise exc
+            return exc
+
+        else:
+            logger.error(
+                f'An error occured while compiling {content.url} {type(e)} msg: {str(e)}')
+            exc = miyadaiku.core.MiyadaikuBuildError(str(e))
+            exc.filename = content.url
+            exc.lineno = None
+            return exc
+
+    def _get_template(self, basecontent, f, *args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except miyadaiku.core.MiyadaikuBuildError:
+            raise
 
         except Exception as e:
-            logger.error(
-                f'An error occured while compiling {basecontent.url} {type(e)} msg: {str(e)}')
-            exc = miyadaiku.core.MiyadaikuBuildError(str(e))
-            exc.filename = basecontent.url
-            exc.lineno = None
+            exc = self._translate_exc(basecontent, e)
             raise exc
 
     def get_template(self, basecontent, name):
@@ -169,13 +206,7 @@ class Site:
 
 
 def _submit_build(key):
-    try:
-        _site._build_content(key)
-    except miyadaiku.core.MiyadaikuBuildError:
-        raise
-    except Exception as e:
-        logger.exception(f'Unhandled exception while building {key}')
-        raise
+    return _site._build_content(key)
 
 # def run():
 #     dir = pathlib.Path(sys.argv[1])

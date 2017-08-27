@@ -34,6 +34,7 @@ class _context(dict):
     def __init__(self, site, page_content):
         self.site = site
         self.page_content = page_content
+        self.depends = set()
 
     def __getattr__(self, name):
         return self.get(name, None)
@@ -48,6 +49,7 @@ class _context(dict):
 class ContentArgProxy:
     def __init__(self, context, content):
         self.context, self.content = context, content
+        self.context.depends.add(self.content)
 
     def __getattr__(self, name):
         try:
@@ -142,6 +144,9 @@ class Content:
                 except IOError:
                     pass
 
+
+    def __str__(self):
+        return f'<{self.__class__.__module__}.{self.__class__.__name__} {self.url}>'
     _omit = object()
 
     def get_metadata(self, name, default=_omit):
@@ -325,10 +330,11 @@ class BinContent(Content):
                 body = pkg_resources.resource_string(package, self.metadata['srcpath'])
             else:
                 body = self.metadata['srcpath'].read_bytes()
-
+        context = _context(self.site, self)
         return [Output(dirname=self.dirname, name=self.name,
                        stat=self.stat,
-                       body=body)]
+                       body=body,
+                       context=context)]
 
 
 class HTMLValue(markupsafe.Markup):
@@ -494,7 +500,7 @@ date: {date.isoformat(timespec='seconds')}
         body = self.site.render(self, template, **self.get_render_args(context))
         return [Output(dirname=self.dirname, name=self.filename,
                        stat=self.stat,
-                       body=body.encode('utf-8'))]
+                       body=body.encode('utf-8'), context=context)]
 
 
 class IndexPage(Content):
@@ -554,8 +560,6 @@ class IndexPage(Content):
         groups = self.site.contents.group_items(
             getattr(self, 'groupby', None), filters=filters)
 
-        context = _context(self.site, self)
-
         for names, group in groups:
             num = len(group)
             num_pages = ((num - 1) // n_per_page) + 1
@@ -574,6 +578,7 @@ class IndexPage(Content):
                 f = page * n_per_page
                 t = num if is_last else f + n_per_page
 
+                context = _context(self.site, self)
                 articles = [ContentArgProxy(context, article)
                             for article in group[f:t]]
 
@@ -588,7 +593,7 @@ class IndexPage(Content):
                 filename = self.filename_to_page(names, page + 1)
                 output = Output(dirname=self.dirname, name=filename,
                                 stat=self.stat,
-                                body=body.encode('utf-8'))
+                                body=body.encode('utf-8'), context=context)
                 outputs.append(output)
 
                 if templatename2:
@@ -650,7 +655,7 @@ class FeedPage(Content):
         body = feed.writeString('utf-8').encode('utf-8')
         return [Output(dirname=self.dirname, name=self.filename,
                        stat=self.stat,
-                       body=body)]
+                       body=body, context=context)]
 
 
 class Contents:
