@@ -41,7 +41,7 @@ title1
     site = main.Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
-    assert p.prop_get_headers(p) == [('id1', 'h1', 'title1')]
+    assert p.prop_get_headers(p, {}) == [('id1', 'h1', 'title1')]
 
 
 def test_header_text(sitedir):
@@ -64,7 +64,7 @@ title2
     site = main.Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
-    print(p._get_html(p))
+    print(p._get_html(p, {}))
 
 
 def test_module(sitedir):
@@ -87,8 +87,8 @@ def test_module(sitedir):
     site = main.Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
-    print(p._get_html(p))
-    assert 'macro test hello' in p._get_html(p)
+    print(p._get_html(p, {}))
+    assert 'macro test hello' in p._get_html(p, {})
 
 
 def test_metadatafile(sitedir):

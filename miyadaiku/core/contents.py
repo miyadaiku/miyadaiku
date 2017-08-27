@@ -29,10 +29,20 @@ class _metadata(dict):
     def __getattr__(self, name):
         return self.get(name, None)
 
+class _context(dict):
+    def __getattr__(self, name):
+        return self.get(name, None)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def set(self, **kwargs):
+        self.update(kwargs)
+
 
 class ContentArgProxy:
-    def __init__(self, site, page_content, content):
-        self.site, self.page_content, self.content = site, page_content, content
+    def __init__(self, site, page_content, content, context):
+        self.site, self.page_content, self.content, self.context = site, page_content, content, context
 
     def __getattr__(self, name):
         try:
@@ -40,7 +50,7 @@ class ContentArgProxy:
                 prop = f'prop_get_{name}'
                 f = getattr(self.content, prop, None)
                 if f:
-                    return f(self.page_content)
+                    return f(self.page_content, self.context)
 
             return getattr(self.content, name)
         except Exception as e:
@@ -53,13 +63,13 @@ class ContentArgProxy:
 
     def load(self, target, default=_omit):
         ret = self.content.get_content(target)
-        return ContentArgProxy(self.site, self.page_content, ret)
+        return ContentArgProxy(self.site, self.page_content, ret, self.context)
 
     def path(self, *args, **kwargs):
         return self.page_content.path_to(self, *args, **kwargs)
 
     def link(self, *args, **kwargs):
-        return self.page_content.link_to(self, *args, **kwargs)
+        return self.page_content.link_to(self.context, self, *args, **kwargs)
 
     def path_to(self, target, *args, **kwargs):
         target = self.load(target)
@@ -67,31 +77,31 @@ class ContentArgProxy:
 
     def link_to(self, target, *args, **kwargs):
         target = self.load(target)
-        return self.page_content.link_to(target, *args, **kwargs)
+        return self.page_content.link_to(self.context, target, *args, **kwargs)
 
 
 class ContentsArgProxy:
-    def __init__(self, site, page_content, content):
-        self.site, self.page_content, self.content = (site, page_content, content)
+    def __init__(self, site, page_content, content, conext):
+        self.site, self.page_content, self.content, self.context  = (site, page_content, content, conext)
 
     def __getitem__(self, key):
         content = self.site.contents.get_content(key, self.content)
-        return ContentArgProxy(self.site, self.page_content, content)
+        return ContentArgProxy(self.site, self.page_content, content, self.context)
 
     def __getattr__(self, name):
         return getattr(self.site.contents, name)
 
     def get_content(self, *args, **kwargs):
         ret = self.site.contents.get_content(*args, **kwargs)
-        return ContentArgProxy(self.site, self.page_content, ret)
+        return ContentArgProxy(self.site, self.page_content, ret, self.context)
 
     def get_contents(self, *args, **kwargs):
         ret = self.site.contents.get_contents(*args, **kwargs)
-        return [ContentArgProxy(self.site, self.page_content, content) for content in ret]
+        return [ContentArgProxy(self.site, self.page_content, content, self.context) for content in ret]
 
     def group_items(self, *args, **kwargs):
         ret = self.site.contents.group_items(*args, **kwargs)
-        ret = [(v, [ContentArgProxy(self.site, self.page_content, content)
+        ret = [(v, [ContentArgProxy(self.site, self.page_content, content, self.context)
                     for content in c]) for v, c in ret]
         return ret
 
@@ -152,7 +162,8 @@ class Content:
         filename_templ = self.filename_templ
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
         template = self.site.template_from_string(self, filename_templ)
-        ret = self.site.render(self, template, **self.get_render_args(self))
+        context = _context()
+        ret = self.site.render(self, template, **self.get_render_args(self, context))
 
         assert ret
         return ret
@@ -215,13 +226,13 @@ class Content:
         tz = self.timezone
         return date.astimezone(tz)
 
-    def prop_get_headers(self, page_content):
+    def prop_get_headers(self, page_content, context):
         return []
 
-    def prop_get_abstract(self, page_content):
+    def prop_get_abstract(self, page_content, context):
         return ""
 
-    def prop_get_html(self, page_content):
+    def prop_get_html(self, page_content, context):
         return ""
 
     def get_output_path(self, *args, **kwargs):
@@ -245,12 +256,12 @@ class Content:
             to = '/' + target.get_output_path(*args, **kwargs)
             return posixpath.relpath(to, here) + fragment
 
-    def link_to(self, target, text=None, fragment=None, abs_path=False, attrs=None, *args, **kwargs):
+    def link_to(self, context, target, text=None, fragment=None, abs_path=False, attrs=None, *args, **kwargs):
         if isinstance(target, str):
             target = self.get_content(target)
         if not text:
             if fragment:
-                text = target.get_headertext(self, fragment)
+                text = target.get_headertext(self, context, fragment)
             if not text:
                 text = target.title
 
@@ -280,16 +291,16 @@ class Content:
 
         return self._imports
 
-    def get_render_args(self, page_content):
-        content = ContentArgProxy(self.site, page_content, self)
+    def get_render_args(self, page_content, context):
+        content = ContentArgProxy(self.site, page_content, self, context)
         if page_content is self:
             page = content
         else:
-            page = ContentArgProxy(self.site, page_content, page_content)
+            page = ContentArgProxy(self.site, page_content, page_content, context)
 
-        contents = ContentsArgProxy(self.site, page_content, self)
+        contents = ContentsArgProxy(self.site, page_content, self, context)
         config = ConfigArgProxy(self.site, page_content, self)
-        kwargs = {'config': config, 'contents': contents, 'page': page, 'content': content}
+        kwargs = {'config': config, 'contents': contents, 'page': page, 'content': content, 'context': context}
 
         imports = self._getimports()
         imports.update(kwargs)
@@ -355,14 +366,14 @@ class HTMLContent(Content):
 
         return headers, str(soup)
 
-    def _get_html(self, page_content):
+    def _get_html(self, page_content, context):
         ret = self._html_cache.get(page_content, None)
         if ret:
             return ret
 
         template = self.site.template_from_string(self, self.body or '')
 
-        html = self.site.render(self, template, **self.get_render_args(page_content))
+        html = self.site.render(self, template, **self.get_render_args(page_content, context))
 
         headers, html = self._set_header_id(html)
 
@@ -370,23 +381,23 @@ class HTMLContent(Content):
         self._header_cache[page_content] = headers
         return html
 
-    def _get_headers(self, page_content):
+    def _get_headers(self, page_content, context):
         ret = self._header_cache.get(page_content)
         if ret is not None:
             return ret
 
-        self._get_html(page_content)
+        self._get_html(page_content, context)
         return self._header_cache.get(page_content)
 
     _in_get_headertext = False
 
-    def get_headertext(self, page_content, fragment):
+    def get_headertext(self, page_content, context, fragment):
         if self._in_get_headertext:
             return 'dummy'
 
         self._in_get_headertext = True
         try:
-            headers = self._get_headers(page_content)
+            headers = self._get_headers(page_content, context)
             for id, elem, text in headers:
                 if id == fragment:
                     return text
@@ -394,12 +405,12 @@ class HTMLContent(Content):
             self._in_get_headertext = False
         return None
 
-    def prop_get_headers(self, page_content):
-        headers = self._get_headers(page_content)
+    def prop_get_headers(self, page_content, context):
+        headers = self._get_headers(page_content, context)
         return headers
 
-    def prop_get_abstract(self, page_content, abstract_length=None):
-        html = self._get_html(page_content)
+    def prop_get_abstract(self, page_content, context, abstract_length=None):
+        html = self._get_html(page_content, context)
         soup = BeautifulSoup(html, 'html.parser')
 
         for elem in soup(["head", "style", "script", "title"]):
@@ -432,8 +443,8 @@ class HTMLContent(Content):
         last_c.string.replace_with(last_c[:abstract_length - curlen])
         return HTMLValue(soup)
 
-    def prop_get_html(self, page_content):
-        html = self._get_html(page_content)
+    def prop_get_html(self, page_content, context):
+        html = self._get_html(page_content, context)
         ret = HTMLValue(html)
         return ret
 
@@ -474,7 +485,8 @@ date: {date.isoformat(timespec='seconds')}
 
         templatename = self.article_template
         template = self.site.jinjaenv.get_template(templatename)
-        body = self.site.render(self, template, **self.get_render_args(self))
+        context = _context()
+        body = self.site.render(self, template, **self.get_render_args(self, context))
 
         return [Output(dirname=self.dirname, name=self.filename,
                        stat=self.stat,
@@ -506,9 +518,11 @@ class IndexPage(Content):
 
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
         template = self.site.template_from_string(self, filename_templ)
+
+        context = _context()
         ret = self.site.render(self, template,
                                value=value, cur_page=npage,
-                               **self.get_render_args(self))
+                               **self.get_render_args(self, context))
 
         return ret
 
@@ -536,6 +550,8 @@ class IndexPage(Content):
         groups = self.site.contents.group_items(
             getattr(self, 'groupby', None), filters=filters)
 
+        context = _context()
+
         for names, group in groups:
             num = len(group)
             num_pages = ((num - 1) // n_per_page) + 1
@@ -554,11 +570,11 @@ class IndexPage(Content):
                 f = page * n_per_page
                 t = num if is_last else f + n_per_page
 
-                articles = [ContentArgProxy(self.site, self, article)
+                articles = [ContentArgProxy(self.site, self, article, context)
                             for article in group[f:t]]
 
                 template = self.site.jinjaenv.get_template(templatename)
-                args = self.get_render_args(self)
+                args = self.get_render_args(self, context)
 
                 body = self.site.render(self, template,
                                         group_values=names, cur_page=page + 1, is_last=is_last,
@@ -613,9 +629,11 @@ class FeedPage(Content):
             filters=filters)]
 
         num_articles = int(self.feed_num_articles)
+        context = _context()
+
         for c in contents[:num_articles]:
             link = c.url
-            description = c.prop_get_abstract(self, self.abstract_length)
+            description = c.prop_get_abstract(self, context, self.abstract_length)
 
             feed.add_item(
                 title=str(c.title),

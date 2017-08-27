@@ -74,7 +74,7 @@ def test_get_abstract():
 
     a = contents.Article(site, '', '1', {'type': 'article'}, body)
 
-    ss = a.prop_get_abstract(a)
+    ss = a.prop_get_abstract(a, {})
     print(ss)
 
 

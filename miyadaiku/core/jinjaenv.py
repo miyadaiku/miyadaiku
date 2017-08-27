@@ -26,6 +26,8 @@ class PackagesLoader(PrefixLoader):
         raise TypeError('this loader cannot iterate over all templates')
 
 
+EXTENSIONS = ['jinja2.ext.do']
+
 def create_env(site, themes, path):
     loaders = [PackagesLoader()]
     if path:
@@ -37,7 +39,8 @@ def create_env(site, themes, path):
     env = Environment(
         undefined=make_logging_undefined(logger, DebugUndefined),
         loader=ChoiceLoader(loaders),
-        autoescape=select_autoescape(['html', 'xml'])
+        autoescape=select_autoescape(['html', 'xml']),
+        extensions=EXTENSIONS
     )
 
     env.globals['site'] = site
