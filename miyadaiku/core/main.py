@@ -104,40 +104,50 @@ class Site:
         global _site
         _site = self
 
-        deps = collections.defaultdict(list)
-        if miyadaiku.core.DEBUG:
-            for key in self.contents.get_contents_keys():
-                ret = _submit_build(key)
-                for k, v in ret.items():
-                    deps[k].extend(v)
+        outputs = []
+        for key, content in self.contents.items():
+            outputs.extend(content.get_outputs())
 
-            return 0, deps
+        output_path = self.path / OUTPUTS_DIR
+        deps = collections.defaultdict(set)
+        for output in outputs:
+            ret = output.build(output_path)
 
-        err = 0
+        return 0, {}
 
-
-        def done(f):
-            exc = f.exception()
-            nonlocal err
-            if exc:
-                err = 1
-
-            if exc and not isinstance(exc, miyadaiku.core.MiyadaikuBuildError):
-                return
-
-            ret = f.result()
-            for k, v in ret.items():
-                deps[k].extend(v)
-
-        if sys.platform == 'win32':
-            executer = concurrent.futures.ThreadPoolExecutor
-        else:
-            executer = concurrent.futures.ProcessPoolExecutor
-
-        with executer() as e:
-            for key in self.contents.get_contents_keys():
-                f = e.submit(_submit_build, key)
-                f.add_done_callback(done)
+#
+#            for key in self.contents.get_contents_keys():
+#                ret = _submit_build(key)
+#                for k, v in ret.items():
+#                    deps[k].extend(v)
+#
+#            return 0, deps
+#
+#        err = 0
+#
+#
+#        def done(f):
+#            exc = f.exception()
+#            nonlocal err
+#            if exc:
+#                err = 1
+#
+#            if exc and not isinstance(exc, miyadaiku.core.MiyadaikuBuildError):
+#                return
+#
+#            ret = f.result()
+#            for k, v in ret.items():
+#                deps[k].extend(v)
+#
+#        if sys.platform == 'win32':
+#            executer = concurrent.futures.ThreadPoolExecutor
+#        else:
+#            executer = concurrent.futures.ProcessPoolExecutor
+#
+#        with executer() as e:
+#            for key in self.contents.get_contents_keys():
+#                f = e.submit(_submit_build, key)
+#                f.add_done_callback(done)
 
         return err, deps
 
