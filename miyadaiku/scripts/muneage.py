@@ -48,9 +48,10 @@ def _main():
     site = Site(d, props)
 
     site.pre_build()
-    code, deps = site.build()
+    code = site.build()
 
     return code
+
 
 def main():
     code = _main()

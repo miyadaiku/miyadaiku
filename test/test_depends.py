@@ -23,5 +23,3 @@ heh
 #    assert deps[((), 'index.rst')] == [('index.html', ((), 'index.rst'))]
 #    assert sorted(deps[((), 'a.rst')]) == sorted(
 #        [('index.html', ((), 'index.rst')), ('a.html', ((), 'a.rst'))])
-
-        

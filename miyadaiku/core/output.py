@@ -65,7 +65,6 @@ class Output:
                 pass
             time.sleep(MKDIR_WAIT)
 
-
         name = self.filename.strip('/\\')
         dest = os.path.expanduser((dir / name))
         dest = os.path.normpath(dest)
@@ -74,11 +73,13 @@ class Output:
         if not dest.startswith(s) or dest[len(s)] not in '\\/':
             raise ValueError(f"Invalid file name: {self.content.filename}")
 
-        self.content.write(pathlib.Path(dest), *self.args, **self.kwargs)
+        context = self.content.write(pathlib.Path(dest), *self.args, **self.kwargs)
 
         if self.content.stat:
             os.utime(dest, (self.content.stat.st_atime, self.content.stat.st_mtime))
             os.chmod(dest, self.content.stat.st_mode)
+
+        return dest, context
 
 
 class Outputs:

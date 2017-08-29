@@ -1,4 +1,5 @@
 import sys
+import pickle
 import pathlib
 import importlib
 import os
@@ -29,6 +30,7 @@ CONTENTS_DIR = 'contents'
 FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
+DEP_FILE = '_depends.pickle'
 
 
 class Site:
@@ -68,88 +70,89 @@ class Site:
             logger.debug(f'Pre-building {cont.url}')
             cont.pre_build()
 
-    def _build_content(self, key):
-        cont = self.contents.get_content(key)
+    def _run_build(self, output):
+        logger.debug(f'Building {output.content.url}')
+        output_path = self.path / OUTPUTS_DIR
         try:
-            logger.debug(f'Building {cont.url}')
-            outputs = cont.get_outputs()
-
-            output_path = self.path / OUTPUTS_DIR
-
-
-            deps = collections.defaultdict(list)
-            for o in outputs:
-                created = o.write(output_path)
-
-                src = (o.context.page_content.dirname, o.context.page_content.name)
-                relpath = created.relative_to(output_path)
-                for ref in o.context.depends:
-                    if 'package' in ref.metadata:
-                        continue
-                    deps[(ref.dirname, ref.name)].append(
-                        (str(relpath), src))
-
-            return dict(deps)
-
+            dest, context = output.build(output_path)
         except Exception as e:
             if miyadaiku.core.DEBUG:
                 # todo: use logging
                 import traceback
                 traceback.print_exc()
-            exc = _site._translate_exc(cont, e)
+            exc = _site._translate_exc(output.content, e)
             #raise exc
-            return {}
+            return None
+
+        src = (output.content.dirname, output.content.name)
+
+        deps = collections.defaultdict(set)
+        refs, pageargs = context.get_depends()
+        for ref in refs:
+            if 'package' in ref.metadata:
+                continue
+            deps[(ref.dirname, ref.name)].add(
+                (dest, src, pageargs))
+
+        return deps
+
+    def save_deps(self, deps):
+        with open(self.path / DEP_FILE, "wb") as f:
+            pickle.dump(deps, f)
 
     def build(self):
         global _site
         _site = self
 
-        outputs = []
+        self.outputs = []
         for key, content in self.contents.items():
-            outputs.extend(content.get_outputs())
+            self.outputs.extend(content.get_outputs())
 
         output_path = self.path / OUTPUTS_DIR
         deps = collections.defaultdict(set)
-        for output in outputs:
-            ret = output.build(output_path)
 
-        return 0, {}
+        if miyadaiku.core.DEBUG:
+            for output in self.outputs:
+                ret = self._run_build(output)
+                if ret is None:
+                    return 1, {}
 
-#
-#            for key in self.contents.get_contents_keys():
-#                ret = _submit_build(key)
-#                for k, v in ret.items():
-#                    deps[k].extend(v)
-#
-#            return 0, deps
-#
-#        err = 0
-#
-#
-#        def done(f):
-#            exc = f.exception()
-#            nonlocal err
-#            if exc:
-#                err = 1
-#
-#            if exc and not isinstance(exc, miyadaiku.core.MiyadaikuBuildError):
-#                return
-#
-#            ret = f.result()
-#            for k, v in ret.items():
-#                deps[k].extend(v)
-#
-#        if sys.platform == 'win32':
-#            executer = concurrent.futures.ThreadPoolExecutor
-#        else:
-#            executer = concurrent.futures.ProcessPoolExecutor
-#
-#        with executer() as e:
-#            for key in self.contents.get_contents_keys():
-#                f = e.submit(_submit_build, key)
-#                f.add_done_callback(done)
+                for k, v in ret.items():
+                    deps[k].update(v)
 
-        return err, deps
+                self.save_deps(deps)
+
+            return 0
+
+        if sys.platform == 'win32':
+            executer = concurrent.futures.ThreadPoolExecutor
+        else:
+            executer = concurrent.futures.ProcessPoolExecutor
+
+        err = 0
+
+        def done(f):
+            nonlocal err
+            try:
+                ret = f.result()
+            except Exception as e:
+                err = 1
+                raise e
+
+            if ret is None:
+                err = 1
+                return
+
+            for k, v in ret.items():
+                deps[k].update(v)
+
+        with executer() as e:
+            for i in range(len(self.outputs)):
+                f = e.submit(_run, i)
+                f.add_done_callback(done)
+
+        self.save_deps(deps)
+        return err
 
     def _translate_exc(self, content, e):
         if isinstance(e, jinja2.exceptions.TemplateSyntaxError):
@@ -164,8 +167,8 @@ class Site:
 
             lines = "\n".join(lines)
             logger.error(
-                f'An error occured while compiling {content} {type(e)}'
-                f'line: {e.lineno} msg: {str(e)}\n'
+                f'An error occured while compiling {content} {type(e)}\n'
+                f'{e.filename}:{e.lineno} {str(e)}\n'
                 f'{lines}'
             )
 
@@ -218,6 +221,12 @@ class Site:
 
 def _submit_build(key):
     return _site._build_content(key)
+
+
+def _run(n):
+    output = _site.outputs[n]
+    return _site._run_build(output)
+
 
 # def run():
 #     dir = pathlib.Path(sys.argv[1])
