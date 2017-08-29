@@ -18,7 +18,7 @@ heh
 ''')
 
     site = main.Site(sitedir)
-    err, deps = site.build()
+    err = site.build()
 
 #    assert deps[((), 'index.rst')] == [('index.html', ((), 'index.rst'))]
 #    assert sorted(deps[((), 'a.rst')]) == sorted(

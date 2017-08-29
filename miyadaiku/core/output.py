@@ -28,9 +28,7 @@ class Output:
                 pass
             time.sleep(MKDIR_WAIT)
 
-        name = self.name.strip('/\\')
-        dest = os.path.expanduser((dir / name))
-        dest = os.path.normpath(dest)
+        dest = self.calc_path(path, self.dirname, self.name)
 
         s = str(path)
         if not dest.startswith(s) or dest[len(s)] not in '\\/':
@@ -47,6 +45,14 @@ class Output:
 
 
 class Output:
+    @staticmethod
+    def calc_path(path, dirname, name):
+        dir = path.joinpath(*dirname)
+        name = name.strip('/\\')
+        dest = os.path.expanduser((dir / name))
+        dest = os.path.normpath(dest)
+        return dest
+
     def __init__(self, content, filename, *args, **kwargs):
         self.content = content
         self.filename = filename
@@ -65,11 +71,9 @@ class Output:
                 pass
             time.sleep(MKDIR_WAIT)
 
-        name = self.filename.strip('/\\')
-        dest = os.path.expanduser((dir / name))
-        dest = os.path.normpath(dest)
-
+        dest = self.calc_path(path, self.content.dirname, self.filename)
         s = str(path)
+
         if not dest.startswith(s) or dest[len(s)] not in '\\/':
             raise ValueError(f"Invalid file name: {self.content.filename}")
 

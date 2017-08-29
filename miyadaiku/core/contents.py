@@ -134,7 +134,8 @@ class ConfigArgProxy:
 
 class Content:
     _filename = None
-
+    updated = False
+    
     def __init__(self, site, dirname, name, metadata, body):
         self.site = site
         self.dirname = utils.dirname_to_tuple(dirname)
@@ -151,6 +152,40 @@ class Content:
                     self.metadata['stat'] = os.stat(path)
                 except IOError:
                     pass
+
+    def check_update(self, output_path):
+        stat = self.metadata.get('stat', None)
+        if self._check_fileupdate(output_path, stat):
+            return True
+
+        if not stat:
+            self.updated = False
+            return False
+
+        if self.site.stat_depfile and stat.st_mtime > self.site.stat_depfile.st_mtime:
+            self.updated = True
+            return True
+
+        self.updated = False
+        return False
+
+    def _check_fileupdate(self, outputpath, stat):
+        filename = Output.calc_path(outputpath, self.dirname, self.filename)
+        try:
+            filestat = os.stat(filename)
+            if not stat:
+                self.updated = False
+                return False
+
+            if filestat.st_mtime >= stat.st_mtime:
+                self.updated = False
+                return False
+
+        except IOError:
+            pass
+        
+        self.updated = True
+        return True
 
     def __str__(self):
         return f'<{self.__class__.__module__}.{self.__class__.__name__} {self.url}>'
@@ -329,6 +364,8 @@ class ConfigContent(Content):
     def get_outputs(self):
         return []
 
+    def _check_fileupdate(self, output_path, stat):
+        return False
 
 class BinContent(Content):
     def __init__(self, site, dirname, name, metadata, body):
@@ -813,6 +850,9 @@ class Contents:
     def __init__(self):
         self._contents = {}
 
+    def get_contents_keys(self):
+        return self._contents.keys()
+
     def items(self):
         return self._contents.items()
 
@@ -820,9 +860,6 @@ class Contents:
         key = (content.dirname, content.name)
         if key not in self._contents:
             self._contents[key] = content
-
-    def get_contents_keys(self):
-        return self._contents.keys()
 
     def has_content(self, key, base=None):
         dirname, filename = utils.abs_path(key, base.dirname if base else None)

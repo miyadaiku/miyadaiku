@@ -31,14 +31,20 @@ FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
 DEP_FILE = '_depends.pickle'
+DEP_VER= '1.0.0'
 
 
 class Site:
+    rebuild = False
+    depends = frozenset()
+    stat_depfile = None
+
     def __init__(self, path, props=None):
         p = os.path.abspath(os.path.expanduser(path))
         self.path = pathlib.Path(p)
         cfgfile = path / CONFIG_FILE
         self.config = config.Config(cfgfile if cfgfile.exists() else None)
+        self.stat_config = os.stat(cfgfile) if cfgfile.exists() else None
 
         if props:
             self.config.add('/', props, tail=False)
@@ -70,6 +76,56 @@ class Site:
             logger.debug(f'Pre-building {cont.url}')
             cont.pre_build()
 
+    def save_deps(self, deps):
+        keys = set(self.contents.get_contents_keys())
+        o = (DEP_VER, keys, deps)
+        with open(self.path / DEP_FILE, "wb") as f:
+            pickle.dump(o, f)
+
+    def load_deps(self):
+        deppath = self.path / DEP_FILE
+        try:
+            with open(deppath, "rb") as f:
+                DEP_VER, keys, deps = pickle.load(f)
+        except IOError:
+            self.rebuild = True
+            return
+
+        self.stat_depfile = os.stat(deppath)
+        if self.stat_config.st_mtime > self.stat_depfile.st_mtime:
+            self.rebuild = True
+            return
+
+        for root, dirs, files in os.walk(self.path / TEMPLATES_DIR):
+            root = pathlib.Path(root)
+            for file in files:
+                if (root / file).stat().st_mtime > self.stat_depfile.st_mtime:
+                    self.rebuild = True
+                    return
+
+        curkeys = set(self.contents.get_contents_keys())
+        created = curkeys - keys
+        deleted = keys - curkeys
+
+        if deleted or created:
+            self.rebuild = True
+            return
+
+        output_path = self.path / OUTPUTS_DIR
+        for key, content in self.contents.items():
+            if content.check_update(output_path):
+                refs = deps.get((content.dirname, content.name), ())
+                for filename, ref, pagearg in refs:
+                    if self.contents.has_content(ref):
+                        c = self.contents.get_content(ref)
+                        c.updated = True
+
+                if isinstance(content, contents.ConfigContent):
+                    self.rebuild = True
+                    return
+
+        self.depends = deps
+
     def _run_build(self, output):
         logger.debug(f'Building {output.content.url}')
         output_path = self.path / OUTPUTS_DIR
@@ -96,13 +152,11 @@ class Site:
 
         return deps
 
-    def save_deps(self, deps):
-        with open(self.path / DEP_FILE, "wb") as f:
-            pickle.dump(deps, f)
-
     def build(self):
         global _site
         _site = self
+
+        self.load_deps()
 
         self.outputs = []
         for key, content in self.contents.items():
@@ -113,6 +167,9 @@ class Site:
 
         if miyadaiku.core.DEBUG:
             for output in self.outputs:
+                if not output.content.updated:
+                    continue
+
                 ret = self._run_build(output)
                 if ret is None:
                     return 1, {}
@@ -148,6 +205,8 @@ class Site:
 
         with executer() as e:
             for i in range(len(self.outputs)):
+                if not self.rebuild and not self.outputs[i].content.updated:
+                    continue
                 f = e.submit(_run, i)
                 f.add_done_callback(done)
 
