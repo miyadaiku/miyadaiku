@@ -135,7 +135,7 @@ class ConfigArgProxy:
 class Content:
     _filename = None
     updated = False
-    
+
     def __init__(self, site, dirname, name, metadata, body):
         self.site = site
         self.dirname = utils.dirname_to_tuple(dirname)
@@ -183,7 +183,7 @@ class Content:
 
         except IOError:
             pass
-        
+
         self.updated = True
         return True
 
@@ -366,6 +366,7 @@ class ConfigContent(Content):
 
     def _check_fileupdate(self, output_path, stat):
         return False
+
 
 class BinContent(Content):
     def __init__(self, site, dirname, name, metadata, body):

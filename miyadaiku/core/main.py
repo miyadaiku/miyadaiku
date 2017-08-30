@@ -31,7 +31,7 @@ FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
 DEP_FILE = '_depends.pickle'
-DEP_VER= '1.0.0'
+DEP_VER = '1.0.0'
 
 
 class Site:

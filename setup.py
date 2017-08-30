@@ -12,7 +12,7 @@ DIR = pathlib.Path(__file__).resolve().parent
 requires = [
     "docutils", "pyyaml", "jinja2", "python-dateutil", "pygments",
     "pytz", "tzlocal", "happylogging", "beautifulsoup4", "feedgenerator",
-    "markdown", "nbformat", "nbconvert",
+    "markdown", "nbformat", "nbconvert", "watchdog",
 ]
 
 
