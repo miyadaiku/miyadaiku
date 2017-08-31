@@ -3,14 +3,16 @@ from miyadaiku.core import rst, contents, config, jinjaenv, output, main
 import yaml
 
 
-def test_article():
-    site = main.Site(Path(''))
+def test_article(sitedir):
+    site = main.Site(sitedir)
     article = contents.Article(site, '', 'test.rst', {}, '1234567890')
     o, = article.get_outputs()
 
-    assert o.dirname == ()
-    assert o.name == 'test.html'
-    assert b'1234567890' in o.body
+    o.build(sitedir)
+
+    assert o.content.dirname == ()
+    assert o.content.filename == 'test.html'
+    assert b'1234567890' in (sitedir / o.content.filename).read_bytes()
 
 
 def test_indexpage():

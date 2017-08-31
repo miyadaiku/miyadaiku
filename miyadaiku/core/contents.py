@@ -1,4 +1,5 @@
 import re
+import shutil
 import secrets
 import os
 import posixpath
@@ -31,10 +32,11 @@ class _metadata(dict):
 
 
 class _context(dict):
-    def __init__(self, site, page_content):
+    def __init__(self, site, page_content, *, pageargs=None):
         self.site = site
         self.page_content = page_content
-        self.depends = set()
+        self.__depends = set()
+        self.__pageargs = pageargs
 
     def __getattr__(self, name):
         return self.get(name, None)
@@ -45,11 +47,17 @@ class _context(dict):
     def set(self, **kwargs):
         self.update(kwargs)
 
+    def add_depend(self, page):
+        self.__depends.add(page)
+
+    def get_depends(self):
+        return (self.__depends, self.__pageargs)
+
 
 class ContentArgProxy:
     def __init__(self, context, content):
         self.context, self.content = context, content
-        self.context.depends.add(self.content)
+        self.context.add_depend(self.content)
 
     def __getattr__(self, name):
         try:
@@ -126,6 +134,7 @@ class ConfigArgProxy:
 
 class Content:
     _filename = None
+    updated = False
 
     def __init__(self, site, dirname, name, metadata, body):
         self.site = site
@@ -144,6 +153,39 @@ class Content:
                 except IOError:
                     pass
 
+    def check_update(self, output_path):
+        stat = self.metadata.get('stat', None)
+        if self._check_fileupdate(output_path, stat):
+            return True
+
+        if not stat:
+            self.updated = False
+            return False
+
+        if self.site.stat_depfile and stat.st_mtime > self.site.stat_depfile.st_mtime:
+            self.updated = True
+            return True
+
+        self.updated = False
+        return False
+
+    def _check_fileupdate(self, outputpath, stat):
+        filename = Output.calc_path(outputpath, self.dirname, self.filename)
+        try:
+            filestat = os.stat(filename)
+            if not stat:
+                self.updated = False
+                return False
+
+            if filestat.st_mtime >= stat.st_mtime:
+                self.updated = False
+                return False
+
+        except IOError:
+            pass
+
+        self.updated = True
+        return True
 
     def __str__(self):
         return f'<{self.__class__.__module__}.{self.__class__.__name__} {self.url}>'
@@ -318,6 +360,14 @@ class Content:
         return imports
 
 
+class ConfigContent(Content):
+    def get_outputs(self):
+        return []
+
+    def _check_fileupdate(self, output_path, stat):
+        return False
+
+
 class BinContent(Content):
     def __init__(self, site, dirname, name, metadata, body):
         super().__init__(site, dirname, name, metadata, body)
@@ -335,6 +385,24 @@ class BinContent(Content):
                        stat=self.stat,
                        body=body,
                        context=context)]
+
+    def get_outputs(self):
+        return [Output(self, self.filename)]
+
+    def write(self, path):
+        body = self.body
+        if not body:
+            package = self.metadata.get('package')
+            if package:
+                body = pkg_resources.resource_string(package, self.metadata['srcpath'])
+                path.write_bytes(body)
+            else:
+                shutil.copyfile(str(self.metadata['srcpath']), str(path))
+        else:
+            path.write_bytes(body)
+
+        context = _context(self.site, self)
+        return context
 
 
 class HTMLValue(markupsafe.Markup):
@@ -502,6 +570,19 @@ date: {date.isoformat(timespec='seconds')}
                        stat=self.stat,
                        body=body.encode('utf-8'), context=context)]
 
+    def get_outputs(self):
+        return [Output(self, self.filename)]
+
+    def write(self, path):
+        templatename = self.article_template
+        template = self.site.jinjaenv.get_template(templatename)
+        context = _context(self.site, self)
+        body = self.site.render(self, template, **self.get_render_args(context))
+
+        path.write_bytes(body.encode('utf-8'))
+
+        return context
+
 
 class IndexPage(Content):
     @property
@@ -601,6 +682,70 @@ class IndexPage(Content):
 
         return outputs
 
+    def get_outputs(self):
+        ret = []
+
+        filters = getattr(self, 'filters', {})
+        filters['type'] = {'article'}
+        filters['draft'] = {False}
+
+        groups = self.site.contents.group_items(
+            getattr(self, 'groupby', None), filters=filters)
+
+        n_per_page = int(self.indexpage_max_articles)
+        page_orphan = int(self.indexpage_orphan)
+        for names, group in groups:
+            num = len(group)
+            num_pages = ((num - 1) // n_per_page) + 1
+            rest = num - ((num_pages - 1) * n_per_page)
+
+            if rest <= page_orphan:
+                if num_pages > 1:
+                    num_pages -= 1
+
+            if self.indexpage_max_num_pages:
+                num_pages = min(num_pages, self.indexpage_max_num_pages)
+
+            for page in range(0, num_pages):
+
+                is_last = (page == (num_pages - 1))
+
+                f = page * n_per_page
+                t = num if is_last else f + n_per_page
+                articles = group[f:t]
+
+                filename = self.filename_to_page(names, page + 1)
+                output = Output(self, filename, group_values=names, cur_page=page + 1,
+                                is_last=is_last, num_pages=num_pages, articles=articles)
+                ret.append(output)
+
+        return ret
+
+    def write(self, path, group_values, cur_page, is_last,
+              num_pages, articles):
+        if cur_page == 1:
+            templatename = self.indexpage_template
+        elif self.indexpage_template2:
+            templatename = self.indexpage_template2
+        else:
+            templatename = self.indexpage_template
+
+        template = self.site.jinjaenv.get_template(templatename)
+
+        context = _context(self.site, self, pageargs=(cur_page - 1,))
+        articles = [ContentArgProxy(context, article)
+                    for article in articles]
+
+        args = self.get_render_args(context)
+
+        body = self.site.render(self, template,
+                                group_values=group_values, cur_page=cur_page, is_last=is_last,
+                                num_pages=num_pages, articles=articles,
+                                **args)
+
+        path.write_bytes(body.encode('utf-8'))
+        return context
+
 
 class FeedPage(Content):
     use_abs_path = True
@@ -638,8 +783,8 @@ class FeedPage(Content):
             filters=filters)]
 
         num_articles = int(self.feed_num_articles)
-        context = _context(self.site, self)
 
+        context = _context(self.site, self)
         for c in contents[:num_articles]:
             link = c.url
             description = c.prop_get_abstract(context, self.abstract_length)
@@ -657,18 +802,65 @@ class FeedPage(Content):
                        stat=self.stat,
                        body=body, context=context)]
 
+    def get_outputs(self):
+
+        filters = getattr(self, 'filters', {})
+        filters['type'] = {'article'}
+        filters['draft'] = {False}
+        contents = [c for c in self.site.contents.get_contents(
+            filters=filters)]
+
+        num_articles = int(self.feed_num_articles)
+
+        return [Output(self, self.filename, contents=contents[:num_articles])]
+
+    def write(self, path, contents):
+        feedtype = self.feedtype
+        if feedtype == 'atom':
+            cls = Atom1Feed
+        elif feedtype == 'rss':
+            cls = Rss201rev2Feed
+        else:
+            raise ValueError(f"Invarid feed type: {feedtype}")
+
+        feed = cls(
+            title=self.site_title,
+            link=self.site_url,
+            feed_url=self.url,
+            description='')
+
+        context = _context(self.site, self)
+        for c in contents:
+            link = c.url
+            description = c.prop_get_abstract(context, self.abstract_length)
+
+            feed.add_item(
+                title=str(c.title),
+                link=link,
+                unique_id=get_tag_uri(link, c.date),
+                description=str(description),
+                pubdate=c.date,
+            )
+
+        body = feed.writeString('utf-8')
+        path.write_bytes(body.encode('utf-8'))
+        return context
+
 
 class Contents:
     def __init__(self):
         self._contents = {}
 
+    def get_contents_keys(self):
+        return self._contents.keys()
+
+    def items(self):
+        return self._contents.items()
+
     def add(self, content):
         key = (content.dirname, content.name)
         if key not in self._contents:
             self._contents[key] = content
-
-    def get_contents_keys(self):
-        return self._contents.keys()
 
     def has_content(self, key, base=None):
         dirname, filename = utils.abs_path(key, base.dirname if base else None)
@@ -763,6 +955,7 @@ class Contents:
 
 def load_config(site, dirname, filename, metadata, body):
     site.config.add(dirname, metadata)
+    return ConfigContent(site, dirname, filename, metadata, body)
 
 
 CONTENT_CLASSES = {

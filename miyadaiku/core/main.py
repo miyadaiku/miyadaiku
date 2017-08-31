@@ -1,4 +1,5 @@
 import sys
+import pickle
 import pathlib
 import importlib
 import os
@@ -29,14 +30,21 @@ CONTENTS_DIR = 'contents'
 FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
+DEP_FILE = '_depends.pickle'
+DEP_VER = '1.0.0'
 
 
 class Site:
+    rebuild = False
+    depends = frozenset()
+    stat_depfile = None
+
     def __init__(self, path, props=None):
         p = os.path.abspath(os.path.expanduser(path))
         self.path = pathlib.Path(p)
         cfgfile = path / CONFIG_FILE
         self.config = config.Config(cfgfile if cfgfile.exists() else None)
+        self.stat_config = os.stat(cfgfile) if cfgfile.exists() else None
 
         if props:
             self.config.add('/', props, tail=False)
@@ -68,77 +76,145 @@ class Site:
             logger.debug(f'Pre-building {cont.url}')
             cont.pre_build()
 
-    def _build_content(self, key):
-        cont = self.contents.get_content(key)
+    def save_deps(self, deps):
+        keys = set(self.contents.get_contents_keys())
+        o = (DEP_VER, keys, deps)
         try:
-            logger.debug(f'Building {cont.url}')
-            outputs = cont.get_outputs()
+            with open(self.path / DEP_FILE, "wb") as f:
+                pickle.dump(o, f)
+        except IOError as e:
+            logger.warn(f'Falied to write {self.path / DEP_FILE}: {e}')
 
-            output_path = self.path / OUTPUTS_DIR
+    def load_deps(self):
+        deppath = self.path / DEP_FILE
+        try:
+            with open(deppath, "rb") as f:
+                DEP_VER, keys, deps = pickle.load(f)
+        except IOError:
+            self.rebuild = True
+            return
 
+        self.stat_depfile = os.stat(deppath)
+        if self.stat_config.st_mtime > self.stat_depfile.st_mtime:
+            self.rebuild = True
+            return
 
-            deps = collections.defaultdict(list)
-            for o in outputs:
-                created = o.write(output_path)
+        for root, dirs, files in os.walk(self.path / TEMPLATES_DIR):
+            root = pathlib.Path(root)
+            for file in files:
+                if (root / file).stat().st_mtime > self.stat_depfile.st_mtime:
+                    self.rebuild = True
+                    return
 
-                src = (o.context.page_content.dirname, o.context.page_content.name)
-                relpath = created.relative_to(output_path)
-                for ref in o.context.depends:
-                    if 'package' in ref.metadata:
-                        continue
-                    deps[(ref.dirname, ref.name)].append(
-                        (str(relpath), src))
+        curkeys = set(self.contents.get_contents_keys())
+        created = curkeys - keys
+        deleted = keys - curkeys
 
-            return dict(deps)
+        if deleted or created:
+            self.rebuild = True
+            return
 
+        output_path = self.path / OUTPUTS_DIR
+        for key, content in self.contents.items():
+            if content.check_update(output_path):
+                refs = deps.get((content.dirname, content.name), ())
+                for filename, ref, pagearg in refs:
+                    if self.contents.has_content(ref):
+                        c = self.contents.get_content(ref)
+                        c.updated = True
+
+                if isinstance(content, contents.ConfigContent):
+                    self.rebuild = True
+                    return
+
+        self.depends = deps
+
+    def _run_build(self, output):
+        logger.debug(f'Building {output.content.url}')
+        output_path = self.path / OUTPUTS_DIR
+        try:
+            dest, context = output.build(output_path)
         except Exception as e:
             if miyadaiku.core.DEBUG:
+                # todo: use logging
                 import traceback
                 traceback.print_exc()
-            exc = _site._translate_exc(cont, e)
+            exc = _site._translate_exc(output.content, e)
             #raise exc
-            return {}
+            return None
+
+        src = (output.content.dirname, output.content.name)
+
+        deps = collections.defaultdict(set)
+        refs, pageargs = context.get_depends()
+        for ref in refs:
+            if 'package' in ref.metadata:
+                continue
+            deps[(ref.dirname, ref.name)].add(
+                (dest, src, pageargs))
+
+        return deps
 
     def build(self):
         global _site
         _site = self
 
-        deps = collections.defaultdict(list)
+        self.load_deps()
+
+        self.outputs = []
+        for key, content in self.contents.items():
+            self.outputs.extend(content.get_outputs())
+
+        output_path = self.path / OUTPUTS_DIR
+        deps = collections.defaultdict(set)
+
         if miyadaiku.core.DEBUG:
-            for key in self.contents.get_contents_keys():
-                ret = _submit_build(key)
+            for output in self.outputs:
+                if not output.content.updated:
+                    continue
+
+                ret = self._run_build(output)
+                if ret is None:
+                    return 1, {}
+
                 for k, v in ret.items():
-                    deps[k].extend(v)
+                    deps[k].update(v)
 
-            return 0, deps
+                self.save_deps(deps)
 
-        err = 0
-
-
-        def done(f):
-            exc = f.exception()
-            nonlocal err
-            if exc:
-                err = 1
-
-            if exc and not isinstance(exc, miyadaiku.core.MiyadaikuBuildError):
-                return
-
-            ret = f.result()
-            for k, v in ret.items():
-                deps[k].extend(v)
+            return 0
 
         if sys.platform == 'win32':
             executer = concurrent.futures.ThreadPoolExecutor
         else:
             executer = concurrent.futures.ProcessPoolExecutor
 
+        err = 0
+
+        def done(f):
+            nonlocal err
+            try:
+                ret = f.result()
+            except Exception as e:
+                err = 1
+                raise e
+
+            if ret is None:
+                err = 1
+                return
+
+            for k, v in ret.items():
+                deps[k].update(v)
+
         with executer() as e:
-            for key in self.contents.get_contents_keys():
-                f = e.submit(_submit_build, key)
+            for i in range(len(self.outputs)):
+                if not self.rebuild and not self.outputs[i].content.updated:
+                    continue
+                f = e.submit(_run, i)
                 f.add_done_callback(done)
 
-        return err, deps
+        self.save_deps(deps)
+        return err
 
     def _translate_exc(self, content, e):
         if isinstance(e, jinja2.exceptions.TemplateSyntaxError):
@@ -153,8 +229,8 @@ class Site:
 
             lines = "\n".join(lines)
             logger.error(
-                f'An error occured while compiling {content} {type(e)}'
-                f'line: {e.lineno} msg: {str(e)}\n'
+                f'An error occured while compiling {content} {type(e)}\n'
+                f'{e.filename}:{e.lineno} {str(e)}\n'
                 f'{lines}'
             )
 
@@ -207,6 +283,12 @@ class Site:
 
 def _submit_build(key):
     return _site._build_content(key)
+
+
+def _run(n):
+    output = _site.outputs[n]
+    return _site._run_build(output)
+
 
 # def run():
 #     dir = pathlib.Path(sys.argv[1])

@@ -10,6 +10,8 @@ import docutils.writers.html5_polyglot
 import docutils.utils
 from docutils.parsers.rst import Directive, directives, roles
 from docutils.parsers.rst.states import MarkupError, Body
+from docutils.readers import standalone
+from docutils.transforms import frontmatter
 
 from . import pygment_directive
 
@@ -111,6 +113,20 @@ RST_SETTINGS = {
 }
 
 
+
+class DocTitleOnly(frontmatter.DocTitle):
+    def promote_subtitle(self, node):
+        return None
+
+class Reader(standalone.Reader):
+    def get_transforms(self):
+        transforms = standalone.Reader.get_transforms(self)
+        # We have PEP-specific frontmatter handling.
+        transforms.remove(frontmatter.DocTitle)
+        transforms.extend([DocTitleOnly])
+        return transforms
+
+
 class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
     docutils.writers.html5_polyglot.HTMLTranslator.special_characters[ord(
         '{')] = '&#123;'
@@ -145,6 +161,7 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
 
 def _make_pub(source_class, metadata):
     pub = docutils.core.Publisher(
+        reader=Reader(),
         source_class=source_class,
         destination_class=docutils.io.StringOutput)
 
