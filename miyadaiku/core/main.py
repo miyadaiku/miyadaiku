@@ -95,7 +95,8 @@ class Site:
             return
 
         self.stat_depfile = os.stat(deppath)
-        if self.stat_config.st_mtime > self.stat_depfile.st_mtime:
+
+        if self.stat_config and self.stat_config.st_mtime > self.stat_depfile.st_mtime:
             self.rebuild = True
             return
 
