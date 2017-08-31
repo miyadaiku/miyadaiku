@@ -43,11 +43,8 @@ class Site:
         p = os.path.abspath(os.path.expanduser(path))
         self.path = pathlib.Path(p)
         cfgfile = path / CONFIG_FILE
-        self.config = config.Config(cfgfile if cfgfile.exists() else None)
+        self.config = config.Config(cfgfile if cfgfile.exists() else None, props)
         self.stat_config = os.stat(cfgfile) if cfgfile.exists() else None
-
-        if props:
-            self.config.add('/', props, tail=False)
 
         self.contents = contents.Contents()
 

@@ -122,7 +122,7 @@ def remove_theme_confs(cfg):
 
 
 class Config:
-    def __init__(self, path):
+    def __init__(self, path, default=None):
         self._configs = collections.defaultdict(list)
         self.themes = []
 
@@ -130,8 +130,10 @@ class Config:
         # read root config
         if path:
             d = yaml.load(path.read_text(encoding=YAML_ENCODING)) or {}
-            self.add((), d)
+            if default:
+                d.update(default)
 
+            self.add((), d)
             themes = list(d.get('themes', [])) + themes
 
             ignore.extend(list(d.get('ignore', [])))
