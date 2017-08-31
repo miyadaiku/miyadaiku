@@ -18,6 +18,8 @@ import miyadaiku.core
 from miyadaiku.core.main import (Site, DEP_FILE, CONFIG_FILE,
                                  CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, OUTPUTS_DIR)
 
+OBSERVER = None
+
 
 class ContentDirHandler(FileSystemEventHandler):
     def __init__(self, ev):
@@ -39,11 +41,21 @@ class ContentDirHandler(FileSystemEventHandler):
         self._ev.set()
 
 
-class ConfigHandker(FileSystemEventHandler):
+DIRS = [CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR]
+
+
+class ConfigHandler(FileSystemEventHandler):
     def __init__(self, ev):
         self._ev = ev
 
     def on_created(self, event):
+        if event.is_directory:
+            if os.path.split(event.src_path)[1] in DIRS:
+                OBSERVER.schedule(
+                    ContentDirHandler(self._ev), event.src_path,
+                    recursive=True)
+            return
+
         if os.path.split(event.src_path)[1] == CONFIG_FILE:
             self._ev.set()
 
@@ -54,6 +66,17 @@ class ConfigHandker(FileSystemEventHandler):
     def on_deleted(self, event):
         if os.path.split(event.src_path)[1] == CONFIG_FILE:
             self._ev.set()
+
+
+def _create_observer(path, ev):
+    observer = Observer()
+    for subdir in DIRS:
+        d = path / subdir
+        if d.is_dir():
+            observer.schedule(ContentDirHandler(ev), str(d), recursive=True)
+
+    observer.schedule(ConfigHandler(ev), str(path), recursive=False)
+    return observer
 
 
 locale.setlocale(locale.LC_ALL, '')
@@ -82,10 +105,20 @@ parser.add_argument('--bind', '-b', default='0.0.0.0',
                     help='bind address')
 
 
-def run_build(d, props):
+def _run_build(d, props):
     site = Site(d, props)
     site.pre_build()
-    return site.build()
+    site.build()
+
+
+def build(d, props):
+    b = multiprocessing.Process(
+        target=_run_build,
+        args=(d, props))
+    b.start()
+    b.join()
+
+    return b.exitcode
 
 
 def run_server(dir, *args, **kwargs):
@@ -94,6 +127,8 @@ def run_server(dir, *args, **kwargs):
 
 
 def _main():
+    global OBSERVER
+
     args = parser.parse_args()
     miyadaiku.core.DEBUG = args.debug
 
@@ -123,41 +158,34 @@ def _main():
             pass
 
     if args.server:
+        outputs = d / OUTPUTS_DIR
+        if not outputs.is_dir():
+            outputs.mkdir()
+
         t = multiprocessing.Process(
             target=run_server,
-            args=(str(d / OUTPUTS_DIR), http.server.SimpleHTTPRequestHandler,),
+            args=(str(outputs), http.server.SimpleHTTPRequestHandler,),
             kwargs=dict(port=args.port, bind=args.bind),
             daemon=True)
 
         t.start()
 
     try:
-        site = Site(d, props)
-        site.pre_build()
-        code = site.build()
-
+        code = build(d, props)
         if args.watch:
             print(f'Watching {d.resolve()} ...')
 
             ev = threading.Event()
 
-            observer = Observer()
-            observer.schedule(ContentDirHandler(ev), str(d / CONTENTS_DIR), recursive=True)
-            observer.schedule(ContentDirHandler(ev), str(d / FILES_DIR), recursive=True)
-            observer.schedule(ContentDirHandler(ev), str(d / TEMPLATES_DIR), recursive=True)
-            observer.schedule(ConfigHandker(ev), str(d), recursive=False)
-            observer.start()
+            OBSERVER = _create_observer(d, ev)
+            OBSERVER.start()
 
             while True:
                 ev.wait()
                 time.sleep(0.1)
                 ev.clear()
 
-                b = multiprocessing.Process(
-                    target=run_build,
-                    args=(d, props))
-                b.start()
-                b.join()
+                build(d, props)
 
         if args.server:
             t.join()

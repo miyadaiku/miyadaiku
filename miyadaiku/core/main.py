@@ -127,21 +127,22 @@ class Site:
 
         self.depends = deps
 
-    def _run_build(self, output):
-        logger.debug(f'Building {output.content.url}')
+    def _run_build(self, out):
+        logger.debug(f'Building {out.content.url}')
         output_path = self.path / OUTPUTS_DIR
         try:
-            dest, context = output.build(output_path)
+            dest, context = out.build(output_path)
         except Exception as e:
             if miyadaiku.core.DEBUG:
                 # todo: use logging
                 import traceback
                 traceback.print_exc()
-            exc = _site._translate_exc(output.content, e)
+            exc = _site._translate_exc(out.content, e)
+            exc
             #raise exc
             return None
 
-        src = (output.content.dirname, output.content.name)
+        src = (out.content.dirname, out.content.name)
 
         deps = collections.defaultdict(set)
         refs, pageargs = context.get_depends()
@@ -163,15 +164,14 @@ class Site:
         for key, content in self.contents.items():
             self.outputs.extend(content.get_outputs())
 
-        output_path = self.path / OUTPUTS_DIR
         deps = collections.defaultdict(set)
 
         if miyadaiku.core.DEBUG:
-            for output in self.outputs:
-                if not output.content.updated:
+            for out in self.outputs:
+                if not out.content.updated:
                     continue
 
-                ret = self._run_build(output)
+                ret = self._run_build(out)
                 if ret is None:
                     return 1, {}
 
@@ -284,8 +284,8 @@ def _submit_build(key):
 
 
 def _run(n):
-    output = _site.outputs[n]
-    return _site._run_build(output)
+    out = _site.outputs[n]
+    return _site._run_build(out)
 
 
 # def run():

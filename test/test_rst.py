@@ -65,6 +65,7 @@ def test_xref(tmpdir):
     print(text)
     assert text == '''<div class="header_target" id="anchor-name"></div>'''
 
+
 def test_subtitle(sitedir):
     f = (sitedir / 'file1.rst')
     f.write_text('''

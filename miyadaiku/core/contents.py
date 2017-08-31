@@ -373,20 +373,6 @@ class BinContent(Content):
         super().__init__(site, dirname, name, metadata, body)
 
     def get_outputs(self):
-        body = self.body
-        if not body:
-            package = self.metadata.get('package')
-            if package:
-                body = pkg_resources.resource_string(package, self.metadata['srcpath'])
-            else:
-                body = self.metadata['srcpath'].read_bytes()
-        context = _context(self.site, self)
-        return [Output(dirname=self.dirname, name=self.name,
-                       stat=self.stat,
-                       body=body,
-                       context=context)]
-
-    def get_outputs(self):
         return [Output(self, self.filename)]
 
     def write(self, path):
@@ -562,15 +548,6 @@ date: {date.isoformat(timespec='seconds')}
             self.metadata['date'] = date
 
     def get_outputs(self):
-        templatename = self.article_template
-        template = self.site.jinjaenv.get_template(templatename)
-        context = _context(self.site, self)
-        body = self.site.render(self, template, **self.get_render_args(context))
-        return [Output(dirname=self.dirname, name=self.filename,
-                       stat=self.stat,
-                       body=body.encode('utf-8'), context=context)]
-
-    def get_outputs(self):
         return [Output(self, self.filename)]
 
     def write(self, path):
@@ -625,62 +602,6 @@ class IndexPage(Content):
 
     def _to_filename(self):
         return self.filename_to_page([''], 1)
-
-    def get_outputs(self):
-        n_per_page = int(self.indexpage_max_articles)
-        page_orphan = int(self.indexpage_orphan)
-
-        templatename1 = self.indexpage_template
-        templatename2 = self.indexpage_template2
-        outputs = []
-
-        filters = getattr(self, 'filters', {})
-        filters['type'] = {'article'}
-        filters['draft'] = {False}
-
-        groups = self.site.contents.group_items(
-            getattr(self, 'groupby', None), filters=filters)
-
-        for names, group in groups:
-            num = len(group)
-            num_pages = ((num - 1) // n_per_page) + 1
-            rest = num - ((num_pages - 1) * n_per_page)
-            if rest <= page_orphan:
-                if num_pages > 1:
-                    num_pages -= 1
-
-            if self.indexpage_max_num_pages:
-                num_pages = min(num_pages, self.indexpage_max_num_pages)
-
-            templatename = templatename1
-            for page in range(0, num_pages):
-                is_last = (page == (num_pages - 1))
-
-                f = page * n_per_page
-                t = num if is_last else f + n_per_page
-
-                context = _context(self.site, self)
-                articles = [ContentArgProxy(context, article)
-                            for article in group[f:t]]
-
-                template = self.site.jinjaenv.get_template(templatename)
-                args = self.get_render_args(context)
-
-                body = self.site.render(self, template,
-                                        group_values=names, cur_page=page + 1, is_last=is_last,
-                                        num_pages=num_pages, articles=articles,
-                                        **args)
-
-                filename = self.filename_to_page(names, page + 1)
-                output = Output(dirname=self.dirname, name=filename,
-                                stat=self.stat,
-                                body=body.encode('utf-8'), context=context)
-                outputs.append(output)
-
-                if templatename2:
-                    templatename = templatename2
-
-        return outputs
 
     def get_outputs(self):
         ret = []
@@ -759,48 +680,6 @@ class FeedPage(Content):
             return '.rdf'
         else:
             raise ValueError(f"Invarid feed type: {feedtype}")
-
-    def get_outputs(self):
-
-        feedtype = self.feedtype
-        if feedtype == 'atom':
-            cls = Atom1Feed
-        elif feedtype == 'rss':
-            cls = Rss201rev2Feed
-        else:
-            raise ValueError(f"Invarid feed type: {feedtype}")
-
-        feed = cls(
-            title=self.site_title,
-            link=self.site_url,
-            feed_url=self.url,
-            description='')
-
-        filters = getattr(self, 'filters', {})
-        filters['type'] = {'article'}
-        filters['draft'] = {False}
-        contents = [c for c in self.site.contents.get_contents(
-            filters=filters)]
-
-        num_articles = int(self.feed_num_articles)
-
-        context = _context(self.site, self)
-        for c in contents[:num_articles]:
-            link = c.url
-            description = c.prop_get_abstract(context, self.abstract_length)
-
-            feed.add_item(
-                title=str(c.title),
-                link=link,
-                unique_id=get_tag_uri(link, c.date),
-                description=str(description),
-                pubdate=c.date,
-            )
-
-        body = feed.writeString('utf-8').encode('utf-8')
-        return [Output(dirname=self.dirname, name=self.filename,
-                       stat=self.stat,
-                       body=body, context=context)]
 
     def get_outputs(self):
 

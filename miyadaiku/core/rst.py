@@ -113,10 +113,10 @@ RST_SETTINGS = {
 }
 
 
-
 class DocTitleOnly(frontmatter.DocTitle):
     def promote_subtitle(self, node):
         return None
+
 
 class Reader(standalone.Reader):
     def get_transforms(self):
