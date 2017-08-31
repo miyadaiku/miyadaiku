@@ -64,3 +64,18 @@ def test_xref(tmpdir):
     metadata, text = rst.load(f)
     print(text)
     assert text == '''<div class="header_target" id="anchor-name"></div>'''
+
+def test_subtitle(sitedir):
+    f = (sitedir / 'file1.rst')
+    f.write_text('''
+title1
+--------------
+
+title2
+===========
+
+abc
+''')
+    metadata, text = rst.load(f)
+    print(text)
+    assert '<h1>title2</h1>' in text
