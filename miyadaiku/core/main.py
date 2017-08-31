@@ -79,8 +79,11 @@ class Site:
     def save_deps(self, deps):
         keys = set(self.contents.get_contents_keys())
         o = (DEP_VER, keys, deps)
-        with open(self.path / DEP_FILE, "wb") as f:
-            pickle.dump(o, f)
+        try:
+            with open(self.path / DEP_FILE, "wb") as f:
+                pickle.dump(o, f)
+        except IOError as e:
+            logger.warn(f'Falied to write {self.path / DEP_FILE}: {e}')
 
     def load_deps(self):
         deppath = self.path / DEP_FILE
