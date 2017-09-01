@@ -21,3 +21,33 @@ def test_feed(sitedir):  # NOQA
 
     p = (sitedir.joinpath('outputs') / 'test.html').read_text()
     assert """<img alt='&lt;&gt;a"\lt' src="test.html"/>""" in p
+
+
+def test_markupsafe(sitedir):
+    (sitedir / 'contents/test.yml').write_text("""
+type: article
+html: "<abc> "
+abstract: "<def>"
+""")
+
+    (sitedir / 'contents/disp.rst').write_text("""
+
+.. jinja::
+
+   {{page.load('./test.yml').html}}
+
+
+.. jinja::
+
+   {{page.load('./test.yml').abstract}}
+
+
+""")
+
+    import miyadaiku.core
+    site = main.Site(sitedir)
+    site.build()
+
+    p = (sitedir.joinpath('outputs') / 'disp.html').read_text()
+    assert """<abc>""" in  p
+    assert """<def>""" in  p

@@ -94,6 +94,20 @@ class ContentArgProxy:
         target = self.load(target)
         return self.context.page_content.link_to(self.context, target, *args, **kwargs)
 
+    @property
+    def html(self):
+        ret = self.__getattr__('html')
+        return self._to_markupsafe(ret)
+
+    @property
+    def abstract(self):
+        ret = self.__getattr__('abstract')
+        return self._to_markupsafe(ret)
+
+    def _to_markupsafe(self, s):
+        if not hasattr(s, '__html__'):
+            s = HTMLValue(s)
+        return s
 
 class ContentsArgProxy:
     def __init__(self, conext, content):

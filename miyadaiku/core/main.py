@@ -168,7 +168,7 @@ class Site:
 
         if miyadaiku.core.DEBUG:
             for out in self.outputs:
-                if not out.content.updated:
+                if not self.rebuild and not self.outputs[i].content.updated:
                     continue
 
                 ret = self._run_build(out)
