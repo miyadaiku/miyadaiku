@@ -25,6 +25,20 @@ from . import YAML_ENCODING
 
 logger = logging.getLogger(__name__)
 
+class ContentNotFount(Exception):
+    content = None
+
+    def __str__(self):
+        ret = super().__str__()
+        if self.content:
+            ret = ret + f' in {self.content.srcfilename} is not found'
+        return ret
+
+    def __repr__(self):
+        ret = super().__repr__()
+        if self.content:
+            ret = ret + f' in {self.content.srcfilename} is not found'
+        return ret
 
 class _metadata(dict):
     def __getattr__(self, name):
@@ -76,8 +90,12 @@ class ContentArgProxy:
     _omit = object()
 
     def load(self, target, default=_omit):
-        ret = self.content.get_content(target)
-        return ContentArgProxy(self.context, ret)
+        try:
+            ret = self.content.get_content(target)
+            return ContentArgProxy(self.context, ret)
+        except ContentNotFount as e:
+            e.content = self.content
+            raise
 
     def path(self, *args, **kwargs):
         return self.context.page_content.path_to(self, *args, **kwargs)
@@ -205,8 +223,8 @@ class Content:
 
     def __str__(self):
         return f'<{self.__class__.__module__}.{self.__class__.__name__} {self.srcfilename}>'
-    _omit = object()
 
+    _omit = object()
     def get_metadata(self, name, default=_omit):
         if name in self.metadata:
             return config.format_value(name, getattr(self.metadata, name))
@@ -792,7 +810,10 @@ class Contents:
 
     def get_content(self, key, base=None):
         dirname, filename = utils.abs_path(key, base.dirname if base else None)
-        return self._contents[(dirname, filename)]
+        try:
+            return self._contents[(dirname, filename)]
+        except KeyError:
+            raise ContentNotFount(key)
 
     def get_contents(self, subdirs=None, base=None, filters=None):
         contents = [c for c in self._contents.values()]
