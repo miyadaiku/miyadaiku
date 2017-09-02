@@ -39,7 +39,11 @@ class Site:
     depends = frozenset()
     stat_depfile = None
 
-    def __init__(self, path, props=None):
+    def __init__(self, path, props=None, debug=None):
+        self.debug = debug
+        if self.debug is None:
+            self.debug = miyadaiku.core.DEBUG
+
         p = os.path.abspath(os.path.expanduser(path))
         self.path = pathlib.Path(p)
         cfgfile = path / CONFIG_FILE
@@ -168,7 +172,7 @@ class Site:
 
         if miyadaiku.core.DEBUG:
             for out in self.outputs:
-                if not self.rebuild and not self.outputs[i].content.updated:
+                if not self.rebuild and not out.content.updated:
                     continue
 
                 ret = self._run_build(out)

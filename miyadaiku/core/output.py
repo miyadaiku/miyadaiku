@@ -39,6 +39,9 @@ class Output:
         if not dest.startswith(s) or dest[len(s)] not in '\\/':
             raise ValueError(f"Invalid file name: {self.content.filename}")
 
+        if os.path.exists(dest):
+            os.unlink(dest)
+
         context = self.content.write(pathlib.Path(dest), *self.args, **self.kwargs)
 
         if self.content.stat:
