@@ -202,7 +202,7 @@ class Content:
         return True
 
     def __str__(self):
-        return f'<{self.__class__.__module__}.{self.__class__.__name__} {self.url}>'
+        return f'<{self.__class__.__module__}.{self.__class__.__name__} {self.srcfilename}>'
     _omit = object()
 
     def get_metadata(self, name, default=_omit):
@@ -227,10 +227,10 @@ class Content:
     def _to_filename(self):
         filename_templ = self.filename_templ
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
-        template = self.site.template_from_string(self, filename_templ)
-        context = _context(self.site, self)
-        ret = self.site.render(self, template, **self.get_render_args(context))
 
+        context = _context(self.site, self)
+        ret = self.site.render_from_string(self, "filename_templ", filename_templ,
+                                           **self.get_render_args(context))
         assert ret
         return ret
 
@@ -269,6 +269,18 @@ class Content:
             return ''
         d, name = posixpath.split(name)
         return posixpath.splitext(name)[1]
+
+    @property
+    def srcfilename(self):
+        package = self.metadata.get('package', '')
+        if package:
+            package = package+'!'
+
+        path = self.metadata.get('srcpath', None)
+        if path:
+            return package+str(path)
+
+        return package+os.path.join('/'.join(self.dirname), self.name)
 
     @property
     def url(self):
@@ -451,9 +463,8 @@ class HTMLContent(Content):
         if ret:
             return ret
 
-        template = self.site.template_from_string(self, self.body or '')
-
-        html = self.site.render(self, template, **self.get_render_args(context))
+        html = self.site.render_from_string(self, "html", self.body or '',
+                                           **self.get_render_args(context))
 
         headers, html = self._set_header_id(html)
 
@@ -568,7 +579,9 @@ date: {date.isoformat(timespec='seconds')}
         templatename = self.article_template
         template = self.site.jinjaenv.get_template(templatename)
         context = _context(self.site, self)
-        body = self.site.render(self, template, **self.get_render_args(context))
+#        body = self.site.render(self, template, **self.get_render_args(context))
+
+        body = self.site.render_from_template(self, template, **self.get_render_args(context))
 
         path.write_bytes(body.encode('utf-8'))
 
@@ -599,14 +612,12 @@ class IndexPage(Content):
                 filename_templ = self.indexpage_filename_templ2
 
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
-        template = self.site.template_from_string(self, filename_templ)
 
         context = _context(self.site, self)
-        ret = self.site.render(self, template,
-                               value=value, cur_page=npage,
-                               **self.get_render_args(context))
+        return self.site.render_from_string(self, "indexpage_group_filename", filename_templ,
+                                     value=value, cur_page=npage,
+                                     **self.get_render_args(context))
 
-        return ret
 
     def get_output_path(self, values=(), npage=None, *args, **kwargs):
         if not npage:
@@ -673,7 +684,12 @@ class IndexPage(Content):
 
         args = self.get_render_args(context)
 
-        body = self.site.render(self, template,
+#        body = self.site.render(self, template,
+#                                group_values=group_values, cur_page=cur_page, is_last=is_last,
+#                                num_pages=num_pages, articles=articles,
+#                               **args)
+
+        body = self.site.render_from_template(self, template,
                                 group_values=group_values, cur_page=cur_page, is_last=is_last,
                                 num_pages=num_pages, articles=articles,
                                 **args)

@@ -53,7 +53,7 @@ abstract: "<def>"
     assert """<def>""" in  p
 
 
-def test_exception(sitedir):
+def test_exception_tag(sitedir):
     (sitedir / 'contents/test.rst').write_text("""
 .. jinja::
 
@@ -64,10 +64,10 @@ def test_exception(sitedir):
     site = main.Site(sitedir)
     site.build()
 
-    p = (sitedir.joinpath('outputs') / 'test.html').read_text()
+    # todo: check output
 
 
-def test_exception2(sitedir):
+def test_exception_templ(sitedir):
     (sitedir / 'contents/test.rst').write_text("""
 abc
 """)
@@ -82,8 +82,6 @@ abc
     site = main.Site(sitedir, debug=True)
     site.build()
 
-    p = (sitedir.joinpath('outputs') / 'test.html').read_text()
-    print(p)
-
+    # todo: check output
 
 

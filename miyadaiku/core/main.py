@@ -6,6 +6,7 @@ import os
 import logging
 import shutil
 import yaml
+import traceback
 import collections
 import dateutil.parser
 import concurrent.futures
@@ -74,8 +75,12 @@ class Site:
 
     def pre_build(self):
         for cont in self.contents.get_contents():
-            logger.debug(f'Pre-building {cont.url}')
-            cont.pre_build()
+            try:
+                logger.debug(f'Pre-building {cont.srcfilename}')
+                cont.pre_build()
+            except Exception as e:
+                exc = self._translate_exc(cont, e)
+                raise exc
 
     def save_deps(self, deps):
         keys = set(self.contents.get_contents_keys())
@@ -132,16 +137,15 @@ class Site:
         self.depends = deps
 
     def _run_build(self, out):
-        logger.debug(f'Building {out.content.url}')
+        logger.debug(f'Building {out.content.srcfilename}')
         output_path = self.path / OUTPUTS_DIR
         try:
             dest, context = out.build(output_path)
         except Exception as e:
             if miyadaiku.core.DEBUG:
                 # todo: use logging
-                import traceback
                 traceback.print_exc()
-            exc = _site._translate_exc(out.content, e)
+            exc = self._translate_exc(out.content, e)
             exc
             #raise exc
             return None
@@ -166,7 +170,11 @@ class Site:
 
         self.outputs = []
         for key, content in self.contents.items():
-            self.outputs.extend(content.get_outputs())
+            try:
+                self.outputs.extend(content.get_outputs())
+            except Exception as e:
+                exc = self._translate_exc(content, e)
+                raise exc
 
         deps = collections.defaultdict(set)
 
@@ -218,87 +226,80 @@ class Site:
         self.save_deps(deps)
         return err
 
+    def nthlines(self, src, lineno):
+        src = src.split('\n')
+        f = max(0, lineno - 3)
+        lines = []
+        for n in range(f, min(f + 5, len(src))):
+            if n == (lineno - 1):
+                lines.append('>>> ' + src[n])
+            else:
+                lines.append('    ' + src[n])
+
+        lines = "\n".join(lines).rstrip() + '\n'
+        return lines
+
     def _translate_exc(self, content, e):
         if isinstance(e, jinja2.exceptions.TemplateSyntaxError):
-            src = e.source.split('\n')
-            f = max(0, e.lineno - 3)
-            lines = []
-            for n in range(f, min(f + 5, len(src))):
-                if n == (e.lineno - 1):
-                    lines.append('>>> ' + src[n])
-                else:
-                    lines.append('    ' + src[n])
-
-            lines = "\n".join(lines)
-            logger.error(
-                f'An error occured while compiling {content} {type(e)}\n'
+            lines = self.nthlines(e.source, lineno)
+            logger.exception(
+                f'An error occured while compiling {content}: {type(e)}\n'
                 f'{e.filename}:{e.lineno} {str(e)}\n'
                 f'{lines}'
             )
 
             exc = miyadaiku.core.MiyadaikuBuildError(str(e))
-            exc.filename = content.url
+            exc.filename = content.srcfilename
             exc.lineno = e.lineno
             exc.source = e.source
 
             return exc
 
+        elif isinstance(e, miyadaiku.core.MiyadaikuBuildError):
+            pass
         else:
-            logger.error(
-                f'An error occured while compiling {content.url} {type(e)} msg: {str(e)}')
+            traceback.print_exc()
+            logger.exception(
+                f'An error occured while compiling {content.srcfilename}: {type(e)} msg: {str(e)}')
             exc = miyadaiku.core.MiyadaikuBuildError(str(e))
-            exc.filename = content.url
+            exc.filename = content.srcfilename
             exc.lineno = None
             return exc
 
-    def _get_template(self, basecontent, f, *args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except miyadaiku.core.MiyadaikuBuildError:
-            raise
-
-        except Exception as e:
-            exc = self._translate_exc(basecontent, e)
-            raise exc
-
-    def get_template(self, basecontent, name):
-        return self._get_template(basecontent, self.jinjaenv.get_template, name)
-
-    def template_from_string(self, basecontent, src):
-        return self._get_template(basecontent, self.jinjaenv.from_string, src)
-
     def render(self, basecontent, template, **kwargs):
+        return template.render(**kwargs)
+
+    def _get_last_tb(self, exc):
+        return list(traceback.walk_tb(exc.__traceback__))[-1]
+
+    def _render(self, content, template, src, args, kwargs):
         try:
             return template.render(**kwargs)
-
-        except miyadaiku.core.MiyadaikuBuildError:
+        except Exception as e:
+            tb, lineno = self._get_last_tb(e)
+            if tb.f_code.co_filename == template.filename:
+                lines = self.nthlines(src, lineno)
+                logger.error(
+                    f'An error occured while rendering {content}: {type(e)}\n'
+                    f'{template.filename}:{lineno} {str(e)}\n'
+                    f'{lines}'
+                )
             raise
 
-        except Exception as e:
-            logger.error(
-                f'An error occured while rendering {basecontent.url} {type(e)} msg: {str(e)}')
-            exc = miyadaiku.core.MiyadaikuBuildError(str(e))
-            exc.filename = basecontent.url
-            exc.lineno = None
-            raise exc
+    def render_from_string(self, curcontent, propname, text, *args, **kwargs):
+        template = self.jinjaenv.from_string(text)
+        if propname:
+            propname = '.' + propname
+        template.filename = f'<#{curcontent.srcfilename}{propname}>'
 
+        return self._render(curcontent, template, text, args, kwargs)
 
-def _submit_build(key):
-    return _site._build_content(key)
+    def render_from_template(self, curcontent, filename, *args, **kwargs):
+        template = self.jinjaenv.get_template(filename)
+        return self._render(curcontent, template, "", args, kwargs)
 
 
 def _run(n):
     out = _site.outputs[n]
     return _site._run_build(out)
 
-
-# def run():
-#     dir = pathlib.Path(sys.argv[1])
-#     site = Site(dir)
-#     site.build()
-#     site.write()
-
-
-# if __name__ == "__main__":
-#     happylogging.initlog(filename='-', level='DEBUG')
-#     run()
