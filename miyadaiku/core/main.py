@@ -82,9 +82,9 @@ class Site:
                 exc = self._translate_exc(cont, e)
                 raise exc
 
-    def save_deps(self, deps):
+    def save_deps(self):
         keys = set(self.contents.get_contents_keys())
-        o = (DEP_VER, keys, deps)
+        o = (DEP_VER, keys, self.depends)
         try:
             with open(self.path / DEP_FILE, "wb") as f:
                 pickle.dump(o, f)
@@ -92,6 +92,8 @@ class Site:
             logger.warn(f'Falied to write {self.path / DEP_FILE}: {e}')
 
     def load_deps(self):
+        self.depends = collections.defaultdict(set)
+
         deppath = self.path / DEP_FILE
         try:
             with open(deppath, "rb") as f:
@@ -176,21 +178,18 @@ class Site:
                 exc = self._translate_exc(content, e)
                 raise exc
 
-        deps = collections.defaultdict(set)
-
         if miyadaiku.core.DEBUG:
             for out in self.outputs:
                 if not self.rebuild and not out.content.updated:
                     continue
-
                 ret = self._run_build(out)
                 if ret is None:
                     return 1, {}
 
                 for k, v in ret.items():
-                    deps[k].update(v)
+                    self.depends[k].update(v)
 
-                self.save_deps(deps)
+            self.save_deps()
 
             return 0
 
@@ -214,7 +213,7 @@ class Site:
                 return
 
             for k, v in ret.items():
-                deps[k].update(v)
+                self.depends[k].update(v)
 
         with executer() as e:
             for i in range(len(self.outputs)):
@@ -223,7 +222,9 @@ class Site:
                 f = e.submit(_run, i)
                 f.add_done_callback(done)
 
-        self.save_deps(deps)
+        if not err:
+            self.save_deps()
+
         return err
 
     def nthlines(self, src, lineno):
@@ -258,7 +259,6 @@ class Site:
         elif isinstance(e, miyadaiku.core.MiyadaikuBuildError):
             pass
         else:
-            traceback.print_exc()
             logger.exception(
                 f'An error occured while compiling {content.srcfilename}: {type(e)} msg: {str(e)}')
             exc = miyadaiku.core.MiyadaikuBuildError(str(e))
@@ -289,8 +289,8 @@ class Site:
     def render_from_string(self, curcontent, propname, text, *args, **kwargs):
         template = self.jinjaenv.from_string(text)
         if propname:
-            propname = '.' + propname
-        template.filename = f'<#{curcontent.srcfilename}{propname}>'
+            propname = ' $' + propname
+        template.filename = f'<{curcontent.srcfilename}>{propname}'
 
         return self._render(curcontent, template, text, args, kwargs)
 

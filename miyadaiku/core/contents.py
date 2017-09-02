@@ -70,8 +70,7 @@ class ContentArgProxy:
             return getattr(self.content, name)
         except Exception as e:
             if miyadaiku.core.DEBUG:
-                import traceback
-                traceback.print_exc()
+                logging.exception(f'error detected in getattr({self}, name)')
             raise
 
     _omit = object()
@@ -168,6 +167,9 @@ class Content:
                     pass
 
     def check_update(self, output_path):
+        if self.updated:
+            return True
+
         stat = self.metadata.get('stat', None)
         if self._check_fileupdate(output_path, stat):
             return True
@@ -278,7 +280,8 @@ class Content:
 
         path = self.metadata.get('srcpath', None)
         if path:
-            return package+str(path)
+            path = os.path.relpath(path)
+            return package+path
 
         return package+os.path.join('/'.join(self.dirname), self.name)
 
@@ -543,6 +546,18 @@ class HTMLContent(Content):
 class Snippet(HTMLContent):
     def get_outputs(self):
         return []
+
+    def check_update(self, output_path):
+        if self.updated:
+            return True
+
+        stat = self.metadata.get('stat', None)
+        if self.site.stat_depfile and stat.st_mtime > self.site.stat_depfile.st_mtime:
+            self.updated = True
+            return True
+
+        self.updated = False
+        return False
 
 
 class Article(HTMLContent):

@@ -112,14 +112,16 @@ def _run_build(d, props):
 
 
 def build(d, props):
-    b = multiprocessing.Process(
-        target=_run_build,
-        args=(d, props))
-    b.start()
-    b.join()
+    if not miyadaiku.core.DEBUG:
+        b = multiprocessing.Process(
+            target=_run_build,
+            args=(d, props))
+        b.start()
+        b.join()
 
-    return b.exitcode
-
+        return b.exitcode
+    else:
+        return _run_build(d, props)
 
 def run_server(dir, *args, **kwargs):
     os.chdir(dir)
