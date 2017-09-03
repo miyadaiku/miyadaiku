@@ -112,16 +112,10 @@ def _run_build(d, props):
 
 
 def build(d, props):
-    if not miyadaiku.core.DEBUG:
-        b = multiprocessing.Process(
-            target=_run_build,
-            args=(d, props))
-        b.start()
-        b.join()
+    site = Site(d, props)
+    site.pre_build()
+    site.build()
 
-        return b.exitcode
-    else:
-        return _run_build(d, props)
 
 def run_server(dir, *args, **kwargs):
     os.chdir(dir)
@@ -137,10 +131,6 @@ def _main():
     lv = 'DEBUG' if miyadaiku.core.DEBUG else 'INFO'
 
     happylogging.initlog(filename='-', level=lv)
-
-    logging.warning.setcolor("GREEN")
-    logging.error.setcolor("RED")
-    logging.exception.setcolor("RED")
 
     props = {}
     for s in args.define or ():

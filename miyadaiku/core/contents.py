@@ -25,20 +25,22 @@ from . import YAML_ENCODING
 
 logger = logging.getLogger(__name__)
 
+
 class ContentNotFount(Exception):
     content = None
 
     def __str__(self):
         ret = super().__str__()
         if self.content:
-            ret = ret + f' in {self.content.srcfilename} is not found'
+            ret = ret + f' in {self.content.srcfilename!r} is not found'
         return ret
 
     def __repr__(self):
         ret = super().__repr__()
         if self.content:
-            ret = ret + f' in {self.content.srcfilename} is not found'
+            ret = ret + f' in {self.content.srcfilename!r} is not found'
         return ret
+
 
 class _metadata(dict):
     def __getattr__(self, name):
@@ -74,18 +76,13 @@ class ContentArgProxy:
         self.context.add_depend(self.content)
 
     def __getattr__(self, name):
-        try:
-            if not hasattr(self.content, name):
-                prop = f'prop_get_{name}'
-                f = getattr(self.content, prop, None)
-                if f:
-                    return f(self.context)
+        if not hasattr(self.content, name):
+            prop = f'prop_get_{name}'
+            f = getattr(self.content, prop, None)
+            if f:
+                return f(self.context)
 
-            return getattr(self.content, name)
-        except Exception as e:
-            if miyadaiku.core.DEBUG:
-                logging.exception(f'error detected in getattr({self}, name)')
-            raise
+        return getattr(self.content, name)
 
     _omit = object()
 
@@ -125,6 +122,7 @@ class ContentArgProxy:
         if not hasattr(s, '__html__'):
             s = HTMLValue(s)
         return s
+
 
 class ContentsArgProxy:
     def __init__(self, conext, content):
@@ -225,6 +223,7 @@ class Content:
         return f'<{self.__class__.__module__}.{self.__class__.__name__} {self.srcfilename}>'
 
     _omit = object()
+
     def get_metadata(self, name, default=_omit):
         if name in self.metadata:
             return config.format_value(name, getattr(self.metadata, name))
@@ -294,14 +293,14 @@ class Content:
     def srcfilename(self):
         package = self.metadata.get('package', '')
         if package:
-            package = package+'!'
+            package = package + '!'
 
         path = self.metadata.get('srcpath', None)
         if path:
             path = os.path.relpath(path)
-            return package+path
+            return package + path
 
-        return package+os.path.join('/'.join(self.dirname), self.name)
+        return package + os.path.join('/'.join(self.dirname), self.name)
 
     @property
     def url(self):
@@ -485,7 +484,7 @@ class HTMLContent(Content):
             return ret
 
         html = self.site.render_from_string(self, "html", self.body or '',
-                                           **self.get_render_args(context))
+                                            **self.get_render_args(context))
 
         headers, html = self._set_header_id(html)
 
@@ -648,9 +647,8 @@ class IndexPage(Content):
 
         context = _context(self.site, self)
         return self.site.render_from_string(self, "indexpage_group_filename", filename_templ,
-                                     value=value, cur_page=npage,
-                                     **self.get_render_args(context))
-
+                                            value=value, cur_page=npage,
+                                            **self.get_render_args(context))
 
     def get_output_path(self, values=(), npage=None, *args, **kwargs):
         if not npage:
@@ -723,9 +721,9 @@ class IndexPage(Content):
 #                               **args)
 
         body = self.site.render_from_template(self, template,
-                                group_values=group_values, cur_page=cur_page, is_last=is_last,
-                                num_pages=num_pages, articles=articles,
-                                **args)
+                                              group_values=group_values, cur_page=cur_page, is_last=is_last,
+                                              num_pages=num_pages, articles=articles,
+                                              **args)
 
         path.write_bytes(body.encode('utf-8'))
         return context
@@ -813,7 +811,7 @@ class Contents:
         try:
             return self._contents[(dirname, filename)]
         except KeyError:
-            raise ContentNotFount(key)
+            raise ContentNotFount(key) from None
 
     def get_contents(self, subdirs=None, base=None, filters=None):
         contents = [c for c in self._contents.values()]

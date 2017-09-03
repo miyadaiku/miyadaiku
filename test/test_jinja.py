@@ -49,8 +49,8 @@ abstract: "<def>"
     site.build()
 
     p = (sitedir.joinpath('outputs') / 'disp.html').read_text()
-    assert """<abc>""" in  p
-    assert """<def>""" in  p
+    assert """<abc>""" in p
+    assert """<def>""" in p
 
 
 def test_exception_tag(sitedir):
@@ -83,5 +83,3 @@ abc
     site.build()
 
     # todo: check output
-
-

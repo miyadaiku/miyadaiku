@@ -3,6 +3,7 @@ import pickle
 import pathlib
 import importlib
 import os
+import io
 import logging
 import shutil
 import yaml
@@ -11,6 +12,12 @@ import collections
 import dateutil.parser
 import concurrent.futures
 import jinja2.exceptions
+
+
+class _MiyadaukuJunja2SyntaxError(Exception):
+    source = ''
+    lineno = 1
+    filename = None
 
 
 def timestamp_constructor(loader, node):
@@ -79,8 +86,9 @@ class Site:
                 logger.debug(f'Pre-building {cont.srcfilename}')
                 cont.pre_build()
             except Exception as e:
-                exc = self._translate_exc(cont, e)
-                raise exc
+                msg, tb = self._repr_exception(cont, e)
+                self.print_err(msg, tb)
+                raise e
 
     def save_deps(self):
         keys = set(self.contents.get_contents_keys())
@@ -144,13 +152,8 @@ class Site:
         try:
             dest, context = out.build(output_path)
         except Exception as e:
-            if miyadaiku.core.DEBUG:
-                # todo: use logging
-                traceback.print_exc()
-            exc = self._translate_exc(out.content, e)
-            exc
-            #raise exc
-            return None
+            msg, tb = self._repr_exception(out.content, e)
+            return None, (msg, tb)
 
         src = (out.content.dirname, out.content.name)
 
@@ -162,7 +165,7 @@ class Site:
             deps[(ref.dirname, ref.name)].add(
                 (dest, src, pageargs))
 
-        return deps
+        return deps, (None, None)
 
     def build(self):
         global _site
@@ -175,15 +178,17 @@ class Site:
             try:
                 self.outputs.extend(content.get_outputs())
             except Exception as e:
-                exc = self._translate_exc(content, e)
-                raise exc
+                msg, tb = self._repr_exception(content, e)
+                self.print_err(msg, tb)
+                return 1
 
         if miyadaiku.core.DEBUG:
             for out in self.outputs:
                 if not self.rebuild and not out.content.updated:
                     continue
-                ret = self._run_build(out)
+                ret, (msg, tb) = self._run_build(out)
                 if ret is None:
+                    self.print_err(msg, tb)
                     return 1, {}
 
                 for k, v in ret.items():
@@ -201,14 +206,17 @@ class Site:
         err = 0
 
         def done(f):
+            import os
             nonlocal err
             try:
-                ret = f.result()
+                ret, (msg, tb) = f.result()
             except Exception as e:
+                #                import pdb;pdb.set_trace()
                 err = 1
                 raise e
 
             if ret is None:
+                self.print_err(msg, tb)
                 err = 1
                 return
 
@@ -227,7 +235,16 @@ class Site:
 
         return err
 
-    def nthlines(self, src, lineno):
+    def nthlines(self, filename, src, lineno):
+        if not src:
+            try:
+                if filename and os.path.exists(filename):
+                    src = open(filename).read()
+            except IOError:
+                src = ''
+
+        if not src:
+            return ''
         src = src.split('\n')
         f = max(0, lineno - 3)
         lines = []
@@ -240,31 +257,24 @@ class Site:
         lines = "\n".join(lines).rstrip() + '\n'
         return lines
 
-    def _translate_exc(self, content, e):
-        if isinstance(e, jinja2.exceptions.TemplateSyntaxError):
-            lines = self.nthlines(e.source, lineno)
-            logger.exception(
-                f'An error occured while compiling {content}: {type(e)}\n'
+    def _repr_exception(self, content, e):
+        if isinstance(e, (jinja2.exceptions.TemplateSyntaxError, _MiyadaukuJunja2SyntaxError)):
+            lines = self.nthlines(e.filename, e.source, e.lineno)
+            s = (
+                f'jinja2.exceptions.TemplateSyntaxError occured while compiling {content}\n'
                 f'{e.filename}:{e.lineno} {str(e)}\n'
                 f'{lines}'
             )
-
-            exc = miyadaiku.core.MiyadaikuBuildError(str(e))
-            exc.filename = content.srcfilename
-            exc.lineno = e.lineno
-            exc.source = e.source
-
-            return exc
-
-        elif isinstance(e, miyadaiku.core.MiyadaikuBuildError):
-            pass
         else:
-            logger.exception(
-                f'An error occured while compiling {content.srcfilename}: {type(e)} msg: {str(e)}')
-            exc = miyadaiku.core.MiyadaikuBuildError(str(e))
-            exc.filename = content.srcfilename
-            exc.lineno = None
-            return exc
+            s = f'An error occured while compiling {content.srcfilename}: {type(e)} msg: {str(e)}'
+
+        t = io.StringIO()
+        traceback.print_exception(type(e), e, e.__traceback__, file=t)
+        return (s, t.getvalue())
+
+    def print_err(self, msg, tb):
+        logger.error(msg)
+        logger.error(tb)
 
     def render(self, basecontent, template, **kwargs):
         return template.render(**kwargs)
@@ -278,7 +288,7 @@ class Site:
         except Exception as e:
             tb, lineno = self._get_last_tb(e)
             if tb.f_code.co_filename == template.filename:
-                lines = self.nthlines(src, lineno)
+                lines = self.nthlines(tb.f_code.co_filename, src, lineno)
                 logger.error(
                     f'An error occured while rendering {content}: {type(e)}\n'
                     f'{template.filename}:{lineno} {str(e)}\n'
@@ -287,7 +297,14 @@ class Site:
             raise
 
     def render_from_string(self, curcontent, propname, text, *args, **kwargs):
-        template = self.jinjaenv.from_string(text)
+        try:
+            template = self.jinjaenv.from_string(text)
+        except jinja2.exceptions.TemplateSyntaxError as e:
+            exc = _MiyadaukuJunja2SyntaxError(str(e))
+            exc.source = e.source
+            exc.lineno = e.lineno
+            raise exc from None
+
         if propname:
             propname = ' $' + propname
         template.filename = f'<{curcontent.srcfilename}>{propname}'
@@ -302,4 +319,3 @@ class Site:
 def _run(n):
     out = _site.outputs[n]
     return _site._run_build(out)
-

@@ -6,6 +6,7 @@ import collections
 MKDIR_MAX_RETRY = 5
 MKDIR_WAIT = 0.05
 
+
 class Output:
     @staticmethod
     def calc_path(path, dirname, name):
