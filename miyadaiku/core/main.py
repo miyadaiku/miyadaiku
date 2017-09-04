@@ -39,7 +39,7 @@ FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
 DEP_FILE = '_depends.pickle'
-DEP_VER = '1.0.0'
+DEP_VER = '1.0.1'
 
 
 class Site:
@@ -92,7 +92,7 @@ class Site:
 
     def save_deps(self):
         keys = set(self.contents.get_contents_keys())
-        o = (DEP_VER, keys, self.depends)
+        o = (DEP_VER, keys, (self.rebuild_always, self.depends))
         try:
             with open(self.path / DEP_FILE, "wb") as f:
                 pickle.dump(o, f)
@@ -101,12 +101,17 @@ class Site:
 
     def load_deps(self):
         self.depends = collections.defaultdict(set)
+        self.rebuild_always = set()
 
         deppath = self.path / DEP_FILE
         try:
             with open(deppath, "rb") as f:
-                DEP_VER, keys, deps = pickle.load(f)
-        except IOError:
+                ver, keys, values = pickle.load(f)
+            if ver != DEP_VER:
+                self.rebuild = True
+                return
+            rebuild_always, deps = values
+        except Exception:
             self.rebuild = True
             return
 
@@ -133,7 +138,8 @@ class Site:
 
         output_path = self.path / OUTPUTS_DIR
         for key, content in self.contents.items():
-            if content.check_update(output_path):
+            if (key in rebuild_always) or content.check_update(output_path):
+                content.updated = True
                 refs = deps.get((content.dirname, content.name), ())
                 for filename, ref, pagearg in refs:
                     if self.contents.has_content(ref):
@@ -145,15 +151,16 @@ class Site:
                     return
 
         self.depends = deps
+        self.rebuild_always = rebuild_always
 
     def _run_build(self, out):
-        logger.debug(f'Building {out.content.srcfilename}')
+        logger.info(f'Building {out.content.srcfilename}')
         output_path = self.path / OUTPUTS_DIR
         try:
             dest, context = out.build(output_path)
         except Exception as e:
             msg, tb = self._repr_exception(out.content, e)
-            return None, (msg, tb)
+            return None, False, (msg, tb)
 
         src = (out.content.dirname, out.content.name)
 
@@ -165,14 +172,13 @@ class Site:
             deps[(ref.dirname, ref.name)].add(
                 (dest, src, pageargs))
 
-        return deps, (None, None)
+        return deps, context.is_rebuild_always(), (None, None)
 
     def build(self):
         global _site
         _site = self
 
         self.load_deps()
-
         self.outputs = []
         for key, content in self.contents.items():
             try:
@@ -186,13 +192,16 @@ class Site:
             for out in self.outputs:
                 if not self.rebuild and not out.content.updated:
                     continue
-                ret, (msg, tb) = self._run_build(out)
+                ret, rebuild_always, (msg, tb) = self._run_build(out)
                 if ret is None:
                     self.print_err(msg, tb)
                     return 1, {}
 
                 for k, v in ret.items():
                     self.depends[k].update(v)
+
+                if rebuild_always:
+                    self.rebuild_always.add((out.content.dirname, out.content.name))
 
             self.save_deps()
 
@@ -205,11 +214,11 @@ class Site:
 
         err = 0
 
-        def done(f):
+        def done(f, out):
             import os
             nonlocal err
             try:
-                ret, (msg, tb) = f.result()
+                ret, rebuild_always, (msg, tb) = f.result()
             except Exception as e:
                 #                import pdb;pdb.set_trace()
                 err = 1
@@ -223,12 +232,15 @@ class Site:
             for k, v in ret.items():
                 self.depends[k].update(v)
 
+            if rebuild_always:
+                self.rebuild_always.add((out.content.dirname, out.content.name))
+
         with executer() as e:
             for i in range(len(self.outputs)):
                 if not self.rebuild and not self.outputs[i].content.updated:
                     continue
                 f = e.submit(_run, i)
-                f.add_done_callback(done)
+                f.add_done_callback(lambda f, c=self.outputs[i]: done(f, c))
 
         if not err:
             self.save_deps()

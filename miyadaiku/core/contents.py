@@ -52,6 +52,7 @@ class _context(dict):
         self.site = site
         self.page_content = page_content
         self.__depends = set()
+        self.__rebuildallways = False
         self.__pageargs = pageargs
 
     def __getattr__(self, name):
@@ -68,6 +69,12 @@ class _context(dict):
 
     def get_depends(self):
         return (self.__depends, self.__pageargs)
+
+    def set_rebuild(self):
+        self.__rebuildallways = True
+
+    def is_rebuild_always(self):
+        return self.__rebuildallways
 
 
 class ContentArgProxy:
@@ -140,10 +147,12 @@ class ContentsArgProxy:
         return ContentArgProxy(self.context, ret)
 
     def get_contents(self, *args, **kwargs):
+        self.context.set_rebuild()
         ret = self.context.site.contents.get_contents(*args, **kwargs)
         return [ContentArgProxy(self.context, content) for content in ret]
 
     def group_items(self, *args, **kwargs):
+        self.context.set_rebuild()
         ret = self.context.site.contents.group_items(*args, **kwargs)
         ret = [(v, [ContentArgProxy(self.context, content)
                     for content in c]) for v, c in ret]
@@ -191,14 +200,11 @@ class Content:
             return True
 
         if not stat:
-            self.updated = False
             return False
 
         if self.site.stat_depfile and stat.st_mtime > self.site.stat_depfile.st_mtime:
-            self.updated = True
             return True
 
-        self.updated = False
         return False
 
     def _check_fileupdate(self, outputpath, stat):
