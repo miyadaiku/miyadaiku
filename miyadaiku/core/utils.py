@@ -4,7 +4,8 @@ import unicodedata
 import pkg_resources
 import posixpath
 import re
-
+import random
+import time
 
 def walk(path):
     articles = []
@@ -88,3 +89,34 @@ def slugify(value):
     value = re.sub('[^\w\s-]', '', value).strip().lower()
     value = '-'.join(value.split())
     return value
+
+
+MKDIR_MAX_RETRY = 5
+MKDIR_WAIT = 0.1
+
+def prepare_output_path(path, dirname, name):
+    dir = path.joinpath(*dirname)
+    name = name.strip('/\\')
+    dest = os.path.expanduser((dir / name))
+    dest = os.path.normpath(dest)
+
+    s = str(path)
+    if not dest.startswith(s) or dest[len(s)] not in '\\/':
+        raise ValueError(f"Invalid file name: {dest}")
+
+    dirname = os.path.split(dest)[0]
+    for i in range(MKDIR_MAX_RETRY):
+        if os.path.isdir(dirname):
+            break
+        try:
+            os.makedirs(dirname, exist_ok=True)
+        except IOError:
+            pass
+
+        time.sleep(MKDIR_WAIT * random.random())
+
+    if os.path.exists(dest):
+        os.unlink(dest)
+
+    return dest
+

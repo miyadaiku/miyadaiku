@@ -153,24 +153,24 @@ class Site:
         self.depends = deps
         self.rebuild_always = rebuild_always
 
-    def _run_build(self, out):
-        logger.info(f'Building {out.content.srcfilename}')
+    def _run_build(self, content):
+        logger.info(f'Building {content.srcfilename}')
         output_path = self.path / OUTPUTS_DIR
         try:
-            dest, context = out.build(output_path)
+            destfiles, context = content.build(output_path)
         except Exception as e:
-            msg, tb = self._repr_exception(out.content, e)
+            msg, tb = self._repr_exception(content, e)
             return None, False, (msg, tb)
 
-        src = (out.content.dirname, out.content.name)
+        src = (content.dirname, content.name)
 
         deps = collections.defaultdict(set)
         refs, pageargs = context.get_depends()
         for ref in refs:
             if 'package' in ref.metadata:
                 continue
-            deps[(ref.dirname, ref.name)].add(
-                (dest, src, pageargs))
+            deps[(ref.dirname, ref.name)].update(
+                (dest, src, pageargs) for dest in destfiles)
 
         return deps, context.is_rebuild_always(), (None, None)
 
@@ -179,20 +179,12 @@ class Site:
         _site = self
 
         self.load_deps()
-        self.outputs = []
-        for key, content in self.contents.items():
-            try:
-                self.outputs.extend(content.get_outputs())
-            except Exception as e:
-                msg, tb = self._repr_exception(content, e)
-                self.print_err(msg, tb)
-                return 1
 
         if miyadaiku.core.DEBUG:
-            for out in self.outputs:
-                if not self.rebuild and not out.content.updated:
+            for key, content in self.contents.items():
+                if not self.rebuild and not content.updated:
                     continue
-                ret, rebuild_always, (msg, tb) = self._run_build(out)
+                ret, rebuild_always, (msg, tb) = self._run_build(content)
                 if ret is None:
                     self.print_err(msg, tb)
                     return 1, {}
@@ -201,10 +193,9 @@ class Site:
                     self.depends[k].update(v)
 
                 if rebuild_always:
-                    self.rebuild_always.add((out.content.dirname, out.content.name))
+                    self.rebuild_always.add((content.dirname, content.name))
 
             self.save_deps()
-
             return 0
 
         if sys.platform == 'win32':
@@ -214,8 +205,8 @@ class Site:
 
         err = 0
 
-        def done(f, out):
-            import os
+        def done(f, key):
+            content = self.contents.get_content(key)
             nonlocal err
             try:
                 ret, rebuild_always, (msg, tb) = f.result()
@@ -233,14 +224,14 @@ class Site:
                 self.depends[k].update(v)
 
             if rebuild_always:
-                self.rebuild_always.add((out.content.dirname, out.content.name))
+                self.rebuild_always.add((content.dirname, content.name))
 
         with executer() as e:
-            for i in range(len(self.outputs)):
-                if not self.rebuild and not self.outputs[i].content.updated:
+            for key, content in self.contents.items():
+                if not self.rebuild and not content.updated:
                     continue
-                f = e.submit(_run, i)
-                f.add_done_callback(lambda f, c=self.outputs[i]: done(f, c))
+                f = e.submit(_run, key)
+                f.add_done_callback(lambda f, key=key: done(f, key))
 
         if not err:
             self.save_deps()
@@ -328,6 +319,6 @@ class Site:
         return self._render(curcontent, template, "", args, kwargs)
 
 
-def _run(n):
-    out = _site.outputs[n]
-    return _site._run_build(out)
+def _run(key):
+    content = _site.contents.get_content(key)
+    return _site._run_build(content)

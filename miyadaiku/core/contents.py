@@ -378,8 +378,11 @@ class Content:
                                               abs_path=abs_path, *args, **kwargs))
         return markupsafe.Markup(f"<a href='{path}' { ' '.join(s_attrs) }>{text}</a>")
 
-    def get_outputs(self):
-        return []
+    def build(self, dir):
+        return [], _context(self.site, self)
+
+#    def get_outputs(self):
+#        return []
 
     def pre_build(self):
         pass
@@ -413,9 +416,6 @@ class Content:
 
 
 class ConfigContent(Content):
-    def get_outputs(self):
-        return []
-
     def _check_fileupdate(self, output_path, stat):
         return False
 
@@ -424,8 +424,13 @@ class BinContent(Content):
     def __init__(self, site, dirname, name, metadata, body):
         super().__init__(site, dirname, name, metadata, body)
 
-    def get_outputs(self):
-        return [Output(self, self.filename)]
+    def build(self, dir):
+        outfilename = utils.prepare_output_path(dir, self.dirname, self.filename)
+        context = self.write(outfilename)
+        return [outfilename], context
+
+#    def get_outputs(self):
+#        return [Output(self, self.filename)]
 
     def write(self, path):
         body = self.body
@@ -433,11 +438,11 @@ class BinContent(Content):
             package = self.metadata.get('package')
             if package:
                 body = pkg_resources.resource_string(package, self.metadata['srcpath'])
-                path.write_bytes(body)
+                Path(path).write_bytes(body)
             else:
-                shutil.copyfile(str(self.metadata['srcpath']), str(path))
+                shutil.copyfile(str(self.metadata['srcpath']), path)
         else:
-            path.write_bytes(body)
+            Path(path).write_bytes(body)
 
         context = _context(self.site, self)
         return context
@@ -567,9 +572,6 @@ class HTMLContent(Content):
 
 
 class Snippet(HTMLContent):
-    def get_outputs(self):
-        return []
-
     def check_update(self, output_path):
         if self.updated:
             return True
@@ -610,18 +612,20 @@ date: {date.isoformat(timespec='seconds')}
 
             self.metadata['date'] = date
 
-    def get_outputs(self):
-        return [Output(self, self.filename)]
+    def build(self, dir):
+        outfilename = utils.prepare_output_path(dir, self.dirname, self.filename)
+        context = self.write(outfilename)
+        return [outfilename], context
 
     def write(self, path):
+        context = _context(self.site, self)
+
         templatename = self.article_template
         template = self.site.jinjaenv.get_template(templatename)
-        context = _context(self.site, self)
-#        body = self.site.render(self, template, **self.get_render_args(context))
 
         body = self.site.render_from_template(self, template, **self.get_render_args(context))
 
-        path.write_bytes(body.encode('utf-8'))
+        Path(path).write_bytes(body.encode('utf-8'))
 
         return context
 
@@ -665,8 +669,49 @@ class IndexPage(Content):
     def _to_filename(self):
         return self.filename_to_page([''], 1)
 
-    def get_outputs(self):
-        ret = []
+#    def get_outputs(self):
+#        ret = []
+#
+#        filters = getattr(self, 'filters', {})
+#        filters['type'] = {'article'}
+#        filters['draft'] = {False}
+#
+#        groups = self.site.contents.group_items(
+#            getattr(self, 'groupby', None), filters=filters)
+#
+#        n_per_page = int(self.indexpage_max_articles)
+#        page_orphan = int(self.indexpage_orphan)
+#        for names, group in groups:
+#            num = len(group)
+#            num_pages = ((num - 1) // n_per_page) + 1
+#            rest = num - ((num_pages - 1) * n_per_page)
+#
+#            if rest <= page_orphan:
+#                if num_pages > 1:
+#                    num_pages -= 1
+#
+#            if self.indexpage_max_num_pages:
+#                num_pages = min(num_pages, self.indexpage_max_num_pages)
+#
+#            for page in range(0, num_pages):
+#
+#                is_last = (page == (num_pages - 1))
+#
+#                f = page * n_per_page
+#                t = num if is_last else f + n_per_page
+#                articles = group[f:t]
+#
+#                filename = self.filename_to_page(names, page + 1)
+#                output = Output(self, filename, group_values=names, cur_page=page + 1,
+#                                is_last=is_last, num_pages=num_pages, articles=articles)
+#                ret.append(output)
+#
+#        return ret
+
+
+    def build(self, dir):
+        context = _context(self.site, self)
+        outfilenames = []
 
         filters = getattr(self, 'filters', {})
         filters['type'] = {'article'}
@@ -698,13 +743,15 @@ class IndexPage(Content):
                 articles = group[f:t]
 
                 filename = self.filename_to_page(names, page + 1)
-                output = Output(self, filename, group_values=names, cur_page=page + 1,
+                outfilename = utils.prepare_output_path(dir, self.dirname, filename)
+
+                self.write(outfilename, context, group_values=names, cur_page=page + 1,
                                 is_last=is_last, num_pages=num_pages, articles=articles)
-                ret.append(output)
+                outfilenames.append(outfilename)
 
-        return ret
+        return outfilenames, context
 
-    def write(self, path, group_values, cur_page, is_last,
+    def write(self, path, context, group_values, cur_page, is_last,
               num_pages, articles):
         if cur_page == 1:
             templatename = self.indexpage_template
@@ -715,23 +762,17 @@ class IndexPage(Content):
 
         template = self.site.jinjaenv.get_template(templatename)
 
-        context = _context(self.site, self, pageargs=(cur_page - 1,))
         articles = [ContentArgProxy(context, article)
                     for article in articles]
 
         args = self.get_render_args(context)
-
-#        body = self.site.render(self, template,
-#                                group_values=group_values, cur_page=cur_page, is_last=is_last,
-#                                num_pages=num_pages, articles=articles,
-#                               **args)
 
         body = self.site.render_from_template(self, template,
                                               group_values=group_values, cur_page=cur_page, is_last=is_last,
                                               num_pages=num_pages, articles=articles,
                                               **args)
 
-        path.write_bytes(body.encode('utf-8'))
+        Path(path).write_bytes(body.encode('utf-8'))
         return context
 
 
@@ -748,19 +789,35 @@ class FeedPage(Content):
         else:
             raise ValueError(f"Invarid feed type: {feedtype}")
 
-    def get_outputs(self):
+
+
+#    def get_outputs(self):
+#
+#        filters = getattr(self, 'filters', {})
+#        filters['type'] = {'article'}
+#        filters['draft'] = {False}
+#        contents = [c for c in self.site.contents.get_contents(
+#            filters=filters)]
+#
+#        num_articles = int(self.feed_num_articles)
+#
+#        return [Output(self, self.filename, contents=contents[:num_articles])]
+#
+    def build(self, dir):
+        outfilename = utils.prepare_output_path(dir, self.dirname, self.filename)
+        context = self.write(outfilename)
+        return [outfilename], context
+
+    def write(self, path):
+
+        num_articles = int(self.feed_num_articles)
 
         filters = getattr(self, 'filters', {})
         filters['type'] = {'article'}
         filters['draft'] = {False}
         contents = [c for c in self.site.contents.get_contents(
-            filters=filters)]
+            filters=filters)][:num_articles]
 
-        num_articles = int(self.feed_num_articles)
-
-        return [Output(self, self.filename, contents=contents[:num_articles])]
-
-    def write(self, path, contents):
         feedtype = self.feedtype
         if feedtype == 'atom':
             cls = Atom1Feed
@@ -789,7 +846,7 @@ class FeedPage(Content):
             )
 
         body = feed.writeString('utf-8')
-        path.write_bytes(body.encode('utf-8'))
+        Path(path).write_bytes(body.encode('utf-8'))
         return context
 
 
