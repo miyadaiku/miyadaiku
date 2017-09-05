@@ -154,6 +154,8 @@ class Site:
         self.rebuild_always = rebuild_always
 
     def _run_build(self, content):
+        import time
+        f = time.time()
         logger.info(f'Building {content.srcfilename}')
         output_path = self.path / OUTPUTS_DIR
         try:
@@ -172,6 +174,7 @@ class Site:
             deps[(ref.dirname, ref.name)].update(
                 (dest, src, pageargs) for dest in destfiles)
 
+        logger.debug(f'{content.srcfilename}: {time.time()-f}')
         return deps, context.is_rebuild_always(), (None, None)
 
     def build(self):
