@@ -114,9 +114,7 @@ def _run_build(d, props):
 def build(d, props):
     site = Site(d, props)
     site.pre_build()
-
-    import cProfile
-    cProfile.runctx("site.build()", globals(), locals(), filename='aaa.prof')
+    site.build()
 
 
 def run_server(dir, *args, **kwargs):
