@@ -80,7 +80,6 @@ class _context(dict):
 class ContentArgProxy:
     def __init__(self, context, content):
         self.context, self.content = context, content
-        self.context.add_depend(self.content)
 
     def __getattr__(self, name):
         if not hasattr(self.content, name):
@@ -147,12 +146,10 @@ class ContentsArgProxy:
         return ContentArgProxy(self.context, ret)
 
     def get_contents(self, *args, **kwargs):
-        self.context.set_rebuild()
         ret = self.context.site.contents.get_contents(*args, **kwargs)
         return [ContentArgProxy(self.context, content) for content in ret]
 
     def group_items(self, *args, **kwargs):
-        self.context.set_rebuild()
         ret = self.context.site.contents.group_items(*args, **kwargs)
         ret = [(v, [ContentArgProxy(self.context, content)
                     for content in c]) for v, c in ret]
@@ -485,6 +482,7 @@ class HTMLContent(Content):
         return headers, str(soup)
 
     def _get_html(self, context):
+        context.add_depend(self)
         ret = self._html_cache.get(context.page_content, None)
         if ret:
             return ret
@@ -617,7 +615,6 @@ date: {date.isoformat(timespec='seconds')}
         templatename = self.article_template
         template = self.site.jinjaenv.get_template(templatename)
         context = _context(self.site, self)
-#        body = self.site.render(self, template, **self.get_render_args(context))
 
         body = self.site.render_from_template(self, template, **self.get_render_args(context))
 
@@ -668,7 +665,7 @@ class IndexPage(Content):
     def get_outputs(self):
         ret = []
 
-        filters = getattr(self, 'filters', {})
+        filters = getattr(self, 'filters', {}).copy()
         filters['type'] = {'article'}
         filters['draft'] = {False}
 
@@ -750,7 +747,7 @@ class FeedPage(Content):
 
     def get_outputs(self):
 
-        filters = getattr(self, 'filters', {})
+        filters = getattr(self, 'filters', {}).copy()
         filters['type'] = {'article'}
         filters['draft'] = {False}
         contents = [c for c in self.site.contents.get_contents(

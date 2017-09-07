@@ -2,6 +2,7 @@ import sys
 import pickle
 import pathlib
 import importlib
+import hashlib
 import os
 import io
 import logging
@@ -39,7 +40,7 @@ FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
 OUTPUTS_DIR = 'outputs'
 DEP_FILE = '_depends.pickle'
-DEP_VER = '1.0.1'
+DEP_VER = '1.0.2'
 
 
 class Site:
@@ -90,9 +91,21 @@ class Site:
                 self.print_err(msg, tb)
                 raise e
 
+    def get_metadatas(self):
+        all = {}
+        for k, c in self.contents.items():
+            m = dict(c.metadata)
+            if 'stat' in m:
+                del m['stat']
+            all[k] = m
+
+        return all
+
     def save_deps(self):
         keys = set(self.contents.get_contents_keys())
-        o = (DEP_VER, keys, (self.rebuild_always, self.depends))
+        metadatas = self.get_metadatas()
+        o = (DEP_VER, keys, (self.rebuild_always, self.depends, metadatas))
+
         try:
             with open(self.path / DEP_FILE, "wb") as f:
                 pickle.dump(o, f)
@@ -110,8 +123,12 @@ class Site:
             if ver != DEP_VER:
                 self.rebuild = True
                 return
-            rebuild_always, deps = values
+            rebuild_always, deps, metadatas = values
         except Exception:
+            self.rebuild = True
+            return
+
+        if metadatas != self.get_metadatas():
             self.rebuild = True
             return
 
@@ -137,18 +154,29 @@ class Site:
             return
 
         output_path = self.path / OUTPUTS_DIR
+
         for key, content in self.contents.items():
             if (key in rebuild_always) or content.check_update(output_path):
                 content.updated = True
-                refs = deps.get((content.dirname, content.name), ())
-                for filename, ref, pagearg in refs:
-                    if self.contents.has_content(ref):
-                        c = self.contents.get_content(ref)
-                        c.updated = True
 
                 if isinstance(content, contents.ConfigContent):
                     self.rebuild = True
                     return
+
+        updated_items = [content for key, content in self.contents.items() if content.updated]
+
+        while updated_items:
+            updated = []
+            for content in updated_items:
+                refs = deps.get((content.dirname, content.name), ())
+                for filename, ref, pagearg in refs:
+                    if self.contents.has_content(ref):
+                        c = self.contents.get_content(ref)
+                        if not c.updated:
+                            c.updated = True
+                            updated.append(c)
+
+            updated_items = updated
 
         self.depends = deps
         self.rebuild_always = rebuild_always
