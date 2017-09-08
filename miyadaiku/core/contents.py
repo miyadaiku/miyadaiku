@@ -54,6 +54,7 @@ class _context(dict):
         self.__depends = set()
         self.__rebuildallways = False
         self.__pageargs = pageargs
+        self.__html_cache = {}
 
     def __getattr__(self, name):
         return self.get(name, None)
@@ -75,6 +76,15 @@ class _context(dict):
 
     def is_rebuild_always(self):
         return self.__rebuildallways
+
+    def get_html_cache(self, content):
+        return self.__html_cache.get((content.dirname, content.name), (None, None))[0]
+
+    def get_header_cache(self, content):
+        return self.__html_cache.get((content.dirname, content.name), (None, None))[1]
+
+    def set_html_cache(self, content, html, headers):
+        self.__html_cache[(content.dirname, content.name)] = (html, headers)
 
 
 class ContentArgProxy:
@@ -448,9 +458,6 @@ class HTMLContent(Content):
     def __init__(self, site, dirname, name, metadata, body):
         super().__init__(site, dirname, name, metadata, body)
 
-        self._html_cache = {}
-        self._header_cache = {}
-
     @property
     def ext(self):
         ext = self.get_metadata('ext', None)
@@ -483,8 +490,8 @@ class HTMLContent(Content):
 
     def _get_html(self, context):
         context.add_depend(self)
-        ret = self._html_cache.get(context.page_content, None)
-        if ret:
+        ret = context.get_html_cache(self)
+        if ret is not None:
             return ret
 
         html = self.site.render_from_string(self, "html", self.body or '',
@@ -492,17 +499,16 @@ class HTMLContent(Content):
 
         headers, html = self._set_header_id(html)
 
-        self._html_cache[context.page_content] = html
-        self._header_cache[context.page_content] = headers
+        ret = context.set_html_cache(self, html, headers)
         return html
 
     def _get_headers(self, context):
-        ret = self._header_cache.get(context.page_content)
+        ret = context.get_header_cache(self)
         if ret is not None:
             return ret
 
         self._get_html(context)
-        return self._header_cache.get(context.page_content)
+        return context.get_header_cache(self)
 
     _in_get_headertext = False
 
@@ -513,6 +519,7 @@ class HTMLContent(Content):
         self._in_get_headertext = True
         try:
             headers = self._get_headers(context)
+            assert headers is not None
             for id, elem, text in headers:
                 if id == fragment:
                     return text
@@ -922,6 +929,11 @@ class FileLoader:
     def _build_content(self, site, package, srcpath, dirname, filename, metadata, body):
         return content_class(metadata['type'])(site, dirname, filename, metadata, body)
 
+    def _update_metadata(self, base, add):
+        keys = list(add.keys() - base.keys())
+        for k in keys:
+            base[k] = add[k]
+
     def from_file(self, site, srcpath, destpath):
         metadata = {
             'srcpath': srcpath,
@@ -965,20 +977,20 @@ class BinaryLoader(FileLoader):
 class RstLoader(FileLoader):
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
         _metadata, body = rst.load(srcpath, metadata)
-        metadata.update(_metadata)
+        self._update_metadata(metadata, _metadata)
         return body
 
     def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
         src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
         _metadata, body = rst.load_string(src, metadata)
-        metadata.update(_metadata)
+        self._update_metadata(metadata, _metadata)
         return body
 
 
 class YamlLoader(FileLoader):
     def _load(self, src, metadata):
         _metadata = yaml.load(src) or {}
-        metadata.update(_metadata)
+        self._update_metadata(metadata, _metadata)
 
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
         src = srcpath.read_text(encoding=YAML_ENCODING)
@@ -992,38 +1004,42 @@ class YamlLoader(FileLoader):
 class HtmlLoader(FileLoader):
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
         _metadata, body = html.load(srcpath)
-        metadata.update(_metadata)
+        self._update_metadata(metadata, _metadata)
         return body
 
     def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
         src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
         _metadata, body = html.load_string(src)
-        metadata.update(_metadata)
+        self._update_metadata(metadata, _metadata)
         return body
 
 
 class MdLoader(FileLoader):
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
         _metadata, body = md.load(srcpath)
-        metadata.update(_metadata)
+        self._update_metadata(metadata, _metadata)
         return body
 
     def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
         src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
         _metadata, body = md.load_string(src)
+        self._update_metadata(metadata, _metadata)
         return body
 
 
 class IpynbLoader(FileLoader):
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
         _metadata, body = ipynb.load(srcpath)
-        metadata.update(_metadata)
+        self._update_metadata(metadata, _metadata)
+
+#        if 'title' not in metadata:
+
         return body
 
     def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
         src = pkg_resources.resource_string(package, srcpath).decode('utf-8')
         _metadata, body = ipynb.load_string(src)
-        metadata.update(_metadata)
+        self._update_metadata(metadata, _metadata)
         return body
 
 
