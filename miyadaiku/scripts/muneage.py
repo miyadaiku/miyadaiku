@@ -1,4 +1,5 @@
 import sys
+import runpy
 import locale
 import argparse
 import os
@@ -17,7 +18,7 @@ from watchdog.events import FileSystemEventHandler
 import miyadaiku.core
 from miyadaiku.core.main import (Site, DEP_FILE, CONFIG_FILE,
                                  CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, OUTPUTS_DIR)
-
+from miyadaiku.core.hooks import HOOKS, run_hook
 OBSERVER = None
 
 
@@ -105,16 +106,24 @@ parser.add_argument('--bind', '-b', default='0.0.0.0',
                     help='bind address')
 
 
-def _run_build(d, props):
-    site = Site(d, props)
+def build(d, props, debug=False):
+    run_hook(HOOKS.start, d, props)
+
+    site = Site(d, props, debug)
     site.pre_build()
-    site.build()
+    code = site.build()
+
+    run_hook(HOOKS.finished, site, code, site)
 
 
-def build(d, props):
-    site = Site(d, props)
-    site.pre_build()
-    site.build()
+def load_hook(d):
+    modules = (d / 'modules').resolve()
+    if modules.is_dir():
+        sys.path.insert(0, modules)
+
+    hook = (d / 'hooks.py').resolve()
+    if hook.exists():
+        runpy.run_path(str(hook))
 
 
 def run_server(dir, *args, **kwargs):
@@ -141,6 +150,8 @@ def _main():
         props[d[0]] = d[1]
 
     d = pathlib.Path(args.directory)
+
+    load_hook(d)
 
     if args.rebuild:
         deppath = d / DEP_FILE

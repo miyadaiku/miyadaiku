@@ -6,6 +6,7 @@ import hashlib
 import os
 import io
 import logging
+import enum
 import shutil
 import yaml
 import traceback
@@ -32,6 +33,7 @@ from . import config
 from . import contents
 from . import jinjaenv
 from . import output
+from .hooks import run_hook, HOOKS
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE = 'config.yml'
@@ -182,15 +184,17 @@ class Site:
         self.rebuild_always = rebuild_always
 
     def _run_build(self, content):
-        import time
-        f = time.time()
         logger.info(f'Building {content.srcfilename}')
+
         output_path = self.path / OUTPUTS_DIR
+        run_hook(HOOKS.pre_build, self, content, output_path)
         try:
             destfiles, context = content.build(output_path)
         except Exception as e:
             msg, tb = self._repr_exception(content, e)
             return None, False, (msg, tb)
+
+        run_hook(HOOKS.post_build, self, content, output_path, destfiles)
 
         src = (content.dirname, content.name)
 
@@ -202,7 +206,6 @@ class Site:
             deps[(ref.dirname, ref.name)].update(
                 (dest, src, pageargs) for dest in destfiles)
 
-        logger.debug(f'{content.srcfilename}: {time.time()-f}')
         return deps, context.is_rebuild_always(), (None, None)
 
     def build(self):
@@ -211,7 +214,7 @@ class Site:
 
         self.load_deps()
 
-        if miyadaiku.core.DEBUG:
+        if self.debug:
             for key, content in self.contents.items():
                 if not self.rebuild and not content.updated:
                     continue

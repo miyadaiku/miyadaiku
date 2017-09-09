@@ -20,12 +20,14 @@ import pytz
 from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
 
 import miyadaiku.core
-from . import utils, rst, html, md, config, ipynb
+from . import utils, rst, html, md, config, ipynb, hooks
+from .hooks import run_hook, HOOKS
 from . output import Output
 from . import YAML_ENCODING
 
 logger = logging.getLogger(__name__)
-LARGE_FILE_SIZE = 1024*1024*1024 # 1
+LARGE_FILE_SIZE = 1024 * 1024 * 1024  # 1
+
 
 class ContentNotFount(Exception):
     content = None
@@ -89,7 +91,7 @@ class _context(dict):
         return self.__html_cache.get((content.dirname, content.name), (None, None))[1]
 
     def set_html_cache(self, content, html, headers):
-        f = tempfile.SpooledTemporaryFile(mode='w', max_size=1024*1024*1024,
+        f = tempfile.SpooledTemporaryFile(mode='w', max_size=1024 * 1024 * 1024,
                                           encoding='utf32')
         f.write(html)
         self.__html_cache[(content.dirname, content.name)] = (f, headers)
@@ -396,9 +398,6 @@ class Content:
     def build(self, dir):
         return [], _context(self.site, self)
 
-#    def get_outputs(self):
-#        return []
-
     def pre_build(self):
         pass
 
@@ -444,9 +443,6 @@ class BinContent(Content):
         context = self.write(outfilename)
         return [outfilename], context
 
-#    def get_outputs(self):
-#        return [Output(self, self.filename)]
-
     def write(self, path):
         body = self.body
         if not body:
@@ -469,6 +465,7 @@ class HTMLValue(markupsafe.Markup):
 
 class HTMLContent(Content):
     has_jinja = True
+
     def __init__(self, site, dirname, name, metadata, body):
         super().__init__(site, dirname, name, metadata, body)
 
@@ -511,7 +508,7 @@ class HTMLContent(Content):
         html = self.body or ''
         if self.has_jinja:
             html = self.site.render_from_string(self, "html", html,
-                                            **self.get_render_args(context))
+                                                **self.get_render_args(context))
 
         headers, html = self._set_header_id(html)
 
@@ -684,46 +681,6 @@ class IndexPage(Content):
     def _to_filename(self):
         return self.filename_to_page([''], 1)
 
-#    def get_outputs(self):
-#        ret = []
-#
-#        filters = getattr(self, 'filters', {})
-#        filters['type'] = {'article'}
-#        filters['draft'] = {False}
-#
-#        groups = self.site.contents.group_items(
-#            getattr(self, 'groupby', None), filters=filters)
-#
-#        n_per_page = int(self.indexpage_max_articles)
-#        page_orphan = int(self.indexpage_orphan)
-#        for names, group in groups:
-#            num = len(group)
-#            num_pages = ((num - 1) // n_per_page) + 1
-#            rest = num - ((num_pages - 1) * n_per_page)
-#
-#            if rest <= page_orphan:
-#                if num_pages > 1:
-#                    num_pages -= 1
-#
-#            if self.indexpage_max_num_pages:
-#                num_pages = min(num_pages, self.indexpage_max_num_pages)
-#
-#            for page in range(0, num_pages):
-#
-#                is_last = (page == (num_pages - 1))
-#
-#                f = page * n_per_page
-#                t = num if is_last else f + n_per_page
-#                articles = group[f:t]
-#
-#                filename = self.filename_to_page(names, page + 1)
-#                output = Output(self, filename, group_values=names, cur_page=page + 1,
-#                                is_last=is_last, num_pages=num_pages, articles=articles)
-#                ret.append(output)
-#
-#        return ret
-
-
     def build(self, dir):
         context = _context(self.site, self)
         outfilenames = []
@@ -761,7 +718,7 @@ class IndexPage(Content):
                 outfilename = utils.prepare_output_path(dir, self.dirname, filename)
 
                 self.write(outfilename, context, group_values=names, cur_page=page + 1,
-                                is_last=is_last, num_pages=num_pages, articles=articles)
+                           is_last=is_last, num_pages=num_pages, articles=articles)
                 outfilenames.append(outfilename)
 
         return outfilenames, context
@@ -804,20 +761,6 @@ class FeedPage(Content):
         else:
             raise ValueError(f"Invarid feed type: {feedtype}")
 
-
-
-#    def get_outputs(self):
-#
-#        filters = getattr(self, 'filters', {})
-#        filters['type'] = {'article'}
-#        filters['draft'] = {False}
-#        contents = [c for c in self.site.contents.get_contents(
-#            filters=filters)]
-#
-#        num_articles = int(self.feed_num_articles)
-#
-#        return [Output(self, self.filename, contents=contents[:num_articles])]
-#
     def build(self, dir):
         outfilename = utils.prepare_output_path(dir, self.dirname, self.filename)
         context = self.write(outfilename)
@@ -1154,6 +1097,7 @@ def load_directory(site, path, loader=None):
             if filename.lower().endswith(METADATA_FILE_SUFFIX):
                 continue
 
+            run_hook(HOOKS.pre_load, site, p, None)
             _loader = loader
             if not _loader:
                 _loader = getContentLoader(p.suffix)
@@ -1161,6 +1105,9 @@ def load_directory(site, path, loader=None):
             content = _loader.from_file(site, p, name)
             if content:
                 site.contents.add(content)
+
+            run_hook(HOOKS.post_load, site, p, None, content)
+
         except Exception as e:
             logger.exception(f'Error loading {p}')
             raise
@@ -1173,6 +1120,8 @@ def load_package(site, package, path, loader=None):
         path = path + '/'
 
     for filename in utils.walk_package(package, path):
+        run_hook(HOOKS.pre_load, site, filename, package)
+
         name = filename[len(path):]
         if name.lower().endswith(METADATA_FILE_SUFFIX):
             continue
@@ -1185,5 +1134,6 @@ def load_package(site, package, path, loader=None):
         content = _loader.from_package(site, package, filename, name)
         if content:
             site.contents.add(content)
+        run_hook(HOOKS.post_load, site, filename, package, content)
 
     return

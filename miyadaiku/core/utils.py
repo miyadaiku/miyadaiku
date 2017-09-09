@@ -7,6 +7,7 @@ import re
 import random
 import time
 
+
 def walk(path):
     articles = []
     path = path.expanduser().resolve()
@@ -94,6 +95,7 @@ def slugify(value):
 MKDIR_MAX_RETRY = 5
 MKDIR_WAIT = 0.1
 
+
 def prepare_output_path(path, dirname, name):
     dir = path.joinpath(*dirname)
     name = name.strip('/\\')
@@ -119,4 +121,3 @@ def prepare_output_path(path, dirname, name):
         os.unlink(dest)
 
     return dest
-
