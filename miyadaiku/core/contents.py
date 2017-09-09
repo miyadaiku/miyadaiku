@@ -8,6 +8,7 @@ import datetime
 import pkg_resources
 from pathlib import Path, PosixPath
 import urllib.parse
+import tempfile
 import yaml
 from jinja2 import Template
 import jinja2.exceptions
@@ -24,7 +25,7 @@ from . output import Output
 from . import YAML_ENCODING
 
 logger = logging.getLogger(__name__)
-
+LARGE_FILE_SIZE = 1024*1024*1024 # 1
 
 class ContentNotFount(Exception):
     content = None
@@ -78,13 +79,20 @@ class _context(dict):
         return self.__rebuildallways
 
     def get_html_cache(self, content):
-        return self.__html_cache.get((content.dirname, content.name), (None, None))[0]
+        f = self.__html_cache.get((content.dirname, content.name), (None, None))[0]
+        if f:
+            f.seek(0)
+            return f.read()
+        return f
 
     def get_header_cache(self, content):
         return self.__html_cache.get((content.dirname, content.name), (None, None))[1]
 
     def set_html_cache(self, content, html, headers):
-        self.__html_cache[(content.dirname, content.name)] = (html, headers)
+        f = tempfile.SpooledTemporaryFile(mode='w', max_size=1024*1024*1024,
+                                          encoding='utf32')
+        f.write(html)
+        self.__html_cache[(content.dirname, content.name)] = (f, headers)
 
 
 class ContentArgProxy:
