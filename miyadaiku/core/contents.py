@@ -733,10 +733,8 @@ class IndexPage(Content):
             templatename = self.indexpage_template
 
         template = self.site.jinjaenv.get_template(templatename)
-
         articles = [ContentArgProxy(context, article)
                     for article in articles]
-
         args = self.get_render_args(context)
 
         body = self.site.render_from_template(self, template,
