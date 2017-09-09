@@ -25,6 +25,10 @@ def start(dirname, props):
 def finished(dirname, props, site):
     seen.add('finished')
 
+@initialized
+def initialized(site):
+    seen.add('initialized')
+
 @pre_load
 def pre_load(site, filename, package):
     assert site
@@ -34,6 +38,10 @@ def pre_load(site, filename, package):
 def post_load(site, filename, package, content):
     assert site
     seen.add('post_load')
+
+@loaded
+def loaded(site):
+    seen.add('loaded')
 
 @pre_build
 def pre_build(site, content, output_path):
@@ -57,4 +65,5 @@ test
     build(sitedir, {}, debug=True)
 
     import __main__
-    assert len(__main__.seen_test_build_depend) == 6
+    print(__main__.seen_test_build_depend)
+    assert len(__main__.seen_test_build_depend) == 8

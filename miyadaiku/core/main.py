@@ -71,12 +71,16 @@ class Site:
             if f:
                 f(self)
 
+        run_hook(HOOKS.initialized, self)
+
         contents.load_directory(self, path / CONTENTS_DIR)
         contents.load_directory(self, path / FILES_DIR, contents.bin_loader)
 
         for theme in self.config.themes:
             contents.load_package(self, theme, CONTENTS_DIR)
             contents.load_package(self, theme, FILES_DIR, contents.bin_loader)
+
+        run_hook(HOOKS.loaded, self)
 
     def add_template_module(self, name, templatename):
         template = self.jinjaenv.get_template(templatename)
