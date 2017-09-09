@@ -32,7 +32,6 @@ import miyadaiku.core
 from . import config
 from . import contents
 from . import jinjaenv
-from . import output
 from .hooks import run_hook, HOOKS
 
 logger = logging.getLogger(__name__)

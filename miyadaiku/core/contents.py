@@ -22,7 +22,6 @@ from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
 import miyadaiku.core
 from . import utils, rst, html, md, config, ipynb, hooks
 from .hooks import run_hook, HOOKS
-from . output import Output
 from . import YAML_ENCODING
 
 logger = logging.getLogger(__name__)

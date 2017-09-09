@@ -1,5 +1,5 @@
 from pathlib import Path
-from miyadaiku.core import rst, contents, config, jinjaenv, output, main
+from miyadaiku.core import rst, contents, config, jinjaenv, main
 
 
 def test_ga(sitedir):
