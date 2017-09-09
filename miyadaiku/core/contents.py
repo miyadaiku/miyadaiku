@@ -455,6 +455,7 @@ class HTMLValue(markupsafe.Markup):
 
 
 class HTMLContent(Content):
+    has_jinja = True
     def __init__(self, site, dirname, name, metadata, body):
         super().__init__(site, dirname, name, metadata, body)
 
@@ -494,7 +495,9 @@ class HTMLContent(Content):
         if ret is not None:
             return ret
 
-        html = self.site.render_from_string(self, "html", self.body or '',
+        html = self.body or ''
+        if self.has_jinja:
+            html = self.site.render_from_string(self, "html", html,
                                             **self.get_render_args(context))
 
         headers, html = self._set_header_id(html)
@@ -1028,12 +1031,15 @@ class MdLoader(FileLoader):
 
 
 class IpynbLoader(FileLoader):
+    def _build_content(self, site, package, srcpath, dirname, filename, metadata, body):
+        content = super()._build_content(site, package, srcpath, dirname, filename,
+                                         metadata, body)
+        content.has_jinja = False
+        return content
+
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
         _metadata, body = ipynb.load(srcpath)
         self._update_metadata(metadata, _metadata)
-
-#        if 'title' not in metadata:
-
         return body
 
     def _get_body_from_package(self, site, package, srcpath, destpath, metadata):
