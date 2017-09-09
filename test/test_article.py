@@ -6,26 +6,24 @@ import yaml
 def test_article(sitedir):
     site = main.Site(sitedir)
     article = contents.Article(site, '', 'test.rst', {}, '1234567890')
-    o, = article.get_outputs()
+    files, context = article.build(sitedir / 'outputs')
 
-    o.build(sitedir)
-
-    assert o.content.dirname == ()
-    assert o.content.filename == 'test.html'
-    assert b'1234567890' in (sitedir / o.content.filename).read_bytes()
+    assert article.dirname == ()
+    assert article.filename == 'test.html'
+    assert b'1234567890' in Path(files[0]).read_bytes()
 
 
-def test_indexpage():
-    site = main.Site(Path(''))
+def test_indexpage(sitedir):
+    site = main.Site(sitedir)
 
     for i in range(10):
         site.contents.add(contents.Article(site, '', f'test{i}', {
             'type': 'article'}, f'<span>{i}</span>'))
 
     article = contents.IndexPage(site, '', 'test', {}, {})
-    outputs = article.get_outputs()
+    files, context = article.build(sitedir / 'outputs')
 
-    assert len(outputs) == 2
+    assert len(files) == 2
 
 
 def test_header(sitedir):
