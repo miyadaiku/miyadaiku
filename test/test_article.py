@@ -20,7 +20,7 @@ def test_indexpage(sitedir):
         site.contents.add(contents.Article(site, '', f'test{i}', {
             'type': 'article'}, f'<span>{i}</span>'))
 
-    article = contents.IndexPage(site, '', 'test', {}, {})
+    article = contents.IndexPage(site, '', 'test', {}, '')
     files, context = article.build(sitedir / 'outputs')
 
     assert len(files) == 2

@@ -174,7 +174,7 @@ def _main():
         t.start()
 
     try:
-        code = build(d, props)
+        code = build(d, props, miyadaiku.core.DEBUG)
         if args.watch:
             print(f'Watching {d.resolve()} ...')
 
@@ -188,7 +188,7 @@ def _main():
                 time.sleep(0.1)
                 ev.clear()
 
-                build(d, props)
+                build(d, props, miyadaiku.core.DEBUG)
 
         if args.server:
             t.join()

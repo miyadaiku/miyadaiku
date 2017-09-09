@@ -3,6 +3,7 @@ import shutil
 import secrets
 import os
 import posixpath
+import atexit
 import collections
 import datetime
 import pkg_resources
@@ -25,7 +26,22 @@ from .hooks import run_hook, HOOKS
 from . import YAML_ENCODING
 
 logger = logging.getLogger(__name__)
-LARGE_FILE_SIZE = 1024 * 1024 * 1024  # 1
+LARGE_FILE_SIZE = 1024 * 1024 * 1024
+
+_tempfiles = []
+pid = os.getpid()
+
+@atexit.register
+def deletefiles():
+    if pid != os.getpid():
+        return
+
+    for f in _tempfiles:
+        try:
+            logger.debug(f'Removong {f}')
+            os.unlink(f)
+        except Exception as e:
+            logger.exception(f'Failed to remove {f}')
 
 
 class ContentNotFount(Exception):
@@ -90,7 +106,7 @@ class _context(dict):
         return self.__html_cache.get((content.dirname, content.name), (None, None))[1]
 
     def set_html_cache(self, content, html, headers):
-        f = tempfile.SpooledTemporaryFile(mode='w', max_size=1024 * 1024 * 1024,
+        f = tempfile.SpooledTemporaryFile(mode='r+', max_size=LARGE_FILE_SIZE,
                                           encoding='utf32')
         f.write(html)
         self.__html_cache[(content.dirname, content.name)] = (f, headers)
@@ -195,7 +211,20 @@ class Content:
         self.dirname = utils.dirname_to_tuple(dirname)
         self.name = name
         self.metadata = _metadata(metadata)
-        self.body = body
+        self._body = self._bodyfilename = None
+
+        assert (body is None) or (isinstance(body, str))
+        if body is None:
+            self._body = None
+        elif len(body) < LARGE_FILE_SIZE:
+            self._body = body
+        else:
+            fd, self._bodyfilename = tempfile.mkstemp()
+            _tempfiles.append(self._bodyfilename)
+
+            with os.fdopen(fd, mode='w', encoding='utf32') as f:
+                f.write(body)
+
         self._imports = None
 
         self.metadata['stat'] = None
@@ -223,8 +252,15 @@ class Content:
 
         return False
 
+    def calc_path(self, path, dirname, name):
+        dir = path.joinpath(*dirname)
+        name = name.strip('/\\')
+        dest = os.path.expanduser((dir / name))
+        dest = os.path.normpath(dest)
+        return dest
+
     def _check_fileupdate(self, outputpath, stat):
-        filename = Output.calc_path(outputpath, self.dirname, self.filename)
+        filename = self.calc_path(outputpath, self.dirname, self.filename)
         try:
             filestat = os.stat(filename)
             if not stat:
@@ -278,6 +314,14 @@ class Content:
     @property
     def title(self):
         return self.get_metadata('title', None) or os.path.splitext(self.name)[0]
+
+    @property
+    def body(self):
+        if self._body is not None:
+            return self._body
+        elif self._bodyfilename:
+            return open(self._bodyfilename, mode='r', encoding='utf32').read()
+        return None
 
     @property
     def filename(self):
@@ -444,7 +488,7 @@ class BinContent(Content):
 
     def write(self, path):
         body = self.body
-        if not body:
+        if body is None:
             package = self.metadata.get('package')
             if package:
                 body = pkg_resources.resource_string(package, self.metadata['srcpath'])
