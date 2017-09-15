@@ -26,7 +26,7 @@ from .hooks import run_hook, HOOKS
 from . import YAML_ENCODING
 
 logger = logging.getLogger(__name__)
-LARGE_FILE_SIZE = 1024 * 1024 * 1024
+LARGE_FILE_SIZE = 1024 * 1024
 
 _tempfiles = []
 pid = os.getpid()

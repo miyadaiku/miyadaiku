@@ -11,7 +11,7 @@ DIR = pathlib.Path(__file__).resolve().parent
 
 requires = [
     "docutils", "pyyaml", "jinja2", "python-dateutil", "pygments",
-    "pytz", "tzlocal", "happylogging", "beautifulsoup4", "feedgenerator",
+    "pytz", "tzlocal", "happylogging>=0.0.5", "beautifulsoup4", "feedgenerator",
     "markdown", "nbformat", "nbconvert", "watchdog",
 ]
 
@@ -25,7 +25,7 @@ entry_points = {
 
 setup(
     name="miyadaiku",
-    version="0.0.43",
+    version="0.0.44",
     author="Atsuo Ishimoto",
     url='https://miyadaiku.github.io/',
     license="MIT",
