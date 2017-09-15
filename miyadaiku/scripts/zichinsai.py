@@ -5,7 +5,7 @@ import argparse
 import os
 import pathlib
 import tzlocal
-import happylogging
+#import happylogging
 
 from miyadaiku.core.main import CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR
 
@@ -16,7 +16,7 @@ parser.add_argument('directory', help='directory name')
 
 
 def main():
-    happylogging.initlog(filename='-', level='DEBUG')
+#    happylogging.initlog(filename='-', level='DEBUG')
 
     args = parser.parse_args()
 

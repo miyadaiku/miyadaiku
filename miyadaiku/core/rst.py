@@ -135,7 +135,6 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
 
     def __init__(self, document):
         super().__init__(document)
-#        self.initial_header_level = 2
 
     def visit_comment(self, node,
                       sub=re.compile('-(?=-)').sub):

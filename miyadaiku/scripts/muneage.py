@@ -138,7 +138,6 @@ def _main():
     miyadaiku.core.DEBUG = args.debug
 
     lv = 'DEBUG' if miyadaiku.core.DEBUG else 'INFO'
-
     happylogging.initlog(filename='-', level=lv)
 
     props = {}
