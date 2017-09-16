@@ -80,11 +80,21 @@ class Site:
             contents.load_package(self, theme, CONTENTS_DIR)
             contents.load_package(self, theme, FILES_DIR, contents.bin_loader)
 
+        self._init_jinja_globals()
         run_hook(HOOKS.loaded, self)
+
+    def _init_jinja_globals(self):
+        import miyadaiku.extend
+        for name, value in miyadaiku.extend._jinja_globals.items():
+            self.add_jinja_global(name, value)
+
 
     def add_template_module(self, name, templatename):
         template = self.jinjaenv.get_template(templatename)
         self.jinjaenv.globals[name] = template.module
+
+    def add_jinja_global(self, name, f):
+        self.jinjaenv.globals[name] = f
 
     def pre_build(self):
         for cont in self.contents.get_contents():
