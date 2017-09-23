@@ -87,8 +87,11 @@ parser.add_argument('directory', help='directory name')
 parser.add_argument('--define', '-d', action='append', metavar='property=value',
                     help='Set default property value.')
 
+parser.add_argument('--traceback', '-t', action='store_true', default=False,
+                    help="Show traceback on error")
+
 parser.add_argument('--debug', '-D', action='store_true', default=False,
-                    help="Show debug message")
+                    help="Run debug mode")
 
 parser.add_argument('--rebuild', '-r', action='store_true',
                     help='Rebuild contents.')
@@ -106,10 +109,10 @@ parser.add_argument('--bind', '-b', default='0.0.0.0',
                     help='bind address')
 
 
-def build(d, props, debug=False):
+def build(d, props, traceback=False, debug=False):
     run_hook(HOOKS.start, d, props)
 
-    site = Site(d, props, debug)
+    site = Site(d, props, traceback, debug)
     site.pre_build()
     code = site.build()
 
@@ -139,6 +142,7 @@ def _main():
 
     lv = 'DEBUG' if miyadaiku.core.DEBUG else 'INFO'
     happylogging.initlog(filename='-', level=lv)
+    logging.error.setcolor("RED") 
 
     props = {}
     for s in args.define or ():
@@ -173,7 +177,7 @@ def _main():
         t.start()
 
     try:
-        code = build(d, props, miyadaiku.core.DEBUG)
+        code = build(d, props, args.traceback, miyadaiku.core.DEBUG)
         if args.watch:
             print(f'Watching {d.resolve()} ...')
 
@@ -187,7 +191,7 @@ def _main():
                 time.sleep(0.1)
                 ev.clear()
 
-                build(d, props, miyadaiku.core.DEBUG)
+                build(d, props, args.traceback, miyadaiku.core.DEBUG)
 
         if args.server:
             t.join()

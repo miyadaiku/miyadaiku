@@ -2,6 +2,7 @@ import re
 import shutil
 import secrets
 import os
+import traceback
 import posixpath
 import atexit
 import collections
@@ -20,16 +21,19 @@ from bs4.element import NavigableString
 import pytz
 from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
 
+import miyadaiku
 import miyadaiku.core
+from . import YAML_ENCODING
 from . import utils, rst, html, md, config, ipynb, hooks
 from .hooks import run_hook, HOOKS
-from . import YAML_ENCODING
+from .exception import MiyadaikuBuildError
 
 logger = logging.getLogger(__name__)
 LARGE_FILE_SIZE = 1024 * 1024
 
 _tempfiles = []
 pid = os.getpid()
+
 
 @atexit.register
 def deletefiles():
@@ -44,20 +48,13 @@ def deletefiles():
             logger.exception(f'Failed to remove {f}')
 
 
-class ContentNotFount(Exception):
+class ContentNotFound(Exception):
     content = None
 
-    def __str__(self):
-        ret = super().__str__()
-        if self.content:
-            ret = ret + f' in {self.content.srcfilename!r} is not found'
-        return ret
-
-    def __repr__(self):
-        ret = super().__repr__()
-        if self.content:
-            ret = ret + f' in {self.content.srcfilename!r} is not found'
-        return ret
+    def set_content(self, content):
+        if not self.content:
+            self.content = content
+            self.args = (f'{self.content.srcfilename}: `{self.args[0]}` is not found',)
 
 
 class _metadata(dict):
@@ -131,8 +128,8 @@ class ContentArgProxy:
         try:
             ret = self.content.get_content(target)
             return ContentArgProxy(self.context, ret)
-        except ContentNotFount as e:
-            e.content = self.content
+        except ContentNotFound as e:
+            e.set_content(self.content)
             raise
 
     def path(self, *args, **kwargs):
@@ -306,8 +303,8 @@ class Content:
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
 
         context = _context(self.site, self)
-        ret = self.site.render_from_string(self, "filename_templ", filename_templ,
-                                           **self.get_render_args(context))
+        ret = self.render_from_string(context, self, "filename_templ", filename_templ,
+                                      kwargs=self.get_render_args(context))
         assert ret
         return ret
 
@@ -325,13 +322,18 @@ class Content:
 
     @property
     def filename(self):
-        if self._filename:
-            return self._filename
+        try:
+            if self._filename:
+                return self._filename
 
-        self._filename = self.get_metadata('filename', None)
-        if not self._filename:
-            self._filename = self._to_filename()
-        return self._filename
+            self._filename = self.get_metadata('filename', None)
+            if not self._filename:
+                self._filename = self._to_filename()
+            return self._filename
+        except Exception:
+            import pdb
+            pdb.set_trace()
+            raise
 
     @property
     def stem(self):
@@ -471,6 +473,30 @@ class Content:
         imports.update(kwargs)
         return imports
 
+    def _amend_exception(self, e, context, page, filename, src):
+        if not isinstance(e, MiyadaikuBuildError):
+            return MiyadaikuBuildError(e, page, filename, src)
+        return e
+
+    def render_from_string(self, context, content, propname, text, kwargs):
+        filename = f'{content.srcfilename}#{propname}'
+        try:
+            template = self.site.jinjaenv.from_string(text)
+            template.filename = filename
+            return template.render(**kwargs)
+        except Exception as e:
+            exc = self._amend_exception(e, context, content, filename, text)
+            raise exc from e
+
+    def render_from_template(self, context, content, filename, kwargs):
+        try:
+            template = self.site.jinjaenv.get_template(filename)
+            template.filename = filename
+            return template.render(**kwargs)
+        except Exception as e:
+            exc = self._amend_exception(e, context, content, filename, None)
+            raise exc from e
+
 
 class ConfigContent(Content):
     def _check_fileupdate(self, output_path, stat):
@@ -550,8 +576,8 @@ class HTMLContent(Content):
 
         html = self.body or ''
         if self.has_jinja:
-            html = self.site.render_from_string(self, "html", html,
-                                                **self.get_render_args(context))
+            html = self.render_from_string(context, self, "html", html,
+                                           kwargs=self.get_render_args(context))
 
         headers, html = self._set_header_id(html)
 
@@ -673,19 +699,48 @@ date: {date.isoformat(timespec='seconds')}
         context = self.write(outfilename)
         return [outfilename], context
 
+
+#    def _render(self, context, template, kwargs):
+#        try:
+#            return template.render(**kwargs)
+#        except MiyadaikuBuildError as e:
+#            raise
+#        except Exception as e:
+#            tb, lineno = self._get_last_tb(e)
+#            if tb.f_code.co_filename == template.filename:
+#                lines = self.nthlines(tb.f_code.co_filename, src, lineno)
+#                logger.error(
+#                    f'An error occured while rendering {content}: {type(e)}\n'
+#                    f'{template.filename}:{lineno} {str(e)}\n'
+#                    f'{lines}'
+#                )
+#            raise
+#
+#
+#    def _get_last_jinjasrc(self, e, filename, src):
+#        if isinstance(e, jinja2.exceptions.TemplateSyntaxError):
+#            fname = filename
+#            src = e.source
+#            lineno = e.lineno  # 1 base
+#        else:
+#            (frame, lineno), = traceback.walk_tb(exc.__traceback__))
+#            if src is None:
+#
+#
+#
     def write(self, path):
         context = _context(self.site, self)
 
         templatename = self.article_template
-        template = self.site.jinjaenv.get_template(templatename)
-        body = self.site.render_from_template(self, template, **self.get_render_args(context))
+        body = self.render_from_template(
+            context, self, templatename, kwargs=self.get_render_args(context))
 
         Path(path).write_bytes(body.encode('utf-8'))
 
         return context
 
 
-class IndexPage(Content):
+class IndexPage(HTMLContent):
     @property
     def ext(self):
         ext = self.get_metadata('ext', None)
@@ -711,9 +766,10 @@ class IndexPage(Content):
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
 
         context = _context(self.site, self)
-        return self.site.render_from_string(self, "indexpage_group_filename", filename_templ,
-                                            value=value, cur_page=npage,
-                                            **self.get_render_args(context))
+        kwargs = dict(value=value, cur_page=npage)
+        kwargs.update(self.get_render_args(context))
+        return self.render_from_string(context, self, "indexpage_group_filename", filename_templ,
+                                       kwargs=kwargs)
 
     def get_output_path(self, values=(), npage=None, *args, **kwargs):
         if not npage:
@@ -778,12 +834,11 @@ class IndexPage(Content):
         template = self.site.jinjaenv.get_template(templatename)
         articles = [ContentArgProxy(context, article)
                     for article in articles]
-        args = self.get_render_args(context)
-
-        body = self.site.render_from_template(self, template,
-                                              group_values=group_values, cur_page=cur_page, is_last=is_last,
-                                              num_pages=num_pages, articles=articles,
-                                              **args)
+        kwargs = dict(group_values=group_values, cur_page=cur_page,
+                      is_last=is_last, num_pages=num_pages, articles=articles)
+        kwargs.update(self.get_render_args(context))
+        body = self.render_from_template(context, self, template,
+                                         kwargs=kwargs)
 
         Path(path).write_bytes(body.encode('utf-8'))
         return context
@@ -873,7 +928,7 @@ class Contents:
         try:
             return self._contents[(dirname, filename)]
         except KeyError:
-            raise ContentNotFount(key) from None
+            raise ContentNotFound(key) from None
 
     def get_contents(self, subdirs=None, base=None, filters=None):
         contents = [c for c in self._contents.values()]

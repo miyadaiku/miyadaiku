@@ -32,6 +32,7 @@ import miyadaiku.core
 from . import config
 from . import contents
 from . import jinjaenv
+from . exception import MiyadaikuBuildError
 from .hooks import run_hook, HOOKS
 
 logger = logging.getLogger(__name__)
@@ -49,10 +50,14 @@ class Site:
     depends = frozenset()
     stat_depfile = None
 
-    def __init__(self, path, props=None, debug=None):
+    def __init__(self, path, props=None, show_traceback=None, debug=None):
         self.debug = debug
         if self.debug is None:
             self.debug = miyadaiku.core.DEBUG
+
+        self.show_traceback = show_traceback
+        if self.show_traceback is None:
+            self.show_traceback = miyadaiku.core.SHOW_TRACEBACK or self.debug
 
         p = os.path.abspath(os.path.expanduser(path))
         self.path = pathlib.Path(p)
@@ -88,7 +93,6 @@ class Site:
         for name, value in miyadaiku.extend._jinja_globals.items():
             self.add_jinja_global(name, value)
 
-
     def add_template_module(self, name, templatename):
         template = self.jinjaenv.get_template(templatename)
         self.jinjaenv.globals[name] = template.module
@@ -96,14 +100,54 @@ class Site:
     def add_jinja_global(self, name, f):
         self.jinjaenv.globals[name] = f
 
+    def nthlines(self, filename, src, lineno):
+        if src is None:
+            try:
+                if filename and os.path.exists(filename):
+                    src = open(filename).read()
+            except IOError:
+                src = ''
+
+        if not src:
+            return ''
+        src = src.split('\n')
+        f = max(0, lineno - 3)
+        lines = []
+        for n in range(f, min(f + 5, len(src))):
+            if n == (lineno - 1):
+                lines.append('  >>> ' + src[n])
+            else:
+                lines.append('      ' + src[n])
+
+        lines = "\n".join(lines).rstrip() + '\n'
+        return lines
+
+    def _exc_to_dict(self, content, e):
+        t = io.StringIO()
+        traceback.print_exception(type(e), e, e.__traceback__, file=t)
+        tb = t.getvalue()
+
+        if not isinstance(e, MiyadaikuBuildError):
+            e = MiyadaikuBuildError(e, content, None, None)
+        ret = e.to_dict()
+        ret['tb'] = tb
+        return ret
+
+    def _print_err_dict(self, d):
+        logger.error(f'Error in {d["srcfilename"]} while building {d["pagefilename"]}')
+        logger.error(f'  {d["exctype"]}: {d["args"][0].rstrip()}')
+
+        if self.show_traceback:
+            logger.error(d['tb'])
+
     def pre_build(self):
         for cont in self.contents.get_contents():
             try:
                 logger.debug(f'Pre-building {cont.srcfilename}')
                 cont.pre_build()
             except Exception as e:
-                msg, tb = self._repr_exception(cont, e)
-                self.print_err(msg, tb)
+                d = self._exc_to_dict(cont, e)
+                self._print_err_dict(d)
                 raise e
 
     def get_metadatas(self):
@@ -204,8 +248,8 @@ class Site:
         try:
             destfiles, context = content.build(output_path)
         except Exception as e:
-            msg, tb = self._repr_exception(content, e)
-            return None, False, (msg, tb)
+            d = self._exc_to_dict(content, e)
+            return None, False, d
 
         run_hook(HOOKS.post_build, self, content, output_path, destfiles)
 
@@ -219,7 +263,7 @@ class Site:
             deps[(ref.dirname, ref.name)].update(
                 (dest, src, pageargs) for dest in destfiles)
 
-        return deps, context.is_rebuild_always(), (None, None)
+        return deps, context.is_rebuild_always(), None
 
     def build(self):
         global _site
@@ -231,9 +275,9 @@ class Site:
             for key, content in self.contents.items():
                 if not self.rebuild and not content.updated:
                     continue
-                ret, rebuild_always, (msg, tb) = self._run_build(content)
+                ret, rebuild_always, d = self._run_build(content)
                 if ret is None:
-                    self.print_err(msg, tb)
+                    self._print_err_dict(d)
                     return 1, {}
 
                 for k, v in ret.items():
@@ -250,21 +294,19 @@ class Site:
         else:
             executer = concurrent.futures.ProcessPoolExecutor
 
-        err = 0
+        errs = []
 
         def done(f, key):
             content = self.contents.get_content(key)
-            nonlocal err
             try:
-                ret, rebuild_always, (msg, tb) = f.result()
+                ret, rebuild_always, d = f.result()
             except Exception as e:
-                #                import pdb;pdb.set_trace()
-                err = 1
+                d = self._exc_to_dict(content, e)
+                errs.append(d)
                 raise e
 
             if ret is None:
-                self.print_err(msg, tb)
-                err = 1
+                errs.append(d)
                 return
 
             for k, v in ret.items():
@@ -280,90 +322,69 @@ class Site:
                 f = e.submit(_run, key)
                 f.add_done_callback(lambda f, key=key: done(f, key))
 
-        if not err:
+        if not errs:
             self.save_deps()
 
-        return err
+        for err in errs:
+            self._print_err_dict(err)
 
-    def nthlines(self, filename, src, lineno):
-        if not src:
-            try:
-                if filename and os.path.exists(filename):
-                    src = open(filename).read()
-            except IOError:
-                src = ''
+        return 1 if errs else 0
 
-        if not src:
-            return ''
-        src = src.split('\n')
-        f = max(0, lineno - 3)
-        lines = []
-        for n in range(f, min(f + 5, len(src))):
-            if n == (lineno - 1):
-                lines.append('>>> ' + src[n])
-            else:
-                lines.append('    ' + src[n])
-
-        lines = "\n".join(lines).rstrip() + '\n'
-        return lines
-
-    def _repr_exception(self, content, e):
-        if isinstance(e, (jinja2.exceptions.TemplateSyntaxError, _MiyadaukuJunja2SyntaxError)):
-            lines = self.nthlines(e.filename, e.source, e.lineno)
-            s = (
-                f'jinja2.exceptions.TemplateSyntaxError occured while compiling {content}\n'
-                f'{e.filename}:{e.lineno} {str(e)}\n'
-                f'{lines}'
-            )
-        else:
-            s = f'An error occured while compiling {content.srcfilename}: {type(e)} msg: {str(e)}'
-
-        t = io.StringIO()
-        traceback.print_exception(type(e), e, e.__traceback__, file=t)
-        return (s, t.getvalue())
-
-    def print_err(self, msg, tb):
-        logger.error(msg)
-        logger.error(tb)
-
-    def render(self, basecontent, template, **kwargs):
-        return template.render(**kwargs)
-
-    def _get_last_tb(self, exc):
-        return list(traceback.walk_tb(exc.__traceback__))[-1]
-
-    def _render(self, content, template, src, args, kwargs):
-        try:
-            return template.render(**kwargs)
-        except Exception as e:
-            tb, lineno = self._get_last_tb(e)
-            if tb.f_code.co_filename == template.filename:
-                lines = self.nthlines(tb.f_code.co_filename, src, lineno)
-                logger.error(
-                    f'An error occured while rendering {content}: {type(e)}\n'
-                    f'{template.filename}:{lineno} {str(e)}\n'
-                    f'{lines}'
-                )
-            raise
-
-    def render_from_string(self, curcontent, propname, text, *args, **kwargs):
-        try:
-            template = self.jinjaenv.from_string(text)
-        except jinja2.exceptions.TemplateSyntaxError as e:
-            exc = _MiyadaukuJunja2SyntaxError(str(e))
-            exc.source = e.source
-            exc.lineno = e.lineno
-            raise exc from None
-
-        if propname:
-            propname = ' $' + propname
-        template.filename = f'<{curcontent.srcfilename}>{propname}'
-
-        return self._render(curcontent, template, text, args, kwargs)
-
-    def render_from_template(self, curcontent, filename, *args, **kwargs):
-        template = self.jinjaenv.get_template(filename)
-        return self._render(curcontent, template, "", args, kwargs)
+#    def _repr_exception(self, content, e):
+#        if isinstance(e, (jinja2.exceptions.TemplateSyntaxError, _MiyadaukuJunja2SyntaxError)):
+#            lines = self.nthlines(e.filename, e.source, e.lineno)
+#            s = (
+#                f'jinja2.exceptions.TemplateSyntaxError occured while compiling {content}\n'
+#                f'{e.filename}:{e.lineno} {str(e)}\n'
+#                f'{lines}'
+#            )
+#        else:
+#            s = f'An error occured while compiling {content.srcfilename}: {type(e)} msg: {str(e)}'
+#
+#        t = io.StringIO()
+#        traceback.print_exception(type(e), e, e.__traceback__, file=t)
+#        return (s, t.getvalue())
+#
+#    def print_err(self, msg, tb):
+#        logger.error(msg)
+#        if self.debug:
+#            logger.error(tb)
+#
+#    def _get_last_tb(self, exc):
+#        return list(traceback.walk_tb(exc.__traceback__))[-1]
+#
+#    def _render(self, content, template, src, args, kwargs):
+#        try:
+#            return template.render(**kwargs)
+#        except Exception as e:
+#            tb, lineno = self._get_last_tb(e)
+#            if tb.f_code.co_filename == template.filename:
+#                lines = self.nthlines(tb.f_code.co_filename, src, lineno)
+#                logger.error(
+#                    f'An error occured while rendering {content}: {type(e)}\n'
+#                    f'{template.filename}:{lineno} {str(e)}\n'
+#                    f'{lines}'
+#                )
+#            raise
+#
+#    def render_from_string(self, curcontent, propname, text, *args, **kwargs):
+#        try:
+#            template = self.jinjaenv.from_string(text)
+#        except jinja2.exceptions.TemplateSyntaxError as e:
+#            exc = _MiyadaukuJunja2SyntaxError(str(e))
+#            exc.source = e.source
+#            exc.lineno = e.lineno
+#            raise exc from None
+#
+#        if propname:
+#            propname = ' $' + propname
+#        template.filename = f'<{curcontent.srcfilename}>{propname}'
+#
+#        return self._render(curcontent, template, text, args, kwargs)
+#
+#    def render_from_template(self, curcontent, filename, *args, **kwargs):
+#        template = self.jinjaenv.get_template(filename)
+#        return self._render(curcontent, template, "", args, kwargs)
 
 
 def _run(key):

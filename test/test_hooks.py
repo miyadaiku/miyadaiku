@@ -62,7 +62,7 @@ test
 ----
 ''')
     load_hook(sitedir)
-    build(sitedir, {}, debug=True)
+    build(sitedir, {}, True, debug=True)
 
     import __main__
     print(__main__.seen_test_build_depend)

@@ -6,6 +6,7 @@ import posixpath
 import re
 import random
 import time
+import traceback
 
 
 def walk(path):
@@ -121,3 +122,34 @@ def prepare_output_path(path, dirname, name):
         os.unlink(dest)
 
     return dest
+
+
+def nthlines(src, lineno):
+    #    if src is None:
+    #        try:
+    #            if filename and os.path.exists(filename):
+    #                src = open(filename).read()
+    #        except IOError:
+    #            src = ''
+    #
+    #    if not src:
+    #        return ''
+    #
+    if not src:
+        return ''
+    src = src.split('\n')
+    f = max(0, lineno - 3)
+    lines = []
+    for n in range(f, min(f + 5, len(src))):
+        if n == (lineno - 1):
+            lines.append('  >>> ' + src[n])
+        else:
+            lines.append('      ' + src[n])
+
+    lines = "\n".join(lines).rstrip() + '\n'
+    return lines
+
+
+def get_last_frame_file(e):
+    frame, lineno = next(traceback.walk_tb(e.__traceback__))
+    return frame.f_code.co_filename, lineno
