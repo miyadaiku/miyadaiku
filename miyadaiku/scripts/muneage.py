@@ -16,6 +16,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 import miyadaiku.core
+import miyadaiku.core.__version__
 from miyadaiku.core.main import (Site, DEP_FILE, CONFIG_FILE,
                                  CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, OUTPUTS_DIR)
 from miyadaiku.core.hooks import HOOKS, run_hook
@@ -84,6 +85,10 @@ locale.setlocale(locale.LC_ALL, '')
 
 parser = argparse.ArgumentParser(description='Build miyadaiku project.')
 parser.add_argument('directory', help='directory name')
+
+parser.add_argument('--version', '-v', action='version',
+                    version=f'{miyadaiku.core.__version__.version}')
+
 parser.add_argument('--define', '-d', action='append', metavar='property=value',
                     help='Set default property value.')
 
@@ -106,7 +111,7 @@ parser.add_argument('--port', '-p', default=8800, type=int,
                     help='http port')
 
 parser.add_argument('--bind', '-b', default='0.0.0.0',
-                    help='bind address')
+                    help='Bind address')
 
 
 def build(d, props, traceback=False, debug=False):
@@ -142,7 +147,7 @@ def _main():
 
     lv = 'DEBUG' if miyadaiku.core.DEBUG else 'INFO'
     happylogging.initlog(filename='-', level=lv)
-    logging.error.setcolor("RED") 
+    logging.error.setcolor("RED")
 
     props = {}
     for s in args.define or ():

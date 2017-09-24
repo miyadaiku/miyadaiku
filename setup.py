@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import pathlib
 from setuptools import setup, find_packages
 from miyadaiku.common import setuputils
@@ -23,16 +24,19 @@ entry_points = {
     ]
 }
 
+versionpy = DIR / 'miyadaiku/core/__version__.py'
+version = re.search(r'"([\d.]+)"', versionpy.read_text())[1]
+
 setup(
     name="miyadaiku",
-    version="0.0.45",
+    version=version,
     author="Atsuo Ishimoto",
     url='https://miyadaiku.github.io/',
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
