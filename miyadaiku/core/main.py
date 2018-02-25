@@ -330,62 +330,6 @@ class Site:
 
         return 1 if errs else 0
 
-#    def _repr_exception(self, content, e):
-#        if isinstance(e, (jinja2.exceptions.TemplateSyntaxError, _MiyadaukuJunja2SyntaxError)):
-#            lines = self.nthlines(e.filename, e.source, e.lineno)
-#            s = (
-#                f'jinja2.exceptions.TemplateSyntaxError occured while compiling {content}\n'
-#                f'{e.filename}:{e.lineno} {str(e)}\n'
-#                f'{lines}'
-#            )
-#        else:
-#            s = f'An error occured while compiling {content.srcfilename}: {type(e)} msg: {str(e)}'
-#
-#        t = io.StringIO()
-#        traceback.print_exception(type(e), e, e.__traceback__, file=t)
-#        return (s, t.getvalue())
-#
-#    def print_err(self, msg, tb):
-#        logger.error(msg)
-#        if self.debug:
-#            logger.error(tb)
-#
-#    def _get_last_tb(self, exc):
-#        return list(traceback.walk_tb(exc.__traceback__))[-1]
-#
-#    def _render(self, content, template, src, args, kwargs):
-#        try:
-#            return template.render(**kwargs)
-#        except Exception as e:
-#            tb, lineno = self._get_last_tb(e)
-#            if tb.f_code.co_filename == template.filename:
-#                lines = self.nthlines(tb.f_code.co_filename, src, lineno)
-#                logger.error(
-#                    f'An error occured while rendering {content}: {type(e)}\n'
-#                    f'{template.filename}:{lineno} {str(e)}\n'
-#                    f'{lines}'
-#                )
-#            raise
-#
-#    def render_from_string(self, curcontent, propname, text, *args, **kwargs):
-#        try:
-#            template = self.jinjaenv.from_string(text)
-#        except jinja2.exceptions.TemplateSyntaxError as e:
-#            exc = _MiyadaukuJunja2SyntaxError(str(e))
-#            exc.source = e.source
-#            exc.lineno = e.lineno
-#            raise exc from None
-#
-#        if propname:
-#            propname = ' $' + propname
-#        template.filename = f'<{curcontent.srcfilename}>{propname}'
-#
-#        return self._render(curcontent, template, text, args, kwargs)
-#
-#    def render_from_template(self, curcontent, filename, *args, **kwargs):
-#        template = self.jinjaenv.get_template(filename)
-#        return self._render(curcontent, template, "", args, kwargs)
-
 
 def _run(key):
     content = _site.contents.get_content(key)

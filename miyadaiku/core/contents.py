@@ -331,8 +331,6 @@ class Content:
                 self._filename = self._to_filename()
             return self._filename
         except Exception:
-            import pdb
-            pdb.set_trace()
             raise
 
     @property
@@ -372,8 +370,20 @@ class Content:
 
     @property
     def url(self):
+        return self.get_url()
+
+    def get_url(self, *args, **kwargs):
         site_url = self.get_metadata('site_url')
-        path = self.get_output_path()
+        path = self.metadata.get('canonical_url')
+        if path:
+            parsed = urllib.parse.urlsplit(path)
+            if parsed.scheme or parsed.netloc:
+                return path # abs url
+
+            if not parsed.path.startswith('/'): # relative path?
+                path = posixpath.join('/'.join(self.dirname), path)
+        else:
+            path = self.get_output_path(*args, **kwargs)
         return urllib.parse.urljoin(site_url, path)
 
     @property
@@ -415,12 +425,28 @@ class Content:
         if isinstance(target, str):
             target = self.get_content(target)
         fragment = f'#{markupsafe.escape(fragment)}' if fragment else ''
+
+        target_url = target.get_url(*args, **kwargs)
         if abs_path or self.use_abs_path:
-            return target.url + fragment
+            return target_url + fragment
+        target_parsed = urllib.parse.urlsplit(target_url)
+
+        my_parsed = urllib.parse.urlsplit(self.get_url(*args, **kwargs))
+
+        # return abs url if protocol or server differs
+        if ((target_parsed.scheme != my_parsed.scheme) or
+           (target_parsed.netloc != my_parsed.netloc)):
+            return target_url + fragment
+
+        my_dir = posixpath.dirname(my_parsed.path)
+        if my_dir == target_parsed.path:
+            ret_path = my_dir
         else:
-            here = f"/{'/'.join(self.dirname)}/"
-            to = '/' + target.get_output_path(*args, **kwargs)
-            return posixpath.relpath(to, here) + fragment
+            ret_path = posixpath.relpath(target_parsed.path, my_dir)
+
+        if target_parsed.path.endswith('/') and (not ret_path.endswith('/')):
+            ret_path = ret_path + '/'
+        return ret_path + fragment
 
     def link_to(self, context, target, text=None, fragment=None, abs_path=False, attrs=None, *args, **kwargs):
         if isinstance(target, str):
