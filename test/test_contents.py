@@ -78,6 +78,7 @@ def test_url_to():
     a5 = contents.Article(site, 'd1', '4', {'type': 'article', 'canonical_url': 'http://www/'}, '3')
     a6 = contents.Article(site, 'd1', '4', {'type': 'article', 'canonical_url': '/'}, '3')
     a7 = contents.Article(site, 'd1', '4', {'type': 'article', 'canonical_url': 'abc'}, '3')
+    a8 = contents.Article(site, 'd1', '4', {'type': 'article', 'canonical_url': 'abc/'}, '3')
 
     assert a1.path_to(a2) == 'd1/2.html'
     assert a3.path_to(a2) == 'http://localhost:8888/d1/2.html'
@@ -85,6 +86,7 @@ def test_url_to():
     assert a1.path_to(a5) == 'http://www/'
     assert a1.path_to(a6) == '/'
     assert a1.path_to(a7) == 'd1/abc'
+    assert a1.path_to(a8) == 'd1/abc/'
 
 
 def test_get_abstract():
