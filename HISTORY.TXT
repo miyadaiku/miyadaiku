@@ -1,0 +1,3 @@
+2018/02/25 0.49
+
+- content.link() returns wrong value if site_url contains path component.

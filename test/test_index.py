@@ -24,7 +24,6 @@ article body
         content.joinpath('%i.rst' % i).write_text(src)
 
 
-
 def test_index(sitedir):
     _create_content(sitedir)
 
@@ -44,6 +43,7 @@ indexpage_max_articles: 4
 
     index = site.contents.get_content('/index.yml')
     assert index.path_to(index, npage=2) == 'index_2.html'
+
 
 def test_group(sitedir):
     _create_content(sitedir)
