@@ -67,7 +67,8 @@ def test_path_to():
 
 
 def test_url_to():
-    site = main.Site(Path('.'))
+    site = main.Site(Path('.'), {'site_url': 'http://abc/test'})
+
     conts = site.contents
 
     a1 = contents.Article(site, '', '1', {'type': 'article'}, '1')
@@ -81,10 +82,10 @@ def test_url_to():
     a8 = contents.Article(site, 'd1', '4', {'type': 'article', 'canonical_url': 'abc/'}, '3')
 
     assert a1.path_to(a2) == 'd1/2.html'
-    assert a3.path_to(a2) == 'http://localhost:8888/d1/2.html'
-    assert a1.path_to(a4) == 'abc/def/'
+    assert a3.path_to(a2) == 'http://abc/test/d1/2.html'
+    assert a1.path_to(a4) == '../abc/def/'
     assert a1.path_to(a5) == 'http://www/'
-    assert a1.path_to(a6) == '/'
+    assert a1.path_to(a6) == '../'
     assert a1.path_to(a7) == 'd1/abc'
     assert a1.path_to(a8) == 'd1/abc/'
 

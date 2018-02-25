@@ -366,7 +366,7 @@ class Content:
             path = os.path.relpath(path)
             return package + path
 
-        return package + os.path.join('/'.join(self.dirname), self.name)
+        return package + os.path.join(*self.dirname, self.name)
 
     @property
     def url(self):
@@ -381,7 +381,7 @@ class Content:
                 return path  # abs url
 
             if not parsed.path.startswith('/'):  # relative path?
-                path = posixpath.join('/'.join(self.dirname), path)
+                path = posixpath.join(*self.dirname, path)
         else:
             path = self.get_output_path(*args, **kwargs)
         return urllib.parse.urljoin(site_url, path)
@@ -412,7 +412,7 @@ class Content:
         return ""
 
     def get_output_path(self, *args, **kwargs):
-        return f"{'/'.join(self.dirname)}/{self.filename}"
+        return posixpath.join(*self.dirname, self.filename)
 
     def get_content(self, target):
         if isinstance(target, str):
@@ -429,6 +429,7 @@ class Content:
         target_url = target.get_url(*args, **kwargs)
         if abs_path or self.use_abs_path:
             return target_url + fragment
+
         target_parsed = urllib.parse.urlsplit(target_url)
 
         my_parsed = urllib.parse.urlsplit(self.get_url(*args, **kwargs))
@@ -801,7 +802,7 @@ class IndexPage(HTMLContent):
         if not npage:
             npage = 1
         filename = self.filename_to_page(values, npage)
-        return f"{'/'.join(self.dirname)}/{filename}"
+        return posixpath.join(*self.dirname, filename)
 
     def _to_filename(self):
         return self.filename_to_page([''], 1)

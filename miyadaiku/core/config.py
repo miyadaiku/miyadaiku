@@ -130,13 +130,16 @@ class Config:
         # read root config
         if path:
             d = yaml.load(path.read_text(encoding=YAML_ENCODING)) or {}
-            if default:
-                d.update(default)
+        else:
+            d = {}
 
-            self.add((), d)
-            themes = list(d.get('themes', [])) + themes
+        if default:
+            d.update(default)
 
-            ignore.extend(list(d.get('ignore', [])))
+        self.add((), d)
+        themes = list(d.get('themes', [])) + themes
+
+        ignore.extend(list(d.get('ignore', [])))
 
         for theme, cfg in _load_theme_configs(themes):
             self.themes.append(theme)
