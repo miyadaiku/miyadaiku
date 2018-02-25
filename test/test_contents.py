@@ -65,6 +65,7 @@ def test_path_to():
     assert conts.get_content('3', a3).name == '3'
     assert conts.get_content('../2', a3).name == '2'
 
+
 def test_url_to():
     site = main.Site(Path('.'))
     conts = site.contents
@@ -72,7 +73,7 @@ def test_url_to():
     a1 = contents.Article(site, '', '1', {'type': 'article'}, '1')
     a2 = contents.Article(site, 'd1', '2', {'type': 'article'}, '2')
 
-    a3 = contents.Article(site, '', '3', {'type': 'article', 'use_abs_path':1}, '1')
+    a3 = contents.Article(site, '', '3', {'type': 'article', 'use_abs_path': 1}, '1')
     a4 = contents.Article(site, 'd1', '4', {'type': 'article', 'canonical_url': '/abc/def/'}, '2')
     a5 = contents.Article(site, 'd1', '4', {'type': 'article', 'canonical_url': 'http://www/'}, '3')
     a6 = contents.Article(site, 'd1', '4', {'type': 'article', 'canonical_url': '/'}, '3')

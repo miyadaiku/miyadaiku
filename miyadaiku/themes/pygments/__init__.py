@@ -3,6 +3,7 @@ from miyadaiku.core import config
 
 DEST_PATH = '/static/pygments/'
 
+
 def load_package(site):
     css = site.config.get('/', 'pygments_css')
     src_path = 'externals/'+css

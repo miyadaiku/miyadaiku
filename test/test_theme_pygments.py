@@ -22,7 +22,7 @@ title
     site.build()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
-    
+
     print(ret)
     assert '<link href="static/pygments/pygments_native.css" rel="stylesheet"/>' in ret
     assert (sitedir / 'outputs/static/pygments/pygments_native.css').exists()

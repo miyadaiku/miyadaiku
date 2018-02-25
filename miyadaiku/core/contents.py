@@ -378,9 +378,9 @@ class Content:
         if path:
             parsed = urllib.parse.urlsplit(path)
             if parsed.scheme or parsed.netloc:
-                return path # abs url
+                return path  # abs url
 
-            if not parsed.path.startswith('/'): # relative path?
+            if not parsed.path.startswith('/'):  # relative path?
                 path = posixpath.join('/'.join(self.dirname), path)
         else:
             path = self.get_output_path(*args, **kwargs)
@@ -435,7 +435,7 @@ class Content:
 
         # return abs url if protocol or server differs
         if ((target_parsed.scheme != my_parsed.scheme) or
-           (target_parsed.netloc != my_parsed.netloc)):
+                (target_parsed.netloc != my_parsed.netloc)):
             return target_url + fragment
 
         my_dir = posixpath.dirname(my_parsed.path)
