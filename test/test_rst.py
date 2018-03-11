@@ -80,3 +80,23 @@ abc
     metadata, text = rst.load(f)
     print(text)
     assert '<h1>title2</h1>' in text
+
+
+def test_pygments(sitedir):
+    f = (sitedir / 'file1.rst')
+    f.write_text('''
+
+.. code-block:: html
+   :caption: caption
+   :linenos:
+
+   :jinja:`{{}}`
+''')
+    metadata, text = rst.load(f)
+    print(text)
+    assert text.strip() == """<div class="code-block">
+<div class="code-block-caption">caption</div>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="highlight"><pre><span></span>:jinja:`&#123;&#123;&#125;&#125;`
+</pre></div>
+</td></tr></table>
+</div>"""

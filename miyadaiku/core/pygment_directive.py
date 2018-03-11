@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 INLINESTYLES = False
 
 # The default formatter
-DEFAULT = HtmlFormatter(noclasses=INLINESTYLES)
+#DEFAULT = HtmlFormatter(noclasses=INLINESTYLES)
 
 pygments.formatters.html._escape_html_table[ord(
     '{')] = '&#123;'
@@ -105,7 +105,9 @@ class Pygments(Directive):
             lexer = TextLexer()
 
         # take an arbitrary option if more than one is given
-        formatter = self.options.get('linenos', DEFAULT)
+        linenos = 'linenos' in self.options
+        formatter = HtmlFormatter(noclasses=INLINESTYLES, linenos=linenos)
+
         parsed = highlight(u'\n'.join(self.content), lexer, formatter)
         caption = self.options.get('caption', '')
         caption = pygments.formatters.html.escape_html(caption)
