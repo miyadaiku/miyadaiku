@@ -726,35 +726,6 @@ date: {date.isoformat(timespec='seconds')}
         context = self.write(outfilename)
         return [outfilename], context
 
-
-#    def _render(self, context, template, kwargs):
-#        try:
-#            return template.render(**kwargs)
-#        except MiyadaikuBuildError as e:
-#            raise
-#        except Exception as e:
-#            tb, lineno = self._get_last_tb(e)
-#            if tb.f_code.co_filename == template.filename:
-#                lines = self.nthlines(tb.f_code.co_filename, src, lineno)
-#                logger.error(
-#                    f'An error occured while rendering {content}: {type(e)}\n'
-#                    f'{template.filename}:{lineno} {str(e)}\n'
-#                    f'{lines}'
-#                )
-#            raise
-#
-#
-#    def _get_last_jinjasrc(self, e, filename, src):
-#        if isinstance(e, jinja2.exceptions.TemplateSyntaxError):
-#            fname = filename
-#            src = e.source
-#            lineno = e.lineno  # 1 base
-#        else:
-#            (frame, lineno), = traceback.walk_tb(exc.__traceback__))
-#            if src is None:
-#
-#
-#
     def write(self, path):
         context = _context(self.site, self)
 
@@ -960,33 +931,35 @@ class Contents:
     def get_contents(self, subdirs=None, base=None, filters=None):
         contents = [c for c in self._contents.values()]
 
-        if filters:
-            filters = filters.copy()
-            if 'draft' not in filters:
-                filters['draft'] = {False}
-            if 'type' not in filters:
-                filters['type'] = {'article'}
+        if not filters:
+            filters = {}
 
-            def f(content):
-                for k, v in filters.items():
-                    if not hasattr(content, k):
+        filters = filters.copy()
+        if 'draft' not in filters:
+            filters['draft'] = {False}
+        if 'type' not in filters:
+            filters['type'] = {'article'}
+
+        def f(content):
+            for k, v in filters.items():
+                if not hasattr(content, k):
+                    return False
+                prop = getattr(content, k)
+                if isinstance(prop, str):
+                    if prop not in v:
                         return False
-                    prop = getattr(content, k)
-                    if isinstance(prop, str):
-                        if prop not in v:
-                            return False
-                    elif isinstance(prop, collections.abc.Collection):
-                        for e in prop:
-                            if e in v:
-                                break
-                        else:
-                            return False
+                elif isinstance(prop, collections.abc.Collection):
+                    for e in prop:
+                        if e in v:
+                            break
                     else:
-                        if prop not in v:
-                            return False
-                return True
+                        return False
+                else:
+                    if prop not in v:
+                        return False
+            return True
 
-            contents = [c for c in self._contents.values() if f(c)]
+        contents = [c for c in self._contents.values() if f(c)]
 
         if subdirs:
             cur = base.dirname if base else None

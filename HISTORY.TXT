@@ -1,3 +1,7 @@
+2018/02/25 0.51
+
+- contents.get_content() searches article objects with draft is false.
+
 2018/02/25 0.50
 
 - linenos option of Pygments directive didn't work(#6).

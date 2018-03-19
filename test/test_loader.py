@@ -18,7 +18,9 @@ def test_load():
 def test_fileloader():
     site = main.Site(Path(''))
     contents.load_directory(site, SITE / 'contents')
-    all = list(site.contents.get_contents())
+    all = list(site.contents.get_contents(filters={
+        'type': {'binary', 'article', 'index', 'config'}
+        }))
     assert len(all) == 4
 
     rst = site.contents.get_content('/test.rst')
@@ -27,8 +29,10 @@ def test_fileloader():
 
 def test_packageloader():
     site = main.Site(Path(''))
-    contents.load_package(site, 'package1', 'contents')
-    all = list(site.contents.get_contents())
+    contents.load_package(site, 'package1', 'contents',)
+    all = list(site.contents.get_contents(filters={
+        'type': {'binary', 'article', 'index', 'config'}
+        }))
 
     assert len(all) == 7
     assert site.contents.get_content(
