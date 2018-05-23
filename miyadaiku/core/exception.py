@@ -13,7 +13,7 @@ class MiyadaikuBuildError(Exception):
     def __init__(self, e, content, srcfilename, src):
         args = e.args
         if not srcfilename:
-            srcifilename = content.srcfilename
+            srcfilename = content.srcfilename
         if isinstance(e, jinja2.exceptions.TemplateSyntaxError):
             lines = utils.nthlines(src, e.lineno)
             msg = f'''{srcfilename}:{e.lineno} {str(e)}
@@ -29,7 +29,7 @@ class MiyadaikuBuildError(Exception):
         super().__init__(*args)
 
         self.pagefilename = content.srcfilename
-        self.srcilfename = srcfilename
+        self.srcfilename = srcfilename
         self.exctype = e.__class__.__name__
 
     def _get_src(self, content, lineno, srcfilename, src):
@@ -56,4 +56,4 @@ Last template: {srcfilename}: {lineno}
 
     def to_dict(self):
         return dict(exctype=self.exctype, args=self.args, pagefilename=self.pagefilename,
-                    srcfilename=self.srcilfename)
+                    srcfilename=self.srcfilename)

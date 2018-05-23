@@ -829,13 +829,12 @@ class IndexPage(HTMLContent):
         else:
             templatename = self.indexpage_template
 
-        template = self.site.jinjaenv.get_template(templatename)
         articles = [ContentArgProxy(context, article)
                     for article in articles]
         kwargs = dict(group_values=group_values, cur_page=cur_page,
                       is_last=is_last, num_pages=num_pages, articles=articles)
         kwargs.update(self.get_render_args(context))
-        body = self.render_from_template(context, self, template,
+        body = self.render_from_template(context, self, templatename,
                                          kwargs=kwargs)
 
         Path(path).write_bytes(body.encode('utf-8'))
