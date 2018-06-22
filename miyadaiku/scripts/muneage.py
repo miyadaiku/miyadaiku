@@ -11,6 +11,7 @@ import happylogging
 import logging
 import http.server
 import multiprocessing
+import traceback
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -196,7 +197,10 @@ def _main():
                 time.sleep(0.1)
                 ev.clear()
 
-                build(d, props, args.traceback, miyadaiku.core.DEBUG)
+                try:
+                    build(d, props, args.traceback, miyadaiku.core.DEBUG)
+                except Exception:
+                    traceback.print_exc()
 
         if args.server:
             t.join()

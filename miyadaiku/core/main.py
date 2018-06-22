@@ -135,7 +135,7 @@ class Site:
 
     def _print_err_dict(self, d):
         logger.error(f'Error in {d["srcfilename"]} while building {d["pagefilename"]}')
-        logger.error(f'  {d["exctype"]}: {d["args"][0].rstrip()}')
+        logger.error(f'  {d["exctype"]}: {str(d["args"][0]).rstrip()}')
 
         if self.show_traceback:
             logger.error(d['tb'])
