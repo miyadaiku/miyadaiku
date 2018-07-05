@@ -1,3 +1,9 @@
+2018/07/5 0.52
+
+- Index files are always generated even if no contents are found.
+
+- Improve error handlings.
+
 2018/02/25 0.51
 
 - contents.get_content() searches article objects with draft is false.
