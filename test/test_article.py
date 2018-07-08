@@ -56,7 +56,7 @@ title111
 
 .. target:: id2
 
-title2
+title2<>
 -----------------
 
 ''')
@@ -65,8 +65,9 @@ title2
     site.build()
     p = site.contents.get_content('/index.rst')
     context = contents._context(site, p)
-    print(p._get_html(context))
-
+    ret = p._get_html(context)
+    print(ret)
+    assert '---<a href="index.html#id2">title2&lt;&gt;</a>---' in ret
 
 def test_module(sitedir):
     templates = sitedir / 'templates'
