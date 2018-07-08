@@ -69,6 +69,53 @@ title2<>
     print(ret)
     assert '---<a href="index.html#id2">title2&lt;&gt;</a>---' in ret
 
+
+def test_link_to(sitedir):
+    content = sitedir / 'contents'
+    content.joinpath('file1.rst').write_text('''
+---:jinja:`{{ page.link_to(page, fragment='id2') }}`---
+
+
+.. target:: id2
+
+title111<> :jinja:`<abc/>`
+--------------------------------
+
+asdfasdf
+''')
+
+    site = main.Site(sitedir)
+    site.build()
+    p = site.contents.get_content('/file1.rst')
+    context = contents._context(site, p)
+    ret = p._get_html(context)
+    print(ret)
+    assert 'title111&lt;&gt; <abc></abc></a>---' in ret
+
+
+def test_link_to2(sitedir):
+    content = sitedir / 'contents'
+    content.joinpath('file1.rst').write_text('''
+title111<> :jinja:`<abc/>`
+--------------------------------
+
+asdfasdf
+''')
+
+    content.joinpath('file2.rst').write_text('''
+
+:jinja:`{{ page.link_to('./file1.rst') }}`
+
+''')
+
+    site = main.Site(sitedir)
+    site.build()
+    p = site.contents.get_content('/file2.rst')
+    context = contents._context(site, p)
+    ret = p._get_html(context)
+    assert 'title111&lt;&gt; <abc></abc></a>' in ret
+
+
 def test_module(sitedir):
     templates = sitedir / 'templates'
     (templates / 'macro.html').write_text('''

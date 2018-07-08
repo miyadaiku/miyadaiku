@@ -452,13 +452,16 @@ class Content:
     def link_to(self, context, target, text=None, fragment=None, abs_path=False, attrs=None, *args, **kwargs):
         if isinstance(target, str):
             target = self.get_content(target)
+
         if not text:
             if fragment:
                 text = target.get_headertext(context, fragment)
             if not text:
-                text = target.title
+                text = target.render_from_string(context, self, "title", target.title,
+                                           kwargs=self.get_render_args(context))
+        else:
+            text = markupsafe.escape(text or '')
 
-        text = markupsafe.escape(text or '')
         s_attrs = []
         if attrs:
             for k, v in attrs.items():
@@ -589,8 +592,7 @@ class HTMLContent(Content):
                     n += 1
                     a = soup.new_tag('div', id=id, **{'class': 'header_target'})
                     c.insert_before(a)
-
-                headers.append((id, c.name, c.text))
+                headers.append((id, c.name, c.decode_contents()))
                 id = None
 
         return headers, str(soup)
