@@ -1,3 +1,7 @@
+2018/07/5 0.53
+
+- Improve link label to the titles.
+
 2018/07/5 0.52
 
 - Index files are always generated even if no contents are found.
