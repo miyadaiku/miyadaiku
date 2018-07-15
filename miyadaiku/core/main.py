@@ -248,6 +248,8 @@ class Site:
         try:
             destfiles, context = content.build(output_path)
         except Exception as e:
+            if self.debug or self.show_traceback:
+                traceback.print_exc()
             d = self._exc_to_dict(content, e)
             return None, False, d
 

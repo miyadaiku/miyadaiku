@@ -24,7 +24,7 @@ class MiyadaikuBuildError(Exception):
         else:
             lineno = self._get_lineno(e, srcfilename)
             if lineno is not None:
-                args = (args[0] + self._get_src(content, lineno, srcfilename, src,), )
+                args = (str(e) + self._get_src(content, lineno, srcfilename, src,), )
 
         super().__init__(*args)
 

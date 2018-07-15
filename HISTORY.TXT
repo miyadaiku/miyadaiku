@@ -1,3 +1,7 @@
+2018/07/5 0.54
+
+- Improve error message.
+
 2018/07/5 0.53
 
 - Improve link label to the titles.
