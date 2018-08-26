@@ -183,8 +183,14 @@ def _main():
         t.start()
 
     try:
-        code = build(d, props, args.traceback, miyadaiku.core.DEBUG)
-        if args.watch:
+        if not args.watch:
+            code = build(d, props, args.traceback, miyadaiku.core.DEBUG)
+        else:
+            try:
+                code = build(d, props, args.traceback, miyadaiku.core.DEBUG)
+            except Exception:
+                traceback.print_exc()
+
             print(f'Watching {d.resolve()} ...')
 
             ev = threading.Event()

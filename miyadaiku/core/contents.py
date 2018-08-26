@@ -1109,6 +1109,9 @@ class YamlLoader(FileLoader):
         _metadata = yaml.load(src) or {}
         self._update_metadata(metadata, _metadata)
 
+        if 'type' not in metadata:
+            metadata['type'] = 'config'
+
     def _get_body_from_file(self, site, srcpath, destpath, metadata):
         src = srcpath.read_text(encoding=YAML_ENCODING)
         self._load(src, metadata)
