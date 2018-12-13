@@ -1,0 +1,25 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run: # install and activate virtual environment with pip
+          command: |
+            python3 -m venv venv
+      - restore_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+      - run:
+          command: |
+            venv/bin/pip install pytest wheel
+      - run:
+          command: |
+            venv/bin/python setup.py install
+      - save_cache: # special step to save dependency cache
+          key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+          paths:
+            - "venv"
+      - run:
+          command: |
+            venv/bin/pytest
