@@ -794,14 +794,6 @@ class IndexPage(HTMLContent):
         n_per_page = int(self.indexpage_max_articles)
         page_orphan = int(self.indexpage_orphan)
 
-        if not groups[0][1]: # empty index
-            filename = self.filename_to_page((), 1)
-            outfilename = utils.prepare_output_path(dir, self.dirname, filename)
-
-            self.write(outfilename, context, group_values=(), cur_page=1,
-                       is_last=True, num_pages=1, articles=[])
-            return [outfilename], context
-
         for names, group in groups:
             num = len(group)
             num_pages = ((num - 1) // n_per_page) + 1
@@ -996,7 +988,7 @@ class Contents:
         for c in self.get_contents(subdirs, base, filters):
             g = getattr(c, group, None)
 
-            if g:
+            if g is not None:
                 if isinstance(g, str):
                     d[(g,)].append(c)
                 elif isinstance(g, collections.abc.Collection):
