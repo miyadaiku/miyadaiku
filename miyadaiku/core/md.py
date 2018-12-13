@@ -7,14 +7,19 @@ import markdown.extensions.codehilite
 
 
 class Ext(markdown.Extension):
-    def extendMarkdown(self, md, globals):
-        md.preprocessors.add('jinja',
-                             JinjaPreprocessor(md),
-                             ">normalize_whitespace")
+    def extendMarkdown(self, md):
+        # prior to fenced_code_block
+        md.preprocessors.register(JinjaPreprocessor(md), 'jinja', 27.5)
 
-        md.parser.blockprocessors.add('target',
-                                      TargetProcessor(md.parser),
-                                      '_begin')
+#        md.preprocessors.add('jinja',
+#                             JinjaPreprocessor(md),
+#                             ">normalize_whitespace")
+
+        # top priority
+        md.parser.blockprocessors.register(TargetProcessor(md.parser), 'target', 110)
+#        md.parser.blockprocessors.add('target',
+#                                      TargetProcessor(md.parser),
+#                                      '_begin')
 
 
 class JinjaPreprocessor(preprocessors.Preprocessor):
@@ -36,7 +41,7 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
         if 'type' not in meta:
             meta['type'] = 'article'
 
-        self.markdown.meta = meta
+        self.md.meta = meta
 
         text = "\n".join(lines[n:])
         while True:
@@ -45,9 +50,9 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
                 break
             if m[1]:
                 # escaped
-                placeholder = self.markdown.htmlStash.store(m[0], safe=True)
+                placeholder = self.md.htmlStash.store(m[0])
             else:
-                placeholder = self.markdown.htmlStash.store(m[2], safe=True)
+                placeholder = self.md.htmlStash.store(m[2])
 
             text = '%s%s%s' % (text[:m.start()],
                                placeholder,
