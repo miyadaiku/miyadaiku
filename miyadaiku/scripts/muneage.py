@@ -17,7 +17,6 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 import miyadaiku.core
-import miyadaiku.core.__version__
 from miyadaiku.core.main import (Site, DEP_FILE, CONFIG_FILE,
                                  CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, OUTPUTS_DIR)
 from miyadaiku.core.hooks import HOOKS, run_hook
@@ -88,7 +87,7 @@ parser = argparse.ArgumentParser(description='Build miyadaiku project.')
 parser.add_argument('directory', help='directory name')
 
 parser.add_argument('--version', '-v', action='version',
-                    version=f'{miyadaiku.core.__version__.version}')
+                    version=f'{miyadaiku.core.__version__}')
 
 parser.add_argument('--define', '-d', action='append', metavar='property=value',
                     help='Set default property value.')
