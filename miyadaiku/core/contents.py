@@ -8,7 +8,7 @@ import atexit
 import collections
 import datetime
 import pkg_resources
-from pathlib import Path, PosixPath
+from pathlib import Path, PurePosixPath
 import urllib.parse
 import tempfile
 import yaml
@@ -482,7 +482,7 @@ class Content:
             for name in self.get_metadata('imports'):
                 template = self.site.jinjaenv.get_template(name)
                 fname = name.split('!', 1)[-1]
-                modulename = PosixPath(fname).stem
+                modulename = PurePosixPath(fname).stem
                 self._imports[modulename] = template.module
 
         return self._imports

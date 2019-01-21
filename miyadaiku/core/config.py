@@ -103,6 +103,7 @@ def _load_theme_configs(themes):
         if theme in seen:
             continue
         seen.add(theme)
+
         cfg = _load_theme_config(theme)
         themes = list(t for t in cfg.get('themes', [])) + themes
         yield theme, cfg
@@ -132,7 +133,6 @@ class Config:
             d = yaml.load(path.read_text(encoding=YAML_ENCODING)) or {}
         else:
             d = {}
-
         if default:
             d.update(default)
 

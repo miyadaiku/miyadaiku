@@ -75,10 +75,11 @@ def dirname_to_tuple(dirname):
     if isinstance(dirname, tuple):
         return dirname
 
+    dirname = format_dirname(dirname)
+
     assert not dirname.startswith('./')
     assert not dirname.startswith('../')
 
-    dirname = format_dirname(dirname)
     if dirname:
         dirname = tuple(dirname.split('/'))
     else:

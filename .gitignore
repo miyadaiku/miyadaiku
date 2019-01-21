@@ -9,3 +9,5 @@ build
 .DS_Store
 .cache
 .venv
+.vscode
+.pytest_cache
