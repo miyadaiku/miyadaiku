@@ -1,4 +1,4 @@
 themes: 
-    - package2
+    - test.package2
 
 package1_prop1: package1_prop1_value

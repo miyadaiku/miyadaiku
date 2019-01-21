@@ -21,7 +21,7 @@ def test_get():
     site = main.Site(Path(''))
 
     contents.load_directory(site, SITE / 'contents')
-    contents.load_package(site, 'package1', 'contents')
+    contents.load_package(site, 'test.package1', 'contents')
 
     assert site.config.get(('dir1',), 'prop_a1') == 'value_site_a1'
     assert site.config.get(('dir1',), 'prop_b') == 'value_site_b'

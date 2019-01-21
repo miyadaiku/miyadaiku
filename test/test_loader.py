@@ -29,7 +29,7 @@ def test_fileloader():
 
 def test_packageloader():
     site = main.Site(Path(''))
-    contents.load_package(site, 'package1', 'contents',)
+    contents.load_package(site, 'test.package1', 'contents',)
     all = list(site.contents.get_contents(filters={
         'type': {'binary', 'article', 'index', 'config'}
         }))
