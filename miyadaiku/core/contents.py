@@ -233,7 +233,7 @@ class Content:
                 except IOError:
                     pass
 
-    def check_update(self, output_path):
+    def is_updated(self, output_path):
         if self.updated:
             return True
 

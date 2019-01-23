@@ -1,10 +1,11 @@
 from pathlib import Path
-from miyadaiku.core import rst, contents, config, jinjaenv, main
+from miyadaiku.core import rst, contents, config, jinjaenv
+from miyadaiku.core.site import Site
 
 
 def test_get_contents():
 
-    site = main.Site(Path('.'))
+    site = Site(Path('.'))
     conts = site.contents
 
     a1 = contents.Article(site, '', '1', {'type': 'article'}, '1')
@@ -27,7 +28,7 @@ def test_get_contents():
 
 def test_group_items():
 
-    site = main.Site(Path('.'))
+    site = Site(Path('.'))
     conts = site.contents
 
     a1 = contents.Article(site, '', '1', {'type': 'article', 'category': 'a'}, '1')
@@ -47,7 +48,7 @@ def test_group_items():
 
 
 def test_path_to():
-    site = main.Site(Path('.'))
+    site = Site(Path('.'))
     conts = site.contents
 
     a1 = contents.Article(site, '', '1', {'type': 'article'}, '1')
@@ -67,7 +68,7 @@ def test_path_to():
 
 
 def test_url_to():
-    site = main.Site(Path('.'), {'site_url': 'http://abc/test'})
+    site = Site(Path('.'), {'site_url': 'http://abc/test'})
 
     conts = site.contents
 
@@ -91,7 +92,7 @@ def test_url_to():
 
 
 def test_get_abstract():
-    site = main.Site(Path('.'))
+    site = Site(Path('.'))
 
     s = '0123456789' * 5
     body = f'<div>{s}<div>{s}<div>{s}<div>{s}</div><p>{s}</p></div></div></div>' * 10
@@ -103,7 +104,7 @@ def test_get_abstract():
 
 
 def test_categories():
-    site = main.Site(Path('.'))
+    site = Site(Path('.'))
 
     a1 = contents.Article(site, '', '1',
                           {'type': 'article', 'category': 'A', 'tags': ['1', '2']}, '1')

@@ -1,7 +1,7 @@
 import re
 import pytest
 import pathlib
-from miyadaiku.core import main
+from miyadaiku.core.site import Site
 
 
 def test_feed(sitedir):  # NOQA
@@ -28,7 +28,7 @@ type: feed
 feedtype: rss
 """)
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     p = sitedir.joinpath('outputs') / 'feed.rdf'

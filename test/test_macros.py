@@ -1,5 +1,6 @@
 from pathlib import Path
-from miyadaiku.core import rst, contents, config, jinjaenv, main
+from miyadaiku.core import rst, contents, config, jinjaenv
+from miyadaiku.core.site import Site
 
 
 def test_ga(sitedir):
@@ -12,7 +13,7 @@ title
    {{ macros.google_analytics() }}
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.config.add('/', {'ga_tracking_id': '12345'})
     site.build()
 
@@ -29,7 +30,7 @@ def test_image(sitedir):
    {{ macros.image(page.load('/img/img.png')) }}
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
@@ -55,7 +56,7 @@ body
 
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()

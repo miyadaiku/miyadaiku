@@ -1,7 +1,7 @@
 import re
 import pytest
 import pathlib
-from miyadaiku.core import main
+from miyadaiku.core.site import Site
 
 
 def test_feed(sitedir):  # NOQA
@@ -16,7 +16,7 @@ def test_feed(sitedir):  # NOQA
 
 """)
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     p = (sitedir.joinpath('outputs') / 'test.html').read_text()
@@ -45,7 +45,7 @@ abstract: "<def>"
 """)
 
     import miyadaiku.core
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     p = (sitedir.joinpath('outputs') / 'disp.html').read_text()
@@ -61,7 +61,7 @@ def test_exception_tag(sitedir):
 
 """)
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     # todo: check output
@@ -79,7 +79,7 @@ abc
 {{page.html}}
 """)
 
-    site = main.Site(sitedir, debug=True)
+    site = Site(sitedir, debug=True)
     site.build()
 
     # todo: check output

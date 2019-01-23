@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from miyadaiku.core import rst, contents, config, jinjaenv, main
+from miyadaiku.core import rst, contents, config, jinjaenv
 from miyadaiku.scripts.muneage import load_hook, build
 import yaml
 

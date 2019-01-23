@@ -1,7 +1,7 @@
 import re
 import pytest
 import pathlib
-from miyadaiku.core import main
+from miyadaiku.core.site import Site
 
 
 def _create_content(sitedir):
@@ -33,7 +33,7 @@ type: index
 indexpage_max_articles: 4
 """)
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     nums = [re.search(r'\d', p.stem + '_1')[0] for p in sitedir.joinpath('outputs').glob('index*')]
@@ -55,7 +55,7 @@ indexpage_max_articles: 4
 groupby: category
 """)
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     files = [p.stem for p in sitedir.joinpath('outputs').glob('index*')]

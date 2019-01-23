@@ -1,5 +1,6 @@
 from pathlib import Path
-from miyadaiku.core import rst, contents, config, main
+from miyadaiku.core import rst, contents, config
+from miyadaiku.core.site import Site
 
 DIR = Path(__file__).parent
 SITE = DIR / 'site1'
@@ -16,7 +17,7 @@ def test_load():
 
 
 def test_fileloader():
-    site = main.Site(Path(''))
+    site = Site(Path(''))
     contents.load_directory(site, SITE / 'contents')
     all = list(site.contents.get_contents(filters={
         'type': {'binary', 'article', 'index', 'config'}
@@ -28,7 +29,7 @@ def test_fileloader():
 
 
 def test_packageloader():
-    site = main.Site(Path(''))
+    site = Site(Path(''))
     contents.load_package(site, 'test.package1', 'contents',)
     all = list(site.contents.get_contents(filters={
         'type': {'binary', 'article', 'index', 'config'}

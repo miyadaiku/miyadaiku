@@ -17,8 +17,9 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 import miyadaiku.core
-from miyadaiku.core.main import (Site, DEP_FILE, CONFIG_FILE,
+from miyadaiku.core.site import (Site, CONFIG_FILE,
                                  CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, OUTPUTS_DIR)
+from miyadaiku.core.builder import DEP_FILE
 from miyadaiku.core.hooks import HOOKS, run_hook
 OBSERVER = None
 

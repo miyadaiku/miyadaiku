@@ -10,7 +10,7 @@ import fnmatch
 
 from . import utils
 from . import YAML_ENCODING
-from . import main
+from . import site
 
 default_timezone = tzlocal.get_localzone().zone
 default_theme = 'miyadaiku.themes.base'
@@ -84,7 +84,7 @@ defaults = dict(
 
 def _load_theme_config(package):
     try:
-        s = pkg_resources.resource_string(package, main.CONFIG_FILE)
+        s = pkg_resources.resource_string(package, site.CONFIG_FILE)
     except FileNotFoundError:
         cfg = {}
     else:
