@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 import pytz
 from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
+import threading
 
 import miyadaiku
 import miyadaiku.core
@@ -224,30 +225,20 @@ class Content:
 
         self._imports = None
 
-        self.metadata['stat'] = None
-        if 'package' not in metadata:
-            path = self.metadata.get('srcpath', None)
-            if path:
-                try:
-                    self.metadata['stat'] = os.stat(path)
-                except IOError:
-                    pass
-
-    def is_updated(self, output_path):
+    def is_updated(self, lastbuild):
         if self.updated:
             return True
 
-        stat = self.metadata.get('stat', None)
-        if self._check_fileupdate(output_path, stat):
-            return True
-
-        if not stat:
+        if 'package' not in self.metadata:
+            path = self.metadata.get('srcpath', None)
+            if path:
+                try:
+                    stat = os.stat(path)
+                    return stat.st_mtime > lastbuild
+                except IOError:
+                    return False
+        else:
             return False
-
-        if self.site.stat_depfile and stat.st_mtime > self.site.stat_depfile.st_mtime:
-            return True
-
-        return False
 
     def calc_path(self, path, dirname, name):
         dir = path.joinpath(*dirname)
@@ -255,24 +246,6 @@ class Content:
         dest = os.path.expanduser((dir / name))
         dest = os.path.normpath(dest)
         return dest
-
-    def _check_fileupdate(self, outputpath, stat):
-        filename = self.calc_path(outputpath, self.dirname, self.filename)
-        try:
-            filestat = os.stat(filename)
-            if not stat:
-                self.updated = False
-                return False
-
-            if filestat.st_mtime >= stat.st_mtime:
-                self.updated = False
-                return False
-
-        except IOError:
-            pass
-
-        self.updated = True
-        return True
 
     def __str__(self):
         return f'<{self.__class__.__module__}.{self.__class__.__name__} {self.srcfilename}>'
@@ -476,14 +449,16 @@ class Content:
     def pre_build(self):
         pass
 
+    LOCK = threading.RLock()
     def _getimports(self):
-        if self._imports is None:
-            self._imports = {}
-            for name in self.get_metadata('imports'):
-                template = self.site.jinjaenv.get_template(name)
-                fname = name.split('!', 1)[-1]
-                modulename = PurePosixPath(fname).stem
-                self._imports[modulename] = template.module
+        with self.LOCK:
+            if self._imports is None:
+                self._imports = {}
+                for name in self.get_metadata('imports'):
+                    template = self.site.jinjaenv.get_template(name)
+                    fname = name.split('!', 1)[-1]
+                    modulename = PurePosixPath(fname).stem
+                    self._imports[modulename] = template.module
 
         return self._imports
 
@@ -683,18 +658,7 @@ class HTMLContent(Content):
 
 
 class Snippet(HTMLContent):
-    def check_update(self, output_path):
-        if self.updated:
-            return True
-
-        stat = self.metadata.get('stat', None)
-        if self.site.stat_depfile and stat.st_mtime > self.site.stat_depfile.st_mtime:
-            self.updated = True
-            return True
-
-        self.updated = False
-        return False
-
+    pass
 
 class Article(HTMLContent):
     def pre_build(self):
@@ -1052,7 +1016,8 @@ class FileLoader:
         if os.path.exists(metadatafile):
             text = open(metadatafile, encoding=YAML_ENCODING).read()
             metadata.update(yaml.load(text) or {})
-
+            metadata['metadatafile'] = metadatafile
+            
         body = self._get_body_from_file(site, srcpath, destpath, metadata)
         dirname, name = os.path.split(destpath)
         return self._build_content(site, None, srcpath, dirname, name, metadata, body)
@@ -1067,7 +1032,7 @@ class FileLoader:
         if pkg_resources.resource_exists(package, metadatafile):
             m = pkg_resources.resource_string(package, metadatafile)
             if m:
-                metadata = yaml.load(m.decode(YAML_ENCODING)) or {}
+                metadata.update(yaml.load(m.decode(YAML_ENCODING)) or {})
 
         body = self._get_body_from_package(site, package, srcpath, destpath, metadata)
 

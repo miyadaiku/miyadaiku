@@ -5,7 +5,7 @@ from miyadaiku.core.site import Site
 import yaml
 
 
-def test_build_depend(sitedir):
+def build_content(sitedir):
     content = sitedir / 'contents'
     content.joinpath('index.rst').write_text('''
 .. jinja::
@@ -19,6 +19,11 @@ def test_build_depend(sitedir):
 heh
 ''')
 
+
+def test_build_depend(sitedir):
+    build_content(sitedir)
+
+    content = sitedir / 'contents'
     site = Site(sitedir)
     site.build()
     
@@ -29,7 +34,52 @@ heh
 
     assert index_rst == {(((), 'index.rst'),None)}
     assert a_rst == {(((), 'index.rst'),None), (((), 'a.rst'),None)}
-
     deps.check_rebuild()
     assert not deps.rebuild
 
+    deps.check_content_update()
+    assert not site.contents.get_content('/index.rst').updated
+    assert not site.contents.get_content('/a.rst').updated
+
+def test_update_article(sitedir):
+    build_content(sitedir)
+    content = sitedir / 'contents'
+
+    site = Site(sitedir)
+    site.build()
+
+    content.joinpath('index.rst').write_text('''
+
+updated
+
+.. jinja::
+   {{ page.load('./a.rst').html }}
+
+''')
+
+    newsite = Site(sitedir)
+    deps = builder.Depends(newsite)
+
+    deps.check_content_update()
+    assert newsite.contents.get_content('/index.rst').updated
+    assert not newsite.contents.get_content('/a.rst').updated
+
+
+def test_update_article_ref(sitedir):
+
+    build_content(sitedir)
+    content = sitedir / 'contents'
+
+    site = Site(sitedir)
+    site.build()
+
+    content.joinpath('a.rst').write_text('''
+heh2
+''')
+
+    newsite = Site(sitedir)
+    deps = builder.Depends(newsite)
+
+    deps.check_content_update()
+    assert newsite.contents.get_content('/index.rst').updated
+    assert newsite.contents.get_content('/a.rst').updated

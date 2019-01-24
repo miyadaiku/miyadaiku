@@ -65,14 +65,16 @@ class Depends:
         all = {}
         for k, c in self.site.contents.items():
             m = dict(c.metadata)
-            if 'stat' in m:
-                del m['stat']
             all[k] = m
 
         return all
 
     def check_rebuild(self):
         if self.rebuild:
+            return
+
+        if not self.stat_depfile:
+            self.rebuild = True
             return
 
         if self.metadatas != self.get_metadatas():
@@ -103,16 +105,15 @@ class Depends:
 
         for key, content in self.site.contents.items():
             if isinstance(content, contents.ConfigContent):
-                if content.is_updated(output_path):
+                if content.is_updated(self.stat_depfile.st_mtime):
                     self.rebuild = True
                     return
 
     def check_content_update(self):
         updated_items = []
 
-        output_path = self.site.path / site.OUTPUTS_DIR
         for key, content in self.site.contents.items():
-            if (key in self.rebuild_always) or content.is_updated(output_path):
+            if (key in self.rebuild_always) or content.is_updated(self.stat_depfile.st_mtime):
                 updated_items.append(content)
                 content.updated = True
 
@@ -166,7 +167,7 @@ def _run_build(key):
         if _site.debug or _site.show_traceback:
             traceback.print_exc()
         d = _exc_to_dict(content, e)
-        return None, False, d
+        return None, True, d
 
     run_hook(HOOKS.post_build, _site, content, output_path, destfiles)
 
