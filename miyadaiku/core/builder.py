@@ -184,6 +184,9 @@ def _run_build(key):
 
 
 def _build_result(site, deps, content, dep, rebuild_always, d, errors):
+    if rebuild_always:
+        deps.rebuild_always.add((content.dirname, content.name))
+
     if dep is None:
         _print_err_dict(site, d)
         errors.append(d)
@@ -191,9 +194,6 @@ def _build_result(site, deps, content, dep, rebuild_always, d, errors):
 
     for k, v in dep.items():
         deps.depends[k].update(v)
-
-    if rebuild_always:
-        deps.rebuild_always.add((content.dirname, content.name))
 
 def _print_err_dict(site, d):
     logger.error(f'Error in {d["srcfilename"]} while building {d["pagefilename"]}')
@@ -237,8 +237,7 @@ def build(site):
 
     executor.shutdown()
 
-    if not errors:
-        deps.save()
+    deps.save()
 
     if not errors:
         logger.error(f'no errors')
