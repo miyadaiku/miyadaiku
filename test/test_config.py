@@ -1,5 +1,6 @@
 from pathlib import Path
-from miyadaiku.core import config, contents, main
+from miyadaiku.core import config, contents
+from miyadaiku.core.site import Site
 
 DIR = Path(__file__).parent
 SITE = DIR / 'site1'
@@ -18,7 +19,7 @@ def test_prop():
 
 
 def test_get():
-    site = main.Site(Path(''))
+    site = Site(Path(''))
 
     contents.load_directory(site, SITE / 'contents')
     contents.load_package(site, 'test.package1', 'contents')

@@ -1,10 +1,11 @@
 from pathlib import Path
-from miyadaiku.core import rst, contents, config, jinjaenv, main
+from miyadaiku.core import rst, contents, config, jinjaenv
+from miyadaiku.core.site import Site
 import yaml
 
 
 def test_article(sitedir):
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     article = contents.Article(site, '', 'test.rst', {}, '1234567890')
     files, context = article.build(sitedir / 'outputs')
 
@@ -14,7 +15,7 @@ def test_article(sitedir):
 
 
 def test_indexpage(sitedir):
-    site = main.Site(sitedir)
+    site = Site(sitedir)
 
     for i in range(10):
         site.contents.add(contents.Article(site, '', f'test{i}', {
@@ -37,7 +38,7 @@ title1
 
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
     context = contents._context(site, p)
@@ -61,7 +62,7 @@ title2<>
 
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
     context = contents._context(site, p)
@@ -84,7 +85,7 @@ title111<> :jinja:`<abc/>`
 asdfasdf
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
     p = site.contents.get_content('/file1.rst')
     context = contents._context(site, p)
@@ -108,7 +109,7 @@ asdfasdf
 
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
     p = site.contents.get_content('/file2.rst')
     context = contents._context(site, p)
@@ -133,7 +134,7 @@ def test_module(sitedir):
 :jinja:`{{ macro.test("hello") }}`
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
     context = contents._context(site, p)
@@ -145,7 +146,7 @@ def test_metadatafile(sitedir):
     content = sitedir / 'contents'
     (content / 'index.rst').write_text('')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.config.add('/', dict(generate_metadata_file=True))
     site.pre_build()
 
@@ -153,6 +154,6 @@ def test_metadatafile(sitedir):
     d = yaml.load((content / 'index.rst.props.yml').read_text())
     assert p.date == d['date']
 
-    site2 = main.Site(sitedir)
+    site2 = Site(sitedir)
     p2 = site2.contents.get_content('/index.rst')
     assert p2.date == d['date']

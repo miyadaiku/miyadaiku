@@ -1,5 +1,6 @@
 from pathlib import Path
-from miyadaiku.core import rst, contents, config, jinjaenv, main
+from miyadaiku.core import rst, contents, config, jinjaenv
+from miyadaiku.core.site import Site
 
 
 def test_docutils_html5(sitedir):
@@ -17,7 +18,7 @@ title
    {{ docutils_html5.load_css(page) }}
 ''')
 
-    site = main.Site(sitedir)
+    site = Site(sitedir)
     site.build()
 
     ret = sitedir.joinpath('outputs/index.html').read_text()
