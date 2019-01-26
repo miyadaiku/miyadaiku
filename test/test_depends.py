@@ -83,3 +83,21 @@ heh2
     deps.check_content_update()
     assert newsite.contents.get_content('/index.rst').updated
     assert newsite.contents.get_content('/a.rst').updated
+
+
+def test_update_propfile(sitedir):
+    build_content(sitedir)
+    content = sitedir / 'contents'
+
+    site = Site(sitedir)
+    site.build()
+
+    content.joinpath('index.rst.props.yml').write_text('''
+prop1: prop1vaue
+''')
+
+    newsite = Site(sitedir)
+    deps = builder.Depends(newsite)
+
+    deps.check_content_update()
+    assert newsite.contents.get_content('/index.rst').updated

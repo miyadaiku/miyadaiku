@@ -234,11 +234,19 @@ class Content:
             if path:
                 try:
                     stat = os.stat(path)
-                    return stat.st_mtime >= lastbuild
+                    if stat.st_mtime >= lastbuild:
+                        return True
                 except IOError:
                     return False
-        else:
-            return False
+
+                dir, fname = os.path.split(path)
+                metafilename = Path(metadata_file_name(dir, fname))
+                if metafilename.is_file():
+                    stat = os.stat(metafilename)
+                    if stat.st_mtime >= lastbuild:
+                        return True
+
+        return False
 
     def calc_path(self, path, dirname, name):
         dir = path.joinpath(*dirname)
