@@ -234,7 +234,7 @@ class Content:
             if path:
                 try:
                     stat = os.stat(path)
-                    return stat.st_mtime > lastbuild
+                    return stat.st_mtime >= lastbuild
                 except IOError:
                     return False
         else:
