@@ -48,7 +48,7 @@ def deletefiles():
         try:
             logger.debug(f'Removong {f}')
             os.unlink(f)
-        except Exception as e:
+        except Exception:
             logger.exception(f'Failed to remove {f}')
 
 
@@ -431,8 +431,8 @@ class Content:
         my_parsed = urllib.parse.urlsplit(self.get_url(*args, **kwargs))
 
         # return abs url if protocol or server differs
-        if ((target_parsed.scheme != my_parsed.scheme) or
-                (target_parsed.netloc != my_parsed.netloc)):
+        if ((target_parsed.scheme != my_parsed.scheme)
+                or (target_parsed.netloc != my_parsed.netloc)):
             return target_url + fragment
 
         my_dir = posixpath.dirname(my_parsed.path)
@@ -445,7 +445,8 @@ class Content:
             ret_path = ret_path + '/'
         return ret_path + fragment
 
-    def link_to(self, context, target, text=None, fragment=None, abs_path=False, attrs=None, plain=True, *args, **kwargs):
+    def link_to(self, context, target, text=None, fragment=None,
+                abs_path=False, attrs=None, plain=True, *args, **kwargs):
         if isinstance(target, str):
             target = self.get_content(target)
 
@@ -454,7 +455,7 @@ class Content:
                 text = target.get_headertext(context, fragment)
             if not text:
                 text = target.render_from_string(context, self, "title", target.title,
-                                           kwargs=self.get_render_args(context))
+                                                 kwargs=self.get_render_args(context))
 
             if plain:
                 soup = BeautifulSoup(text)
@@ -621,7 +622,7 @@ class HTMLContent(Content):
                     slug = f'{slug}_{n}'
                     n += 1
                 slugs.add(slug)
-                
+
                 id = f'h_{slug}'
                 anchor_id = f'a_{slug}'
 
@@ -669,10 +670,12 @@ class HTMLContent(Content):
                 return ret, context.get_header_anchor_cache(self), context.get_fragment_cache(self)
 
             self._get_html(context)
-            return context.get_header_cache(self), context.get_header_anchor_cache(self), context.get_fragment_cache(self)
+            return (context.get_header_cache(self),
+                    context.get_header_anchor_cache(self),
+                    context.get_fragment_cache(self))
 
         finally:
-            self._in_get_headers  = False
+            self._in_get_headers = False
 
 
     def get_headertext(self, context, fragment):
@@ -1107,7 +1110,7 @@ class FileLoader:
             text = open(metadatafile, encoding=YAML_ENCODING).read()
             metadata.update(yaml.load(text) or {})
             metadata['metadatafile'] = metadatafile
-            
+
         body = self._get_body_from_file(site, srcpath, destpath, metadata)
         dirname, name = os.path.split(destpath)
         return self._build_content(site, None, srcpath, dirname, name, metadata, body)
@@ -1264,7 +1267,7 @@ def load_directory(site, path, loader=None):
 
             run_hook(HOOKS.post_load, site, p, None, content)
 
-        except Exception as e:
+        except Exception:
             logger.exception(f'Error loading {p}')
             raise
     return

@@ -101,8 +101,6 @@ class Depends:
             self.rebuild = True
             return
 
-        output_path = self.site.path / site.OUTPUTS_DIR
-
         for key, content in self.site.contents.items():
             if isinstance(content, contents.ConfigContent):
                 if content.is_updated(self.stat_depfile.st_mtime):
@@ -219,6 +217,7 @@ def build(site):
         executor = concurrent.futures.ProcessPoolExecutor()
 
     errors = []
+
     def done(f, key):
         content = site.contents.get_content(key)
         dep, rebuild_always, d = f.result()
@@ -227,7 +226,7 @@ def build(site):
     for key, content in site.contents.items():
         if not deps.rebuild and not content.updated:
             continue
-        
+
         if site.debug:
             dep, rebuild_always, d = _run_build(key)
             _build_result(site, deps, content, dep, rebuild_always, d, errors)
@@ -243,5 +242,3 @@ def build(site):
         logger.info(f'no errors')
     else:
         logger.error(f'total: {len(errors)} errors')
-
-    

@@ -24,4 +24,6 @@ ignore =
     # F403  unable to detect undefined name
     F403,
     # F405 may be undefine
-    F405
+    F405,
+    # W503 line break before binary operator
+    W503 

@@ -89,7 +89,7 @@ def dirname_to_tuple(dirname):
 
 def slugify(value):
     value = unicodedata.normalize('NFKC', value)
-    value = re.sub('[^\w\s-]', '', value).strip().lower()
+    value = re.sub(r'[^\w\s-]', '', value).strip().lower()
     value = '-'.join(value.split())
     return value
 
