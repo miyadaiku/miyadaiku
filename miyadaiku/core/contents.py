@@ -7,7 +7,11 @@ import posixpath
 import atexit
 import collections
 import datetime
+import threading
+import html as htmlmodule
+
 import pkg_resources
+import unicodedata
 from pathlib import Path, PurePosixPath
 import urllib.parse
 import tempfile
@@ -20,7 +24,6 @@ from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 import pytz
 from feedgenerator import Atom1Feed, Rss201rev2Feed, get_tag_uri
-import threading
 
 import miyadaiku
 import miyadaiku.core
@@ -67,10 +70,10 @@ class _context(dict):
     def __init__(self, site, page_content, *, pageargs=None):
         self.site = site
         self.page_content = page_content
-        self.__depends = set()
-        self.__rebuildallways = False
-        self.__pageargs = pageargs
-        self.__html_cache = {}
+        self._depends = set()
+        self._rebuildallways = False
+        self._pageargs = pageargs
+        self._html_cache = {}
 
     def __getattr__(self, name):
         return self.get(name, None)
@@ -82,32 +85,38 @@ class _context(dict):
         self.update(kwargs)
 
     def add_depend(self, page):
-        self.__depends.add(page)
+        self._depends.add(page)
 
     def get_depends(self):
-        return (self.__depends, self.__pageargs)
+        return (self._depends, self._pageargs)
 
     def set_rebuild(self):
-        self.__rebuildallways = True
+        self._rebuildallways = True
 
     def is_rebuild_always(self):
-        return self.__rebuildallways
+        return self._rebuildallways
 
     def get_html_cache(self, content):
-        f = self.__html_cache.get((content.dirname, content.name), (None, None))[0]
+        f = self._html_cache.get((content.dirname, content.name), (None, None, None, None))[0]
         if f:
             f.seek(0)
             return f.read()
         return f
 
     def get_header_cache(self, content):
-        return self.__html_cache.get((content.dirname, content.name), (None, None))[1]
+        return self._html_cache.get((content.dirname, content.name), (None, None, None, None))[1]
 
-    def set_html_cache(self, content, html, headers):
+    def get_header_anchor_cache(self, content):
+        return self._html_cache.get((content.dirname, content.name), (None, None, None, None))[2]
+
+    def get_fragment_cache(self, content):
+        return self._html_cache.get((content.dirname, content.name), (None, None, None, None))[3]
+
+    def set_html_cache(self, content, html, headers, header_anchors, fragments):
         f = tempfile.SpooledTemporaryFile(mode='r+', max_size=LARGE_FILE_SIZE,
                                           encoding='utf32')
         f.write(html)
-        self.__html_cache[(content.dirname, content.name)] = (f, headers)
+        self._html_cache[(content.dirname, content.name)] = (f, headers, header_anchors, fragments)
 
 
 class ContentArgProxy:
@@ -386,6 +395,12 @@ class Content:
     def prop_get_headers(self, context):
         return []
 
+    def prop_get_header_anchors(self, context):
+        return []
+
+    def prop_get_fragments(self, context):
+        return []
+
     def prop_get_abstract(self, context):
         return ""
 
@@ -430,7 +445,7 @@ class Content:
             ret_path = ret_path + '/'
         return ret_path + fragment
 
-    def link_to(self, context, target, text=None, fragment=None, abs_path=False, attrs=None, *args, **kwargs):
+    def link_to(self, context, target, text=None, fragment=None, abs_path=False, attrs=None, plain=True, *args, **kwargs):
         if isinstance(target, str):
             target = self.get_content(target)
 
@@ -440,6 +455,11 @@ class Content:
             if not text:
                 text = target.render_from_string(context, self, "title", target.title,
                                            kwargs=self.get_render_args(context))
+
+            if plain:
+                soup = BeautifulSoup(text)
+                text = markupsafe.escape(soup.text.strip())
+
         else:
             text = markupsafe.escape(text or '')
 
@@ -558,27 +578,67 @@ class HTMLContent(Content):
             return ext
         return '.html'
 
-    def _set_header_id(self, html):
-        soup = BeautifulSoup(html, 'html.parser')
-        n = 1
+    def _set_header_id(self, context, htmlsrc):
+
+
+        def add_htmlid(self, id):
+            newid = id
+            n = 1
+            while newid in self._html_ids:
+                newid = f'{id}_{n}'
+                n += 1
+            self._html_ids.add(newid)
+            return newid
+
+
+
+        soup = BeautifulSoup(htmlsrc, 'html.parser')
         headers = []
-        id = None
+        header_anchors = []
+        fragments = []
+        target_id = None
+
+        slugs = set()
+
         for c in soup.recursiveChildGenerator():
             if c.name and ('header_target' in (c.get('class', '') or [])):
-                id = c.get('id', None)
+                target_id = c.get('id', None)
 
             elif re.match(r'h\d', c.name or ''):
-                if not id:
-                    id = f'h_{"_".join(self.dirname)}_{self.name}_{n}'
-                    id = re.sub(r'[^a-zA-Z0-9_]', lambda m: f'_{ord(m[0]):02x}', id)
+                contents = c.decode_contents()
+                contents = htmlmodule.unescape(contents)
 
+                if target_id:
+                    fragments.append((target_id, c.name, contents))
+                    target_id = None
+
+                slug = unicodedata.normalize('NFKC', c.text[:40])
+                slug = re.sub(r'[^\w?.]', '', slug)
+                slug = urllib.parse.quote_plus(slug)
+
+                n = 1
+                while slug in slugs:
+                    slug = f'{slug}_{n}'
                     n += 1
-                    a = soup.new_tag('div', id=id, **{'class': 'header_target'})
-                    c.insert_before(a)
-                headers.append((id, c.name, c.decode_contents()))
-                id = None
+                slugs.add(slug)
+                
+                id = f'h_{slug}'
+                anchor_id = f'a_{slug}'
 
-        return headers, str(soup)
+                parent = c.parent
+                if (parent.name) != 'div' or ('md_header_block' not in parent.get('class', [])):
+                    parent = soup.new_tag('div', id=id, **{'class': 'md_header_block'})
+                    parent.insert(0, soup.new_tag('a', id=anchor_id,
+                                                  **{'class': 'md_header_anchor'}))
+                    c.wrap(parent)
+                else:
+                    parent['id'] = id
+                    parent.a['id'] = anchor_id
+
+                headers.append((id, c.name, contents))
+                header_anchors.append((anchor_id, c.name, contents))
+
+        return headers, header_anchors, fragments, str(soup)
 
     def _get_html(self, context):
         context.add_depend(self)
@@ -591,39 +651,61 @@ class HTMLContent(Content):
             html = self.render_from_string(context, self, "html", html,
                                            kwargs=self.get_render_args(context))
 
-        headers, html = self._set_header_id(html)
+        headers, header_anchor, fragments, html = self._set_header_id(context, html)
 
-        ret = context.set_html_cache(self, html, headers)
+        ret = context.set_html_cache(self, html, headers, header_anchor, fragments)
         return html
 
+    _in_get_headers = False
     def _get_headers(self, context):
-        ret = context.get_header_cache(self)
-        if ret is not None:
-            return ret
+        if self._in_get_headers:
+            return [], [], []
 
-        self._get_html(context)
-        return context.get_header_cache(self)
+        self._in_get_headers = True
 
-    _in_get_headertext = False
+        try:
+            ret = context.get_header_cache(self)
+            if ret is not None:
+                return ret, context.get_header_anchor_cache(self), context.get_fragment_cache(self)
+
+            self._get_html(context)
+            return context.get_header_cache(self), context.get_header_anchor_cache(self), context.get_fragment_cache(self)
+
+        finally:
+            self._in_get_headers  = False
+
 
     def get_headertext(self, context, fragment):
-        if self._in_get_headertext:
+        if self._in_get_headers:
             return 'dummy'
 
-        self._in_get_headertext = True
-        try:
-            headers = self._get_headers(context)
-            assert headers is not None
-            for id, elem, text in headers:
-                if id == fragment:
-                    return text
-        finally:
-            self._in_get_headertext = False
+        headers, header_anchors, fragments = self._get_headers(context)
+        assert headers is not None
+        for id, elem, text in fragments:
+            if id == fragment:
+                return text
+
+        for id, elem, text in headers:
+            if id == fragment:
+                return text
+
+        for id, elem, text in header_anchors:
+            if id == fragment:
+                return text
+
         return None
 
     def prop_get_headers(self, context):
-        headers = self._get_headers(context)
+        headers, header_anchors, fragments = self._get_headers(context)
         return headers
+
+    def prop_get_header_anchors(self, context):
+        headers, header_anchors, fragments = self._get_headers(context)
+        return header_anchors
+
+    def prop_get_fragments(self, context):
+        headers, header_anchors, fragments = self._get_headers(context)
+        return fragments
 
     def prop_get_abstract(self, context, abstract_length=None):
         html = self._get_html(context)

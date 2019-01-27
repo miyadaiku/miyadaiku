@@ -240,7 +240,7 @@ def build(site):
     deps.save()
 
     if not errors:
-        logger.error(f'no errors')
+        logger.info(f'no errors')
     else:
         logger.error(f'total: {len(errors)} errors')
 

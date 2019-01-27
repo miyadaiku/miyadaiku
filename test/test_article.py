@@ -2,6 +2,7 @@ from pathlib import Path
 from miyadaiku.core import rst, contents, config, jinjaenv
 from miyadaiku.core.site import Site
 import yaml
+from bs4 import BeautifulSoup
 
 
 def test_article(sitedir):
@@ -36,16 +37,98 @@ def test_header(sitedir):
 title1
 ------------
 
+xxxx
+
+title1
+==========
+
+
+
 ''')
 
     site = Site(sitedir)
     site.build()
     p = site.contents.get_content('/index.rst')
     context = contents._context(site, p)
-    assert p.prop_get_headers(context) == [('id1', 'h1', 'title1')]
+
+    print(p.prop_get_headers(context))
+    assert p.prop_get_headers(context) == [
+        ('h_title1', 'h1', 'title1'), ('h_title1_1', 'h2', 'title1')]
+
+    assert p.prop_get_fragments(context) == [('id1', 'h1', 'title1')]
+
+    html = p._get_html(context)
+    soup = BeautifulSoup(html, 'html.parser')
+    print(html)
 
 
 def test_header_text(sitedir):
+    content = sitedir / 'contents'
+    content.joinpath('index.rst').write_text('''
+
+---:jinja:`{{ page.link_to(page, fragment='h_title2') }}`---
+
+
+title111
+------------
+
+abc
+
+title2<>
+-----------------
+
+''')
+
+    site = Site(sitedir)
+    p = site.contents.get_content('/index.rst')
+    context = contents._context(site, p)
+    ret = p._get_html(context)
+    print(ret)
+    assert '---<a href="index.html#h_title2">title2&lt;&gt;</a>---' in ret
+
+
+def test_unicode_header(sitedir):
+
+    content = sitedir / 'contents'
+    content.joinpath('index.rst').write_text('''
+
+.. jinja::
+
+   {% for id, elem, text in page.headers %}
+     <div>
+       {{ page.link_to(page, fragment=id) }}
+     </div>
+   {% endfor %}
+
+
+あ
+------------
+
+abc
+
+か
+-----------------
+
+def
+
+''')
+
+    site = Site(sitedir)
+    p = site.contents.get_content('/index.rst')
+    context = contents._context(site, p)
+    ret = p._get_html(context)
+    print(ret)
+
+    assert '<a href="index.html#h_%E3%81%82">あ</a>' in ret
+    assert '<a href="index.html#h_%E3%81%8B">か</a>' in ret
+
+    assert ('<div class="md_header_block" id="h_%E3%81%82">'
+            '<a class="md_header_anchor" id="a_%E3%81%82"></a><h1>あ</h1></div>') in ret
+    assert ('<div class="md_header_block" id="h_%E3%81%8B">'
+            '<a class="md_header_anchor" id="a_%E3%81%8B"></a><h1>か</h1></div>') in ret
+
+
+def test_fragment_text(sitedir):
     content = sitedir / 'contents'
     content.joinpath('index.rst').write_text('''
 
@@ -91,8 +174,8 @@ asdfasdf
     context = contents._context(site, p)
     ret = p._get_html(context)
     print(ret)
-    assert 'title111&lt;&gt; <abc></abc></a>---' in ret
 
+    assert 'title111&lt;&gt;</a>---' in ret
 
 def test_link_to2(sitedir):
     content = sitedir / 'contents'
@@ -114,7 +197,7 @@ asdfasdf
     p = site.contents.get_content('/file2.rst')
     context = contents._context(site, p)
     ret = p._get_html(context)
-    assert 'title111&lt;&gt; <abc></abc></a>' in ret
+    assert 'title111&lt;&gt;</a>' in ret
 
 
 def test_module(sitedir):
