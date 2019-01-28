@@ -177,10 +177,11 @@ asdfasdf
 
     assert 'title111&lt;&gt;</a>---' in ret
 
+
 def test_link_to2(sitedir):
     content = sitedir / 'contents'
     content.joinpath('file1.rst').write_text('''
-title111<> :jinja:`<abc/>`
+title111<>
 --------------------------------
 
 asdfasdf

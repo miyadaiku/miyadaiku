@@ -453,13 +453,13 @@ class Content:
         if not text:
             if fragment:
                 text = target.get_headertext(context, fragment)
-            if not text:
-                text = target.render_from_string(context, self, "title", target.title,
-                                                 kwargs=self.get_render_args(context))
 
-            if plain:
-                soup = BeautifulSoup(text)
-                text = markupsafe.escape(soup.text.strip())
+                if plain:
+                    soup = BeautifulSoup(text)
+                    text = markupsafe.escape(soup.text.strip())
+
+            if not text:
+                text = target.title
 
         else:
             text = markupsafe.escape(text or '')
