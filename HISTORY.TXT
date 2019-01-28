@@ -1,11 +1,15 @@
-2019/01/ 0.57
+2019/01/28 0.58
 
-- support Windows
+- Improve header handling.
+
+2019/01/21 0.57
+
+- Support Windows.
 
 2019/01/07 0.56
 
-- fix https://github.com/pyjug/pythonjp-miyadaiku/issues/48
-- support recent Markdown
+- Fix https://github.com/pyjug/pythonjp-miyadaiku/issues/48
+- Support recent Markdown
 
 2018/08/26 0.55
 
