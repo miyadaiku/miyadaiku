@@ -453,9 +453,11 @@ class Content:
         if not text:
             if fragment:
                 text = target.get_headertext(context, fragment)
+                if text is None:
+                    raise ValueError(f'Cannot find fragment: {fragment}')
 
                 if plain:
-                    soup = BeautifulSoup(text)
+                    soup = BeautifulSoup(text, 'html.parser')
                     text = markupsafe.escape(soup.text.strip())
 
             if not text:

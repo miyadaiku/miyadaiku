@@ -11,7 +11,7 @@ if sys.version_info < (3, 6):
 DIR = pathlib.Path(__file__).resolve().parent
 
 requires = [
-    "docutils", "pyyaml>=4.2b1", "jinja2", "python-dateutil", "pygments",
+    "docutils", "pyyaml", "jinja2", "python-dateutil", "pygments",
     "pytz", "tzlocal", "happylogging>=0.0.5", "beautifulsoup4", "feedgenerator",
     "markdown>=3.0", "nbformat", "nbconvert", "watchdog",
 ]

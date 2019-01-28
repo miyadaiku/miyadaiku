@@ -1,3 +1,11 @@
+2019/01/28 0.60
+
+- Improve error message when link fragment is not found.
+
+2019/01/28 0.59
+
+- Fix wrong package dependancy.
+
 2019/01/28 0.58
 
 - Improve header handling.

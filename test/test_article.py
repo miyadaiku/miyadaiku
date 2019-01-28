@@ -201,6 +201,29 @@ asdfasdf
     assert 'title111&lt;&gt;</a>' in ret
 
 
+
+def test_fragment_error(sitedir):
+    content = sitedir / 'contents'
+    content.joinpath('index.rst').write_text('''
+
+---:jinja:`{{ page.link(fragment='xxxxx') }}`---
+
+
+
+title2<>
+-----------------
+
+''')
+
+    site = Site(sitedir)
+    p = site.contents.get_content('/index.rst')
+    context = contents._context(site, p)
+    try:
+        ret = p._get_html(context)
+    except Exception as e:
+        assert str(e).startswith('Cannot find fragment: xxxxx')
+
+
 def test_module(sitedir):
     templates = sitedir / 'templates'
     (templates / 'macro.html').write_text('''
