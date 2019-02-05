@@ -461,7 +461,7 @@ class Content:
                     text = markupsafe.escape(soup.text.strip())
 
             if not text:
-                text = target.title
+                text = markupsafe.escape(target.title)
 
         else:
             text = markupsafe.escape(text or '')
@@ -608,8 +608,7 @@ class HTMLContent(Content):
                 target_id = c.get('id', None)
 
             elif re.match(r'h\d', c.name or ''):
-                contents = c.decode_contents()
-                contents = htmlmodule.unescape(contents)
+                contents = c.text
 
                 if target_id:
                     fragments.append((target_id, c.name, contents))

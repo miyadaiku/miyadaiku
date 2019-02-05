@@ -5,7 +5,7 @@ import datetime
 
 def test_meta(sitedir):
     sitedir.joinpath('a.md').write_text('''
-title: title
+title: title<>
 tags: a,b,c
 draft: false
 date: 2017-1-1
@@ -19,7 +19,7 @@ adfas
     metadata, text = md .load(sitedir.joinpath('a.md'))
 
     assert metadata['type'] == 'article'
-    assert metadata['title'] == 'title'
+    assert metadata['title'] == 'title<>'
 
 
 def test_inline(sitedir):

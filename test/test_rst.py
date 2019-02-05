@@ -27,17 +27,19 @@ def test_load2(tmpdir):
     assert text == "<!-- &#123;&#123; page.site_title &#125;&#125; - - -->\n"
 
 
-def test_date(tmpdir):
+def test_articledirective(tmpdir):
     f = tmpdir.join('file1.rst')
     f.write('''
 .. article::
    :date: 2017-01-01
-   :filename: slug name
-   :aaa: 100
+   :title: title<>
+
+test
 ''')
 
     metadata, text = rst.load(f)
-    print(metadata, text)
+    assert metadata['date'] == '2017-01-01'
+    assert metadata['title'] == 'title<>'
 
 
 def test_jinjadirective(tmpdir):
@@ -65,6 +67,17 @@ def test_xref(tmpdir):
     print(text)
     assert text == '''<div class="header_target" id="anchor-name"></div>'''
 
+
+def test_itle(sitedir):
+    f = (sitedir / 'file1.rst')
+    f.write_text('''
+title1 http://example.com
+-----------------------------
+
+abc
+''')
+    metadata, text = rst.load(f)
+    assert metadata['title'] == 'title1 http://example.com'
 
 def test_subtitle(sitedir):
     f = (sitedir / 'file1.rst')

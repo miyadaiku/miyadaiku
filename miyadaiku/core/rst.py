@@ -1,5 +1,6 @@
 import re
 import os
+import html
 import datetime
 import dateutil.parser
 import collections
@@ -12,6 +13,7 @@ from docutils.parsers.rst import Directive, directives, roles
 from docutils.parsers.rst.states import MarkupError, Body
 from docutils.readers import standalone
 from docutils.transforms import frontmatter
+from bs4 import BeautifulSoup
 
 from . import pygment_directive
 
@@ -181,9 +183,13 @@ def _parse(pub):
     pub.publish(enable_exit_status=True)
 
     parts = pub.writer.parts
+    title = parts.get("title")
+    if title:
+        title = BeautifulSoup(html.unescape(title), 'html.parser').text
+
     metadata = {
         'type': 'article',
-        'title': parts.get("title"),
+        'title': title,
     }
 
     if hasattr(pub.document, "article_metadata"):

@@ -8,14 +8,14 @@ import tzlocal
 #import happylogging
 
 import miyadaiku.core.__version__
-from miyadaiku.core.main import CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR
+from miyadaiku.core.site import CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR
 
 locale.setlocale(locale.LC_ALL, '')
 
 parser = argparse.ArgumentParser(description='Start new miyadaiku document.')
 parser.add_argument('directory', help='directory name')
 parser.add_argument('--version', '-v', action='version',
-                    version=f'{miyadaiku.core.__version__.version}')
+                    version=f'{miyadaiku.core.__version__}')
 
 
 def main():

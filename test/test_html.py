@@ -5,7 +5,7 @@ import datetime
 
 def test_load(sitedir):
     sitedir.joinpath('a.html').write_text('''
-title: title
+title: title<>
 tags: a,b,c
 draft: false
 date: 2017-1-1
@@ -15,6 +15,6 @@ date: 2017-1-1
 
     metadata, text = html .load(sitedir.joinpath('a.html'))
 
-    assert metadata['title'] == 'title'
+    assert metadata['title'] == 'title<>'
 
     assert text == '<a>'

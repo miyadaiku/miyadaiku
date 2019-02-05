@@ -15,6 +15,24 @@ def test_article(sitedir):
     assert b'1234567890' in Path(files[0]).read_bytes()
 
 
+def test_title(sitedir):
+    content = sitedir / 'contents'
+    content.joinpath('index.rst').write_text('''
+
+:jinja:`{{xx}}<a>` abc<>
+------------------------------------------------
+
+body
+''')
+
+    site = Site(sitedir)
+    site.build()
+    p = site.contents.get_content('/index.rst')
+    assert p.title == '{{xx}} abc<>'
+    html = BeautifulSoup((sitedir / 'outputs/index.html').read_text())
+    assert html.h1.decode_contents().strip() == '{{xx}} abc&lt;&gt;'
+
+
 def test_indexpage(sitedir):
     site = Site(sitedir)
 
@@ -34,13 +52,19 @@ def test_header(sitedir):
 
 .. target:: id1
 
-title1
+title1<>
+------------
+
+title1<>
 ------------
 
 xxxx
 
-title1
+title2<>
 ==========
+
+title3 http://example.com
+==============================
 
 
 
@@ -53,9 +77,12 @@ title1
 
     print(p.prop_get_headers(context))
     assert p.prop_get_headers(context) == [
-        ('h_title1', 'h1', 'title1'), ('h_title1_1', 'h2', 'title1')]
+        ('h_title1', 'h1', 'title1<>'),
+        ('h_title1_1', 'h1', 'title1<>'),
+        ('h_title2', 'h2', 'title2<>'),
+        ('h_title3httpexample.com', 'h2', 'title3 http://example.com')]
 
-    assert p.prop_get_fragments(context) == [('id1', 'h1', 'title1')]
+    assert p.prop_get_fragments(context) == [('id1', 'h1', 'title1<>')]
 
     html = p._get_html(context)
     soup = BeautifulSoup(html, 'html.parser')
@@ -66,7 +93,13 @@ def test_header_text(sitedir):
     content = sitedir / 'contents'
     content.joinpath('index.rst').write_text('''
 
----:jinja:`{{ page.link_to(page, fragment='h_title2') }}`---
+TITLE<>
+=========================
+
++++ :jinja:`{{ page.link_to(page) }}` +++
+
+
+--- :jinja:`{{ page.link_to(page, fragment='h_title2') }}` ---
 
 
 title111
@@ -84,8 +117,8 @@ title2<>
     context = contents._context(site, p)
     ret = p._get_html(context)
     print(ret)
-    assert '---<a href="index.html#h_title2">title2&lt;&gt;</a>---' in ret
-
+    assert '+++ <a href="index.html">TITLE&lt;&gt;</a> +++' in ret
+    assert '--- <a href="index.html#h_title2">title2&lt;&gt;</a> ---' in ret
 
 def test_unicode_header(sitedir):
 
