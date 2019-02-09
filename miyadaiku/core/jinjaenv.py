@@ -46,10 +46,15 @@ def create_env(site, themes, path):
         extensions=EXTENSIONS
     )
 
+    env.globals['str'] = str
+    env.globals['list'] = list
+    env.globals['tuple'] = tuple
+
     env.globals['site'] = site
+
     env.globals['repr'] = repr
     env.globals['type'] = type
-    env.globals['str'] = str
     env.globals['dir'] = dir
     env.globals['isinstance'] = isinstance
+
     return env

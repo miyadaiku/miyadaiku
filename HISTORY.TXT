@@ -1,3 +1,7 @@
+2019/02/05 0.62
+
+- Improve miyadaiku.themes.firstblog templates a bit.
+
 2019/02/05 0.61
 
 - HTML tags in title are escaped.

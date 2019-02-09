@@ -5,9 +5,6 @@ import pathlib
 from setuptools import setup, find_packages
 from miyadaiku.common import setuputils
 
-if sys.version_info < (3, 6):
-    raise RuntimeError('Miyadaiku requires Python later than 3.6')
-
 DIR = pathlib.Path(__file__).resolve().parent
 
 requires = [
@@ -31,11 +28,11 @@ setup(
     name="miyadaiku",
     version=version,
     author="Atsuo Ishimoto",
-    url='https://miyadaiku.github.io/',
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Environment :: Web Environment",
@@ -44,6 +41,13 @@ setup(
     ],
     description='Miyadaiku - Flexible static site generator for Jinja2 artists',
     long_description=setuputils.read_file(DIR, 'README.rst'),
+    url='https://github.com/miyadaiku/miyadaiku',
+    project_urls={
+        'Documentation': 'https://miyadaiku.github.io/',
+        'Source': 'https://github.com/miyadaiku/miyadaiku',
+    },
+    python_requires='>=3.6',
+
     entry_points=entry_points,
     packages=list(setuputils.list_packages(DIR, 'miyadaiku')),
     package_data={
