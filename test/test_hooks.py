@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from miyadaiku.core import rst, contents, config, jinjaenv
 from miyadaiku.scripts.muneage import load_hook, build
@@ -67,3 +68,17 @@ test
     import __main__
     print(__main__.seen_test_build_depend)
     assert len(__main__.seen_test_build_depend) == 8
+
+def test_modules(sitedir):
+    (sitedir / 'modules/mod1.py').write_text("a=100")
+
+    content = sitedir / 'contents'
+    content.joinpath('index.html').write_text('''
+'a == {{ mod1.a }}'
+''')
+
+    build(sitedir, {}, True, debug=True)
+    assert sys.modules['mod1']
+
+    ret = (sitedir / 'outputs/index.html').read_text()
+    assert 'a == 100' in ret

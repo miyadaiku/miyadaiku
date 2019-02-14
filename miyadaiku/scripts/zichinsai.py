@@ -8,7 +8,7 @@ import tzlocal
 #import happylogging
 
 import miyadaiku.core.__version__
-from miyadaiku.core.site import CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR
+from miyadaiku.core.site import MODULES_DIR, CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -57,8 +57,8 @@ timezone: {tz}
 #   - miyadaiku.themes.sample.blog
 
 """
-
     (d / CONTENTS_DIR).mkdir(parents=True)
+    (d / MODULES_DIR).mkdir()
     (d / FILES_DIR).mkdir()
     (d / TEMPLATES_DIR).mkdir()
 

@@ -27,9 +27,11 @@ from . import jinjaenv
 from . import builder
 from . exception import MiyadaikuBuildError
 from .hooks import run_hook, HOOKS
+from . utils import import_script
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE = 'config.yml'
+MODULES_DIR = 'modules'
 CONTENTS_DIR = 'contents'
 FILES_DIR = 'files'
 TEMPLATES_DIR = 'templates'
@@ -60,6 +62,25 @@ class Site:
 
         self.jinjaenv = jinjaenv.create_env(
             self, self.config.themes, path / TEMPLATES_DIR)
+
+        modules = (path / MODULES_DIR).resolve()
+        if modules.is_dir():
+            s = str(modules)
+            if s not in sys.path:
+                sys.path.insert(0, s)
+
+            for f in modules.iterdir():
+                if not f.is_file():
+                    continue
+                if f.suffix != '.py':
+                    continue
+                name = f.stem
+                if not name.isidentifier():
+                    continue
+                m = import_script(name, f)
+
+                self.add_jinja_global(name, m)
+
 
         for theme in self.config.themes:
             mod = importlib.import_module(theme)

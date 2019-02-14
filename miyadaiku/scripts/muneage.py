@@ -126,10 +126,6 @@ def build(d, props, traceback=False, debug=False):
 
 
 def load_hook(d):
-    modules = (d / 'modules').resolve()
-    if modules.is_dir():
-        sys.path.insert(0, modules)
-
     hook = (d / 'hooks.py').resolve()
     if hook.exists():
         runpy.run_path(str(hook))

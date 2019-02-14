@@ -1,4 +1,5 @@
 import os
+import sys
 import pathlib
 import unicodedata
 import pkg_resources
@@ -7,6 +8,7 @@ import re
 import random
 import time
 import traceback
+import importlib.util
 
 
 def walk(path):
@@ -154,3 +156,10 @@ def nthlines(src, lineno):
 def get_last_frame_file(e):
     frame, lineno = next(traceback.walk_tb(e.__traceback__))
     return frame.f_code.co_filename, lineno
+
+def import_script(name, path):
+    spec = importlib.util.spec_from_file_location(name, str(path))
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    sys.modules[name] = m
+    return m
