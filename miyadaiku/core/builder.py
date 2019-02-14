@@ -86,6 +86,13 @@ class Depends:
                 self.rebuild = True
                 return
 
+        for root, dirs, files in os.walk(self.site.path / site.MODULES_DIR):
+            root = pathlib.Path(root)
+            for file in files:
+                if (root / file).stat().st_mtime > self.stat_depfile.st_mtime:
+                    self.rebuild = True
+                    return
+
         for root, dirs, files in os.walk(self.site.path / site.TEMPLATES_DIR):
             root = pathlib.Path(root)
             for file in files:

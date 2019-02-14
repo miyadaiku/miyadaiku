@@ -18,7 +18,7 @@ from watchdog.events import FileSystemEventHandler
 
 import miyadaiku.core
 from miyadaiku.core.site import (Site, CONFIG_FILE,
-                                 CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, OUTPUTS_DIR)
+                                 CONTENTS_DIR, FILES_DIR, MODULES_DIR, TEMPLATES_DIR, OUTPUTS_DIR)
 from miyadaiku.core.builder import DEP_FILE
 from miyadaiku.core.hooks import HOOKS, run_hook
 OBSERVER = None
@@ -44,7 +44,7 @@ class ContentDirHandler(FileSystemEventHandler):
         self._ev.set()
 
 
-DIRS = [CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR]
+DIRS = [CONTENTS_DIR, FILES_DIR, MODULES_DIR, TEMPLATES_DIR]
 
 
 class ConfigHandler(FileSystemEventHandler):
