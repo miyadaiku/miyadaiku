@@ -6,6 +6,7 @@ import traceback
 import posixpath
 import atexit
 import collections
+import collections.abc
 import datetime
 import threading
 import html as htmlmodule
@@ -208,6 +209,8 @@ class ConfigArgProxy:
     def __getattr__(self, name):
         return self.context.site.config.get(self.context.page_content.dirname, name)
 
+    def get(self, *args, **kwargs):
+        return self.context.site.config.get(*args, **kwargs)
 
 class Content:
     _filename = None
@@ -279,6 +282,7 @@ class Content:
             return self.site.config.get(self.dirname, name, default)
 
     def is_same(self, other):
+        other = self.get_content(other)
         return (self.dirname, self.name) == (other.dirname, other.name)
 
     def __getattr__(self, name):
@@ -296,6 +300,13 @@ class Content:
         ret = self.render_from_string(context, self, "filename_templ", filename_templ,
                                       kwargs=self.get_render_args(context))
         assert ret
+        return ret
+
+    @property
+    def parents_dirs(self):
+        ret = [()]
+        for dirname in self.dirname:
+            ret.append(ret[-1] + (dirname,))
         return ret
 
     @property
@@ -411,15 +422,13 @@ class Content:
         return posixpath.join(*self.dirname, self.filename)
 
     def get_content(self, target):
-        if isinstance(target, str):
-            content = self.site.contents.get_content(target, self)
-        else:
+        if isinstance(target, (Content, ContentArgProxy)):
             return target
-        return content
+        else:
+            return self.site.contents.get_content(target, self)
 
     def path_to(self, target, fragment=None, abs_path=False, *args, **kwargs):
-        if isinstance(target, str):
-            target = self.get_content(target)
+        target = self.get_content(target)
         fragment = f'#{markupsafe.escape(fragment)}' if fragment else ''
 
         target_url = target.get_url(*args, **kwargs)
@@ -447,8 +456,7 @@ class Content:
 
     def link_to(self, context, target, text=None, fragment=None,
                 abs_path=False, attrs=None, plain=True, *args, **kwargs):
-        if isinstance(target, str):
-            target = self.get_content(target)
+        target = self.get_content(target)
 
         if not text:
             if fragment:

@@ -44,6 +44,7 @@ def walk_package(package, dir):
 
 def abs_path(relpath, dirtuple=None):
     if not isinstance(relpath, str):
+        assert len(relpath) == 2
         return relpath
     d, f = posixpath.split(relpath)
     d = abs_dir(d, dirtuple)
@@ -76,6 +77,9 @@ def format_dirname(dirname):
 def dirname_to_tuple(dirname):
     if isinstance(dirname, tuple):
         return dirname
+
+    if isinstance(dirname, list):
+        return tuple(dirname)
 
     dirname = format_dirname(dirname)
 
