@@ -996,7 +996,7 @@ class Contents:
         except KeyError:
             raise ContentNotFound(key) from None
 
-    def get_contents(self, subdirs=None, base=None, filters=None):
+    def get_contents(self, subdirs=None, base=None, filters=None, recurse=True):
         contents = [c for c in self._contents.values()]
 
         if not filters:
@@ -1032,7 +1032,12 @@ class Contents:
         if subdirs:
             cur = base.dirname if base else None
             subdirs = [utils.abs_dir(d, cur) for d in subdirs]
-            contents = filter(lambda c: any(c.dirname[:len(d)] == d for d in subdirs), contents)
+            if recurse:
+                cond = lambda c: any(c.dirname[:len(d)] == d for d in subdirs)
+            else:
+                cond = lambda c: c.dirname in subdirs
+
+            contents = filter(cond, contents)
 
         recs = []
         for c in contents:
@@ -1046,12 +1051,12 @@ class Contents:
         recs.sort(reverse=True, key=lambda r: (r[0], r[1].title))
         return [c for (ts, c) in recs]
 
-    def group_items(self, group, subdirs=None, base=None, filters=None):
+    def group_items(self, group, subdirs=None, base=None, filters=None, recurse=True):
         if not group:
-            return [((), list(self.get_contents(subdirs, base, filters)))]
+            return [((), list(self.get_contents(subdirs, base, filters, recurse)))]
 
         d = collections.defaultdict(list)
-        for c in self.get_contents(subdirs, base, filters):
+        for c in self.get_contents(subdirs, base, filters, recurse):
             g = getattr(c, group, None)
 
             if g is not None:

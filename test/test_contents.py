@@ -24,6 +24,7 @@ def test_get_contents():
     assert len(conts.get_contents(subdirs=[('d1', 'd2')])) == 1
     assert len(conts.get_contents(subdirs=['./d2'], base=a2)) == 1
     assert len(conts.get_contents(subdirs=[('d3',)])) == 1
+    assert len(conts.get_contents(subdirs=['/d1'], recurse=False)) == 1
 
 
 def test_group_items():
@@ -41,7 +42,7 @@ def test_group_items():
     conts.add(a3)
     conts.add(a4)
 
-    ret = dict(conts.group_items('category', filters={'type': {'article'}}, subdirs=[()]))
+    ret = dict(conts.group_items('category', filters={'type': {'article'}}, subdirs=[()], recurse=False))
 
     assert len(ret[('a',)]) == 2
     assert len(ret[('b',)]) == 1

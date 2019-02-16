@@ -11,3 +11,4 @@ build
 .venv
 .vscode
 .pytest_cache
+Pipfile.lock
