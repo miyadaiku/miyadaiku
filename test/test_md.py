@@ -57,8 +57,8 @@ def test_fence(sitedir):
 
     metadata, text = md.load(sitedir / 'a.md')
     print(text)
-    assert text == '''<div class="codehilite"><pre><span></span>{{abcdef}}
-</pre></div>'''
+    assert text == '''<div class="codehilite"><pre><span></span><code>{{abcdef}}
+</code></pre></div>'''
 
 
 def test_code(sitedir):
@@ -67,8 +67,8 @@ def test_code(sitedir):
     :jinja:`{{abcdef}}`
 ''')
     metadata, text = md.load(sitedir / 'a.md')
-    assert text == '''<div class="codehilite"><pre><span></span>{{abcdef}}
-</pre></div>'''
+    assert text == '''<div class="codehilite"><pre><span></span><code>{{abcdef}}
+</code></pre></div>'''
 
 
 def test_target(sitedir):
