@@ -1122,7 +1122,7 @@ class FileLoader:
         metadatafile = metadata_file_name(*os.path.split(srcpath))
         if os.path.exists(metadatafile):
             text = open(metadatafile, encoding=YAML_ENCODING).read()
-            metadata.update(yaml.load(text) or {})
+            metadata.update(yaml.load(text, Loader=yaml.FullLoader) or {})
             metadata['metadatafile'] = metadatafile
 
         body = self._get_body_from_file(site, srcpath, destpath, metadata)
@@ -1139,7 +1139,7 @@ class FileLoader:
         if pkg_resources.resource_exists(package, metadatafile):
             m = pkg_resources.resource_string(package, metadatafile)
             if m:
-                metadata.update(yaml.load(m.decode(YAML_ENCODING)) or {})
+                metadata.update(yaml.load(m.decode(YAML_ENCODING), Loader=yaml.FullLoader) or {})
 
         body = self._get_body_from_package(site, package, srcpath, destpath, metadata)
 
@@ -1170,7 +1170,7 @@ class RstLoader(FileLoader):
 
 class YamlLoader(FileLoader):
     def _load(self, src, metadata):
-        _metadata = yaml.load(src) or {}
+        _metadata = yaml.load(src, Loader=yaml.FullLoader) or {}
         self._update_metadata(metadata, _metadata)
 
         if 'type' not in metadata:

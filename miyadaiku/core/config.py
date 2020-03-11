@@ -88,7 +88,7 @@ def _load_theme_config(package):
     except FileNotFoundError:
         cfg = {}
     else:
-        cfg = yaml.load(s.decode(YAML_ENCODING))
+        cfg = yaml.load(s.decode(YAML_ENCODING), Loader=yaml.FullLoader)
 
     if not cfg:
         cfg = {}
@@ -130,7 +130,7 @@ class Config:
         themes = [default_theme]
         # read root config
         if path:
-            d = yaml.load(path.read_text(encoding=YAML_ENCODING)) or {}
+            d = yaml.load(path.read_text(encoding=YAML_ENCODING), Loader=yaml.FullLoader) or {}
         else:
             d = {}
         if default:
@@ -192,7 +192,7 @@ class Config:
 
 
 def load_config(path):
-    return Config(yaml.load(path.read_text()))
+    return Config(yaml.load(path.read_text()), Loader=yaml.FullLoader)
 
 
 def to_bool(s):

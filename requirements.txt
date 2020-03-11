@@ -1,0 +1,14 @@
+docutils
+pyyaml
+jinja2
+python-dateutil
+pygments
+pytz
+tzlocal
+happylogging>=0.0.5
+beautifulsoup4
+feedgenerator
+markdown>=3.0
+nbformat
+nbconvert
+watchdog

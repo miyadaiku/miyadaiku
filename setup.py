@@ -7,11 +7,7 @@ from miyadaiku.common import setuputils
 
 DIR = pathlib.Path(__file__).resolve().parent
 
-requires = [
-    "docutils", "pyyaml", "jinja2", "python-dateutil", "pygments",
-    "pytz", "tzlocal", "happylogging>=0.0.5", "beautifulsoup4", "feedgenerator",
-    "markdown>=3.0", "nbformat", "nbconvert", "watchdog",
-]
+requires = open("requirements.txt").readlines()
 
 
 entry_points = {
@@ -54,6 +50,9 @@ setup(
         '': setuputils.SETUP_FILE_EXTS,
     },
     install_requires=requires,
+    extras_require={  # Optional
+        'test': ['pytest'],
+    },
     include_package_data=True,
     zip_safe=False
 )

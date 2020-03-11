@@ -291,7 +291,7 @@ def test_metadatafile(sitedir):
     site.pre_build()
 
     p = site.contents.get_content('/index.rst')
-    d = yaml.load((content / 'index.rst.props.yml').read_text())
+    d = yaml.load((content / 'index.rst.props.yml').read_text(), Loader=yaml.FullLoader)
     assert p.date == d['date']
 
     site2 = Site(sitedir)
