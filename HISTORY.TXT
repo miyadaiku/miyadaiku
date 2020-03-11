@@ -1,3 +1,7 @@
+2019/02/17 0.66
+
+- Stop pyyaml warnings.
+
 2019/02/17 0.65
 
 - Add ``recurse`` arg to Contents.get_contents().
