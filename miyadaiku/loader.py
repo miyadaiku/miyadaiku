@@ -1,4 +1,4 @@
-from typing import List, Iterator, Dict, Tuple, Optional, DefaultDict, Any, Callable, Set, Union
+from typing import List, Iterator, Dict, Tuple, Optional, DefaultDict, Any, Callable, Set, Union, TypedDict
 import os
 import fnmatch
 import pkg_resources
@@ -19,9 +19,9 @@ def is_ignored(ignores:Set[str], name:str):
         if fnmatch.fnmatch(name, p):
             return True
 
-PATHTUPLE = Tuple[str, ...]
+PathTuple = Tuple[str, ...]
 
-def to_pathtuple(path)->PATHTUPLE:
+def to_pathtuple(path)->PathTuple:
     if isinstance(path, tuple):
         return path
     spath = str(path)
@@ -32,7 +32,19 @@ def to_pathtuple(path)->PATHTUPLE:
             raise ValueError("Invalid path: {path}")
     return ret
 
-def walk_directory(path:Path, ignores:Set[str])->Iterator[Tuple[str, PATHTUPLE]]:
+
+class FileContent(TypedDict, total=False):
+    srcpath: Path
+    destpath: PathTuple
+
+
+class ThemeContent(TypedDict, total=False):
+    package: str
+    srcpath: str
+    destpath: PathTuple
+    
+
+def walk_directory(path:Path, ignores:Set[str])->Iterator[FileContent]:
     logger.info(f"Loading {path}")
     path = path.expanduser().resolve()
     if not path.is_dir():
@@ -50,8 +62,8 @@ def walk_directory(path:Path, ignores:Set[str])->Iterator[Tuple[str, PATHTUPLE]]
         filenames = (filename for filename in files if not is_ignored(ignores, filename))
 
         for name in filenames:
-            filename = str(rootpath / name)
-            yield (filename, to_pathtuple(filename[pathlen:]))
+            filename = rootpath / name
+            yield {'srcpath': filename, 'destpath': to_pathtuple(str(filename)[pathlen:])}
 
 
 def _iter_package_files(package:str, path:str, ignores:Set[str])->Iterator[str]:
@@ -67,7 +79,7 @@ def _iter_package_files(package:str, path:str, ignores:Set[str])->Iterator[str]:
             yield p
 
 
-def walk_package(package:str, path:str, ignores:Set[str])->Iterator[Tuple[str, PATHTUPLE]]:
+def walk_package(package:str, path:str, ignores:Set[str])->Iterator[ThemeContent]:
     logger.info(f"Loading {package}/{path}")
 
     if not path.endswith('/'):
@@ -80,4 +92,4 @@ def walk_package(package:str, path:str, ignores:Set[str])->Iterator[Tuple[str, P
 
     for filename in _iter_package_files(package, path, ignores):
         destname = filename[pathlen:]
-        yield filename, to_pathtuple(destname)
+        yield {'package': package, 'srcpath': filename, 'destpath': to_pathtuple(destname), }
