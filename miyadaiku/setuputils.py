@@ -16,7 +16,7 @@ SETUP_FILE_EXTS = [
 def list_packages(packagedir, root):
     yield root
 
-    dir = os.path.join(packagedir:str, root:str) -> str
+    dir = os.path.join(packagedir, root) 
     for dirpath, dirnames, filenames in os.walk(dir):
         for d in dirnames:
             if not d.startswith('_'):

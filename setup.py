@@ -50,7 +50,7 @@ setup(
         '': setuputils.SETUP_FILE_EXTS,
     },
     install_requires=requires,
-    extras_require={  # Optional
+    extras_require={
         'test': ['pytest'],
     },
     include_package_data=True,

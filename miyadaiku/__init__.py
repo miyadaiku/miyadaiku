@@ -27,3 +27,5 @@ IGNORE = [
     'ehthumbs.db',
     'Thumbs.db',
 ]
+
+METADATA_FILE_SUFFIX = '.props.yml'
