@@ -1,0 +1,15 @@
+*.dll
+*.exe
+*.o
+*.so
+*.pyc
+*.egg-info
+dist
+build
+.DS_Store
+.cache
+.venv
+.vscode
+.pytest_cache
+Pipfile.lock
+.mypy_cache
