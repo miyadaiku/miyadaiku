@@ -1,4 +1,4 @@
-import tzlocal #  type: ignore
+import tzlocal # type: ignore
 
 YAML_ENCODING = "utf-8"
 

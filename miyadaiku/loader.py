@@ -4,8 +4,10 @@ import fnmatch
 import pkg_resources
 from pathlib import Path, PurePosixPath, PurePath
 import logging
+import yaml
 
 import miyadaiku
+from . import rst, md
 
 logger = logging.getLogger(__name__)
 
@@ -93,3 +95,64 @@ def walk_package(package:str, path:str, ignores:Set[str])->Iterator[ThemeContent
     for filename in _iter_package_files(package, path, ignores):
         destname = filename[pathlen:]
         yield {'package': package, 'srcpath': filename, 'destpath': to_pathtuple(destname), }
+
+
+
+
+FILELOADERS = {
+    '.rst': rst.load,
+    '.rest': rst.load,
+    '.md': md.load,
+}
+
+TEXTLOADERS = {
+    '.rst': rst.load_string,
+    '.md': md.load_string,
+}
+
+
+def metadata_file_name(dirname, fname):
+    return posixpath.join(dirname, f'{fname}{miyadailu.METADATA_FILE_SUFFIX}')
+
+
+def load_from_file(metadata:FileContent)->Tuple[Dict, str]:
+    srcpath = metadata['srcpath']
+
+    loaded:Dict = {}
+    metadatafile = metadata_file_name(*os.path.split(srcpath))
+    if os.path.exists(metadatafile):
+        text = open(metadatafile, encoding=miyadaiku.YAML_ENCODING).read()
+        loaded = yaml.load(text, Loader=yaml.FullLoader) or {}
+        loaded['metadatafile'] = metadatafile
+        
+    ext = srcpath.suffix
+    f = FILELOADERS.get(ext)
+    if not f:
+        return {}, ''
+    d, html = f(srcpath)
+    loaded.update(d)
+    return loaded, html
+
+
+def load_from_package(metadata:ThemeContent)->Tuple[Dict, str]:
+    package = metadata['package']
+    srcpath = metadata['srcpath']
+
+    loaded:Dict = {}
+    metadatafile = metadata_file_name(*os.path.split(srcpath))
+    if pkg_resources.resource_exists(package, metadatafile):
+        text = pkg_resources.resource_string(package, metadatafile)
+        loaded = yaml.load(text, Loader=yaml.FullLoader) or {}
+        loaded['metadatafile'] = metadatafile
+        
+    src = pkg_resources.resource_string(package, srcpath)
+
+    ext = os.path.splitext(srcpath)[-1]
+    f = TEXTLOADERS.get(ext)
+    if not f:
+        return {}, ''
+    d, html = f(src)
+    loaded.update(d)
+    return loaded, html
+
+
