@@ -12,3 +12,4 @@ markdown>=3.0
 nbformat
 nbconvert
 watchdog
+ipython
