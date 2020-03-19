@@ -7,6 +7,7 @@ import logging
 import yaml
 
 import miyadaiku
+from miyadaiku import PathTuple
 from . import rst, md
 
 logger = logging.getLogger(__name__)
@@ -21,29 +22,28 @@ def is_ignored(ignores:Set[str], name:str):
         if fnmatch.fnmatch(name, p):
             return True
 
-PathTuple = Tuple[str, ...]
-
-def to_pathtuple(path)->PathTuple:
-    if isinstance(path, tuple):
-        return path
+def to_pathtuple(path: str)->PathTuple:
     spath = str(path)
     spath = spath.replace("\\", "/").strip("/")
-    ret = tuple(path.split("/"))
+    ret = path.split("/")
+
     for c in ret:
         if set(c.strip()) == '.':
             raise ValueError("Invalid path: {path}")
-    return ret
+
+    dir = tuple(ret[:-1])
+    return (dir, ret[-1])
 
 
 class FileContent(TypedDict, total=False):
     srcpath: Path
-    destpath: PathTuple
+    contentpath: PathTuple
 
 
 class ThemeContent(TypedDict, total=False):
     package: str
     srcpath: str
-    destpath: PathTuple
+    contentpath: PathTuple
     
 
 def walk_directory(path:Path, ignores:Set[str])->Iterator[FileContent]:
@@ -52,8 +52,6 @@ def walk_directory(path:Path, ignores:Set[str])->Iterator[FileContent]:
     if not path.is_dir():
         logger.debug(f'directory: {str(path)} is not a valid directory.')
         return
-
-    pathlen = len(str(path)) + 1
 
     for root, dirs, files in os.walk(path):
         rootpath = Path(root)
@@ -64,9 +62,8 @@ def walk_directory(path:Path, ignores:Set[str])->Iterator[FileContent]:
         filenames = (filename for filename in files if not is_ignored(ignores, filename))
 
         for name in filenames:
-            filename = rootpath / name
-            yield {'srcpath': filename, 'destpath': to_pathtuple(str(filename)[pathlen:])}
-
+            filename = (rootpath / name).resolve()
+            yield {'srcpath': filename, 'contentpath': to_pathtuple(str(filename.relative_to(path)))}
 
 def _iter_package_files(package:str, path:str, ignores:Set[str])->Iterator[str]:
     children = pkg_resources.resource_listdir(package, path)
@@ -94,7 +91,7 @@ def walk_package(package:str, path:str, ignores:Set[str])->Iterator[ThemeContent
 
     for filename in _iter_package_files(package, path, ignores):
         destname = filename[pathlen:]
-        yield {'package': package, 'srcpath': filename, 'destpath': to_pathtuple(destname), }
+        yield {'package': package, 'srcpath': filename, 'contentpath': to_pathtuple(destname), }
 
 
 

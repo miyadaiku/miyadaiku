@@ -1,7 +1,7 @@
 import re
-from nbconvert.exporters import HTMLExporter
-import nbformat
-from bs4 import BeautifulSoup
+from nbconvert.exporters import HTMLExporter # type: ignore
+import nbformat # type: ignore
+from bs4 import BeautifulSoup # type: ignore
 
 
 def _export(json):

@@ -22,8 +22,8 @@ def test_walk_directory(sitedir):
     all = sorted(results, key=lambda d:d['srcpath'])
     assert len(all) == 2
 
-    assert all[0] == dict(srcpath=file2, destpath=('dir1', 'dir2', 'file2'))
-    assert all[1] == dict(srcpath=file1, destpath=('dir1', 'file1'))
+    assert all[0] == dict(srcpath=file2, contentpath=('dir1', 'dir2', 'file2'))
+    assert all[1] == dict(srcpath=file1, contentpath=('dir1', 'file1'))
 
 
 def test_walkpackage(sitedir):
@@ -31,5 +31,5 @@ def test_walkpackage(sitedir):
     all = sorted(results, key=lambda d:d['srcpath'])
     
     assert len(all) == 7
-    assert all[0] == {'package': 'package1', 'srcpath': 'contents/dir1/a', 'destpath': ('dir1', 'a')}
+    assert all[0] == {'package': 'package1', 'srcpath': 'contents/dir1/a', 'contentpath': ('dir1', 'a')}
 

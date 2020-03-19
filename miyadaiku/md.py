@@ -1,9 +1,9 @@
 import re
 import datetime
 import dateutil.parser
-import markdown
-from markdown import util, preprocessors, postprocessors, blockprocessors
-import markdown.extensions.codehilite
+import markdown # type: ignore
+from markdown import util, preprocessors, postprocessors, blockprocessors # type: ignore
+import markdown.extensions.codehilite # type: ignore
 
 
 class Ext(markdown.Extension):

@@ -1,3 +1,5 @@
+from typing import List, Iterator, Dict, Tuple, Optional, DefaultDict, Any, Callable, Set, Union, TypedDict
+
 import tzlocal # type: ignore
 
 YAML_ENCODING = "utf-8"
@@ -29,3 +31,6 @@ IGNORE = [
 ]
 
 METADATA_FILE_SUFFIX = '.props.yml'
+
+
+PathTuple = Tuple[Tuple[str, ...], str]
