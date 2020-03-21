@@ -1,5 +1,5 @@
-from typing import List, Iterator, Dict, Tuple, Optional, DefaultDict, Any, Callable, Set, Union, TypedDict
-
+from typing import List, Iterator, Dict, Tuple, Optional, DefaultDict, Any, Callable, Set, Union, TypedDict, NamedTuple
+import pkg_resources
 import tzlocal # type: ignore
 
 YAML_ENCODING = "utf-8"
@@ -32,5 +32,26 @@ IGNORE = [
 
 METADATA_FILE_SUFFIX = '.props.yml'
 
+PathTuple = Tuple[str, ...]
+ContentPath = Tuple[PathTuple, str]
 
-PathTuple = Tuple[Tuple[str, ...], str]
+
+class ContentSrc(NamedTuple):
+    package: str
+    srcpath: str
+    metadata: Dict
+    contentpath: ContentPath
+    mtime: float
+
+    def read(self, bin:bool):
+        if not bin:
+            if self.package:
+                return pkg_resources.resource_string(self.package, self.srcpath)
+            else:
+                return open(self.srcpath).read()
+        else:
+            if self.package:
+                return pkg_resources.resource_stream(self.package, self.srcpath).read()
+            else:
+                return open(self.srcpath, "rb").read()
+

@@ -1,4 +1,5 @@
 from typing import List, Iterator, Dict, Tuple, Optional, DefaultDict, Any, Callable
+import os
 import collections
 import yaml
 from pathlib import Path
@@ -9,8 +10,7 @@ import datetime
 import fnmatch
 
 import miyadaiku
-
-CONTENT_PATH = Tuple[str,  ...]
+from miyadaiku import ContentSrc, PathTuple
 
 
 DEFAULTS = dict(
@@ -78,30 +78,34 @@ def remove_theme_confs(cfg:Dict)->Dict:
 
 
 class Config:
-    _configs: DefaultDict[CONTENT_PATH, List[Dict]]
-
-    def __init__(self, d:Dict, default:Optional[Dict]=None):
+    updated: float
+    _configs: DefaultDict[PathTuple, List[Dict]]
+    def __init__(self, d:Dict):
         self._configs = collections.defaultdict(list)
+        self.add((), d, None)
+        self.updated = 0
 
-        if default:
-            d.update(default)
+    def add(self, dirname:PathTuple, cfg:Dict, contentsrc:Optional[ContentSrc]=None, tail:bool=True):
+        cfg = cfg.copy()
+        if 'type' in cfg:
+            del cfg['type']
 
-        self.add((), d)
-#        IGNORE.extend(list(d.get('ignore', [])))
-
-
-    def add(self, dirname:CONTENT_PATH, cfg:Dict, tail:bool=True):
-#        cfg = remove_theme_confs(cfg)
         if not cfg:
             return
+
         if tail:
             self._configs[dirname].append(cfg)
         else:
             self._configs[dirname].insert(0, cfg)
 
+        if contentsrc:
+            if not contentsrc.metadata['package']:
+                mtime = os.stat(contentsrc.metadata['srcpath']).st_mtime
+                self.updated = max(self.updated, mtime)
+
     _omit = object()
 
-    def get(self, dirname:CONTENT_PATH, name:str, default:Any=_omit):
+    def get(self, dirname:PathTuple, name:str, default:Any=_omit):
         while True:
             configs = self._configs.get(dirname, None)
             if configs:
@@ -121,7 +125,7 @@ class Config:
 
             dirname = dirname[:-1]
 
-    def getbool(self, dirname:CONTENT_PATH, name: str, default:Any=_omit):
+    def getbool(self, dirname:PathTuple, name: str, default:Any=_omit):
         ret = self.get(dirname, name, default)
         return to_bool(ret)
 
