@@ -11,6 +11,7 @@ from docutils.parsers.rst import Directive, directives, roles
 from docutils.readers import standalone
 from docutils.transforms import frontmatter
 from bs4 import BeautifulSoup  # type: ignore
+from . import pygment_directive  # noqa
 
 
 class _RstDirective(Directive):
