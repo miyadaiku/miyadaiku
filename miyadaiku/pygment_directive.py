@@ -42,9 +42,8 @@
 # ~~~~~~~
 
 
-from pygments.formatters import HtmlFormatter # type: ignore
+from pygments.formatters import HtmlFormatter  # type: ignore
 
-import html
 from docutils import nodes
 from docutils.parsers.rst import directives, Directive
 
@@ -53,6 +52,7 @@ from pygments.lexers import get_lexer_by_name, TextLexer
 import pygments.formatters.html
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,17 +60,15 @@ logger = logging.getLogger(__name__)
 INLINESTYLES = False
 
 # The default formatter
-#DEFAULT = HtmlFormatter(noclasses=INLINESTYLES)
+# DEFAULT = HtmlFormatter(noclasses=INLINESTYLES)
 
-pygments.formatters.html._escape_html_table[ord(
-    '{')] = '&#123;'
-pygments.formatters.html._escape_html_table[ord(
-    '}')] = '&#125;'
+pygments.formatters.html._escape_html_table[ord("{")] = "&#123;"
+pygments.formatters.html._escape_html_table[ord("}")] = "&#125;"
 
 
 # Add name -> formatter pairs for every variant you want to use
 VARIANTS = {
-    'linenos': HtmlFormatter(noclasses=INLINESTYLES, linenos=True),
+    "linenos": HtmlFormatter(noclasses=INLINESTYLES, linenos=True),
 }
 
 TEMPL = """
@@ -84,12 +82,13 @@ TEMPL = """
 class Pygments(Directive):
     """ Source code syntax hightlighting.
     """
+
     required_arguments = 0
     optional_arguments = 1
     final_argument_whitespace = True
     option_spec = {
-        'linenos': directives.flag,
-        'caption': directives.unchanged,
+        "linenos": directives.flag,
+        "caption": directives.unchanged,
     }
     has_content = True
 
@@ -102,22 +101,22 @@ class Pygments(Directive):
                 lexer = get_lexer_by_name(self.arguments[0])
             except ValueError:
                 # no lexer found - use the text one instead of an exception
-                logger.warn(f'no lexer for alias {self.arguments[0]!r} found')
+                logger.warn(f"no lexer for alias {self.arguments[0]!r} found")
 
         if not lexer:
             lexer = TextLexer()
 
         # take an arbitrary option if more than one is given
-        linenos = 'linenos' in self.options
+        linenos = "linenos" in self.options
         formatter = HtmlFormatter(noclasses=INLINESTYLES, linenos=linenos)
 
-        parsed = highlight(u'\n'.join(self.content), lexer, formatter)
-        caption = self.options.get('caption', '')
+        parsed = highlight("\n".join(self.content), lexer, formatter)
+        caption = self.options.get("caption", "")
         caption = pygments.formatters.html.escape_html(caption)
         if caption:
-            caption = f'''<div class="code-block-caption">{caption}</div>'''
+            caption = f"""<div class="code-block-caption">{caption}</div>"""
         parsed = TEMPL.format(parsed=parsed, caption=caption)
-        return [nodes.raw('', parsed, format='html')]
+        return [nodes.raw("", parsed, format="html")]
 
 
-directives.register_directive('code-block', Pygments)
+directives.register_directive("code-block", Pygments)

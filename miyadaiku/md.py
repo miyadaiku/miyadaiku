@@ -1,22 +1,22 @@
 import re
-import datetime
-import dateutil.parser
-import markdown # type: ignore
-from markdown import util, preprocessors, postprocessors, blockprocessors # type: ignore
-import markdown.extensions.codehilite # type: ignore
+import markdown  # type: ignore
+from markdown import util, preprocessors, postprocessors, blockprocessors  # type: ignore
+import markdown.extensions.codehilite  # type: ignore
 
 
 class Ext(markdown.Extension):
     def extendMarkdown(self, md):
         # prior to fenced_code_block
-        md.preprocessors.register(JinjaPreprocessor(md), 'jinja', 27.5)
+        md.preprocessors.register(JinjaPreprocessor(md), "jinja", 27.5)
 
-#        md.preprocessors.add('jinja',
-#                             JinjaPreprocessor(md),
-#                             ">normalize_whitespace")
+        #        md.preprocessors.add('jinja',
+        #                             JinjaPreprocessor(md),
+        #                             ">normalize_whitespace")
 
         # top priority
-        md.parser.blockprocessors.register(TargetProcessor(md.parser), 'target', 110)
+        md.parser.blockprocessors.register(TargetProcessor(md.parser), "target", 110)
+
+
 #        md.parser.blockprocessors.add('target',
 #                                      TargetProcessor(md.parser),
 #                                      '_begin')
@@ -30,7 +30,7 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
             if not l.strip():
                 n += 1
                 continue
-            m = re.match(r'([a-zA-Z0-9_-]+):\s(.+)$', l)
+            m = re.match(r"([a-zA-Z0-9_-]+):\s(.+)$", l)
             if not m:
                 break
             n += 1
@@ -38,14 +38,14 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
             name, value = m[1].strip(), m[2].strip()
             meta[name] = value
 
-        if 'type' not in meta:
-            meta['type'] = 'article'
+        if "type" not in meta:
+            meta["type"] = "article"
 
         self.md.meta = meta
 
         text = "\n".join(lines[n:])
         while True:
-            m = re.search(r'(\\)?:jinja:`(.*?(?<!\\))`', text, re.DOTALL)
+            m = re.search(r"(\\)?:jinja:`(.*?(?<!\\))`", text, re.DOTALL)
             if not m:
                 break
             if m[1]:
@@ -54,11 +54,9 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
             else:
                 placeholder = self.md.htmlStash.store(m[2])
 
-            text = '%s%s%s' % (text[:m.start()],
-                               placeholder,
-                               text[m.end(0):])
+            text = "%s%s%s" % (text[: m.start()], placeholder, text[m.end(0) :])
 
-        text = text.translate({ord('{'): '&#123;', ord('}'): '&#125;'})
+        text = text.translate({ord("{"): "&#123;", ord("}"): "&#125;"})
         return text.split("\n")
 
 
@@ -73,7 +71,7 @@ class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):
         return ret
 
     def isblocklevel(self, html):
-        if re.match(r'\{.*}$', html.strip(), re.DOTALL):
+        if re.match(r"\{.*}$", html.strip(), re.DOTALL):
             return True
         return super().isblocklevel(html)
 
@@ -84,7 +82,7 @@ postprocessors.RawHtmlPostprocessor = JinjaRawHtmlPostprocessor
 
 class TargetProcessor(blockprocessors.BlockProcessor):
 
-    RE = re.compile(r'^.. target::\s*([-a-zA-Z0-9_]+)\s*$')
+    RE = re.compile(r"^.. target::\s*([-a-zA-Z0-9_]+)\s*$")
 
     def test(self, parent, block):
         return self.RE.search(block)
@@ -93,20 +91,20 @@ class TargetProcessor(blockprocessors.BlockProcessor):
         block = blocks.pop(0)
         m = self.RE.match(block)
         attrs = {
-            'class': 'header_target',
-            'id': m.group(1),
+            "class": "header_target",
+            "id": m.group(1),
         }
-        util.etree.SubElement(parent, 'div', attrib=attrs)
+        util.etree.SubElement(parent, "div", attrib=attrs)
 
 
 def load(path):
-    return load_string(path.read_text(encoding='utf-8'))
+    return load_string(path.read_text(encoding="utf-8"))
 
 
 def load_string(string):
     extensions = [
         markdown.extensions.codehilite.CodeHiliteExtension(guess_lang=False),
-        'markdown.extensions.extra',
+        "markdown.extensions.extra",
         Ext(),
     ]
 
