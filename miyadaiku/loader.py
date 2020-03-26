@@ -5,12 +5,16 @@ from typing import (
     Tuple,
     Optional,
     Set,
+    Any,
+    KeysView,
+    ItemsView
 )
 import os
 import fnmatch
 import pkg_resources
 from pathlib import Path, PurePath
 import logging
+import posixpath
 import yaml
 
 import miyadaiku
@@ -20,14 +24,14 @@ from . import config, rst, md
 logger = logging.getLogger(__name__)
 
 
-def is_ignored(ignores: Set[str], name: str):
+def is_ignored(ignores: Set[str], name: str)->bool:
     if name.lower().endswith(miyadaiku.METADATA_FILE_SUFFIX):
         return True
 
     for p in ignores:
         if fnmatch.fnmatch(name, p):
             return True
-
+    return False
 
 def to_contentpath(path: str) -> ContentPath:
     spath = str(path)
@@ -35,16 +39,12 @@ def to_contentpath(path: str) -> ContentPath:
     ret = path.split("/")
 
     for c in ret:
-        if set(c.strip()) == ".":
+        if set(c.strip()) == set("."):
             raise ValueError("Invalid path: {path}")
 
     dir = tuple(ret[:-1])
     return (dir, ret[-1])
 
-
-def metadata_file_name(path: PurePath):
-    dirname, fname = os.path.split(path)
-    return path.parent / f"{path.name}{miyadaiku.METADATA_FILE_SUFFIX}"
 
 
 def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
@@ -65,8 +65,11 @@ def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
 
         for name in filenames:
             filename = (rootpath / name).resolve()
-            metadatafile = metadata_file_name(filename)
-            if metadatafile.is_file():
+
+            dirname, fname = os.path.split(filename)
+            metadatafile = os.path.join(dirname, f"{fname}{miyadaiku.METADATA_FILE_SUFFIX}")
+
+            if os.path.isfile(metadatafile):
                 text = open(metadatafile, encoding=miyadaiku.YAML_ENCODING).read()
                 metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
             else:
@@ -104,11 +107,11 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
     if not pkg_resources.resource_isdir(package, path):
         return
 
-    for filename in _iter_package_files(package, path, ignores):
-        destname = filename[pathlen:]
+    for srcpath in _iter_package_files(package, path, ignores):
+        destname = srcpath [pathlen:]
 
-        srcpath = PurePath(filename)
-        metadatapath = str(metadata_file_name(srcpath))
+        dirname, fname = posixpath.split(srcpath )
+        metadatapath  = posixpath.join(dirname,f"{fname}{miyadaiku.METADATA_FILE_SUFFIX}")
 
         if pkg_resources.resource_exists(package, metadatapath):
             text = pkg_resources.resource_string(package, metadatapath)
@@ -125,7 +128,7 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
         )
 
 
-def yamlloader(src: ContentSrc) -> Tuple[Dict, Optional[str]]:
+def yamlloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
     text = src.read_bytes()
     metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
     if "type" not in metadata:
@@ -134,7 +137,7 @@ def yamlloader(src: ContentSrc) -> Tuple[Dict, Optional[str]]:
     return metadata, None
 
 
-def binloader(src: ContentSrc) -> Tuple[Dict, Optional[str]]:
+def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
     return {"type": "binary"}, None
 
 
@@ -150,17 +153,17 @@ FILELOADERS = {
 class ContentFiles:
     _contentfiles: Dict[ContentPath, Tuple[ContentSrc, Optional[str]]]
 
-    def __init__(self):
+    def __init__(self)->None:
         self._contentfiles = {}
 
-    def add(self, contentsrc: ContentSrc, body: Optional[str]):
+    def add(self, contentsrc: ContentSrc, body: Optional[str])->None:
         if contentsrc.contentpath not in self._contentfiles:
             self._contentfiles[contentsrc.contentpath] = (contentsrc, body)
 
-    def get_contentfiles_keys(self):
+    def get_contentfiles_keys(self)->KeysView[ContentPath]:
         return self._contentfiles.keys()
 
-    def items(self):
+    def items(self)->ItemsView[ContentPath, Tuple[ContentSrc, Optional[str]]]:
         return self._contentfiles.items()
 
     # def has_content(self, key, base=None):
@@ -271,7 +274,7 @@ def loadfiles(
     ignores: Set[str],
     themes: List[str],
 ) -> None:
-    def loadfile(src: ContentSrc, bin):
+    def loadfile(src: ContentSrc, bin:bool)->Optional[str]:
         if not bin:
             ext = os.path.splitext(src.srcpath)[1]
             loader = FILELOADERS.get(ext, binloader)
@@ -283,7 +286,7 @@ def loadfiles(
 
         return body
 
-    def load(walk, bin=False) -> None:
+    def load(walk:Iterator[ContentSrc], bin:bool=False) -> None:
         for f in walk:
             body = loadfile(f, bin)
 

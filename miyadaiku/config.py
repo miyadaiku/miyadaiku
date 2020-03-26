@@ -71,16 +71,20 @@ class Config:
 
     def __init__(self, d: Dict):
         self._configs = collections.defaultdict(list)
-        self.add((), d, None)
         self.updated = 0
+        self.root = d
+        self.themes:List[Dict] = []
+
+    def add_themecfg(self, cfg:Dict[str, Any])->None:
+        self.themes.append(cfg)
 
     def add(
         self,
         dirname: PathTuple,
-        cfg: Dict,
+        cfg: Dict[str, Any],
         contentsrc: Optional[ContentSrc] = None,
         tail: bool = True,
-    ):
+    )->None:
         cfg = cfg.copy()
         if "type" in cfg:
             del cfg["type"]
@@ -109,6 +113,13 @@ class Config:
                         return format_value(name, config[name])
 
             if not dirname:
+                if name in self.root:
+                    return format_value(name, self.root[name])
+
+                for config in self.themes:
+                    if name in config:
+                        return format_value(name, config[name])
+
                 if default is not self._omit:
                     return default
 
@@ -202,51 +213,51 @@ def format_value(name: str, value):
     return value
 
 
-def load(path: Optional[Path]) -> Config:
-    if path:
-        d: dict = yaml.load(
-            path.read_text(encoding=miyadaiku.YAML_ENCODING), Loader=yaml.FullLoader
-        ) or {}
-    else:
-        d = {}
-    return Config(d)
-
-
-def _load_theme_config(package: str) -> Dict:
-    try:
-        s = pkg_resources.resource_string(package, miyadaiku.CONFIG_FILE)
-    except FileNotFoundError:
-        cfg = {}
-    else:
-        cfg = yaml.load(s.decode(miyadaiku.YAML_ENCODING), Loader=yaml.FullLoader)
-
-    if not cfg:
-        cfg = {}
-    return cfg
-
-
-def _load_theme_configs(themes: List[str]) -> Iterator[Tuple[str, Dict]]:
-    seen = set()
-    themes = themes[:]
-    while themes:
-        theme = themes.pop(0)
-        if theme in seen:
-            continue
-        seen.add(theme)
-
-        cfg = _load_theme_config(theme)
-        themes = list(t for t in cfg.get("themes", [])) + themes
-        yield theme, cfg
-
-
-def load_themes(config: Config):
-    themenames = list(config.get((), "themes"))
-    if not themenames:
-        themenames = [miyadaiku.DEFAULT_THEME]
-
-    themes = []
-    for theme, cfg in _load_theme_configs(themenames):
-        themes.append(theme)
-        config.add((), cfg)
-
-    return themes
+#def load(path: Optional[Path]) -> Config:
+#    if path:
+#        d: dict = yaml.load(
+#            path.read_text(encoding=miyadaiku.YAML_ENCODING), Loader=yaml.FullLoader
+#        ) or {}
+#    else:
+#        d = {}
+#    return Config(d)
+#
+#
+#def _load_theme_config(package: str) -> Dict:
+#    try:
+#        s = pkg_resources.resource_string(package, miyadaiku.CONFIG_FILE)
+#    except FileNotFoundError:
+#        cfg = {}
+#    else:
+#        cfg = yaml.load(s.decode(miyadaiku.YAML_ENCODING), Loader=yaml.FullLoader)
+#
+#    if not cfg:
+#        cfg = {}
+#    return cfg
+#
+#
+#def _load_theme_configs(themes: List[str]) -> Iterator[Tuple[str, Dict]]:
+#    seen = set()
+#    themes = themes[:]
+#    while themes:
+#        theme = themes.pop(0)
+#        if theme in seen:
+#            continue
+#        seen.add(theme)
+#
+#        cfg = _load_theme_config(theme)
+#        themes = list(t for t in cfg.get("themes", [])) + themes
+#        yield theme, cfg
+#
+#
+#def load_themes(config: Config):
+#    themenames = list(config.get((), "themes"))
+#    if not themenames:
+#        themenames = [miyadaiku.DEFAULT_THEME]
+#
+#    themes = []
+#    for theme, cfg in _load_theme_configs(themenames):
+#        themes.append(theme)
+#        config.add((), cfg)
+#
+#    return themes
