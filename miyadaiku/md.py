@@ -1,7 +1,9 @@
+from typing import Tuple, Dict
 import re
 import markdown  # type: ignore
 from markdown import util, preprocessors, postprocessors, blockprocessors  # type: ignore
 import markdown.extensions.codehilite  # type: ignore
+from miyadaiku import ContentSrc
 
 
 class Ext(markdown.Extension):
@@ -97,8 +99,9 @@ class TargetProcessor(blockprocessors.BlockProcessor):
         util.etree.SubElement(parent, "div", attrib=attrs)
 
 
-def load(path):
-    return load_string(path.read_text(encoding="utf-8"))
+def load(src: ContentSrc) -> Tuple[Dict, str]:
+    s = src.read_text()
+    return load_string(s)
 
 
 def load_string(string):

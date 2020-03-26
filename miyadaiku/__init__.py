@@ -1,8 +1,4 @@
-from typing import (
-    Dict,
-    Tuple,
-    NamedTuple,
-)
+from typing import Dict, Tuple, NamedTuple
 import pkg_resources
 import tzlocal  # type: ignore
 
@@ -43,17 +39,18 @@ class ContentSrc(NamedTuple):
     package: str
     srcpath: str
     metadata: Dict
-    contentpath: ContentPath
-    mtime: float
+    contentpath: ContentPath = ((), "")
+    mtime: float = 0.0
 
-    def read(self, bin: bool):
-        if not bin:
-            if self.package:
-                return pkg_resources.resource_string(self.package, self.srcpath)
-            else:
-                return open(self.srcpath).read()
+    def read_text(self, encoding: str = "utf-8") -> str:
+        if self.package:
+            ret = pkg_resources.resource_string(self.package, self.srcpath)
+            return ret.decode(encoding)
         else:
-            if self.package:
-                return pkg_resources.resource_stream(self.package, self.srcpath).read()
-            else:
-                return open(self.srcpath, "rb").read()
+            return open(self.srcpath).read()
+
+    def read_bytes(self) -> bytes:
+        if self.package:
+            return pkg_resources.resource_string(self.package, self.srcpath)
+        else:
+            return open(self.srcpath, "rb").read()

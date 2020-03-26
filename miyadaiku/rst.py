@@ -2,6 +2,7 @@ import re
 import os
 import html
 import collections
+from typing import Dict, Tuple, Any
 import docutils
 import docutils.core
 import docutils.nodes
@@ -11,6 +12,8 @@ from docutils.parsers.rst import Directive, directives, roles
 from docutils.readers import standalone
 from docutils.transforms import frontmatter
 from bs4 import BeautifulSoup  # type: ignore
+
+from miyadaiku import ContentSrc
 from . import pygment_directive  # noqa
 
 
@@ -178,7 +181,7 @@ def _make_pub(source_class):
     return pub
 
 
-def _parse(pub):
+def _parse(pub: Any) -> Tuple[Dict, str]:
     pub.publish(enable_exit_status=True)
 
     parts = pub.writer.parts
@@ -203,13 +206,21 @@ def _parse(pub):
     return metadata, parts.get("body")
 
 
-def load(path):
-    pub = _make_pub(docutils.io.FileInput)
-    pub.set_source(source_path=os.fspath(path))
-    return _parse(pub)
-
-
-def load_string(string):
+def load_string(string: str) -> Tuple[Dict, str]:
     pub = _make_pub(docutils.io.StringInput)
     pub.set_source(source=string)
     return _parse(pub)
+
+
+def load_file(filename: str) -> Tuple[Dict, str]:
+    pub = _make_pub(docutils.io.FileInput)
+    pub.set_source(source_path=os.fspath(filename))
+    return _parse(pub)
+
+
+def load(src: ContentSrc) -> Tuple[Dict, str]:
+    if src.package:
+        s = src.read_text()
+        return load_string(s)
+    else:
+        return load_file(src.srcpath)

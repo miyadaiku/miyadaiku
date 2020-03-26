@@ -125,15 +125,16 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
         )
 
 
-def yamlloader(src: str) -> Tuple[Dict, Optional[str]]:
-    metadata = yaml.load(src, Loader=yaml.FullLoader) or {}
+def yamlloader(src: ContentSrc) -> Tuple[Dict, Optional[str]]:
+    text = src.read_bytes()
+    metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
     if "type" not in metadata:
         metadata["type"] = "config"
 
     return metadata, None
 
 
-def binloader(src: str) -> Tuple[Dict, Optional[str]]:
+def binloader(src: ContentSrc) -> Tuple[Dict, Optional[str]]:
     return {"type": "binary"}, None
 
 
@@ -265,29 +266,31 @@ class ContentFiles:
 
 def loadfiles(
     files: ContentFiles,
-    config: config.Config,
+    cfg: config.Config,
     root: Path,
     ignores: Set[str],
     themes: List[str],
-):
+) -> None:
     def loadfile(src: ContentSrc, bin):
-        ext = os.path.splitext(src.srcpath)[1]
         if not bin:
+            ext = os.path.splitext(src.srcpath)[1]
             loader = FILELOADERS.get(ext, binloader)
         else:
             loader = binloader
 
-        metadata, body = loader(src.srcpath)
+        metadata, body = loader(src)
         src.metadata.update(metadata)
 
         return body
 
-    def load(walk, bin=False):
-        for f in walk():
+    def load(walk, bin=False) -> None:
+        for f in walk:
             body = loadfile(f, bin)
 
-            if f.metadata["type"] == "config":
-                config.add(f.contentpath[0], f.metadata, f)
+            if bin:
+                files.add(f, body)
+            elif f.metadata["type"] == "config":
+                cfg.add(f.contentpath[0], f.metadata, f)
             else:
                 files.add(f, body)
 

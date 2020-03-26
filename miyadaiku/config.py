@@ -94,8 +94,8 @@ class Config:
             self._configs[dirname].insert(0, cfg)
 
         if contentsrc:
-            if not contentsrc.metadata["package"]:
-                mtime = os.stat(contentsrc.metadata["srcpath"]).st_mtime
+            if not contentsrc.package:
+                mtime = os.stat(contentsrc.srcpath).st_mtime
                 self.updated = max(self.updated, mtime)
 
     _omit = object()

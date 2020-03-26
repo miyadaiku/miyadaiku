@@ -1,8 +1,10 @@
+from typing import Tuple, Dict
 import re
+from miyadaiku import ContentSrc
 
 
-def load(path):
-    return load_string(path.read_text(encoding="utf-8"))
+def load(src: ContentSrc) -> Tuple[Dict, str]:
+    return load_string(src.read_text())
 
 
 def load_string(string):
