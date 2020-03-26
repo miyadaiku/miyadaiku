@@ -1,3 +1,4 @@
+# type: ignore 
 import re
 import os
 import html
@@ -11,7 +12,7 @@ import docutils.utils
 from docutils.parsers.rst import Directive, directives, roles
 from docutils.readers import standalone
 from docutils.transforms import frontmatter
-from bs4 import BeautifulSoup  # type: ignore
+from bs4 import BeautifulSoup
 
 from miyadaiku import ContentSrc
 from . import pygment_directive  # noqa

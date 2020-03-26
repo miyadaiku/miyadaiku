@@ -19,41 +19,41 @@ def run_hook(hook:HOOKS , *args:Any, **kwargs:Any)->None:
         h(*args, **kwargs)
 
 
-def start(f:Callable[..., Any])->Callable[..., Any]:
+def start(f:HookFunc)->HookFunc:
     hooks[HOOKS.start].append(f)
     return f
 
 
-def initialized(f:Callable[..., Any])->Callable[..., Any]:
+def initialized(f:HookFunc)->HookFunc:
     hooks[HOOKS.initialized].append(f)
     return f
 
 
-def pre_load(f:Callable[..., Any])->Callable[..., Any]:
+def pre_load(f:HookFunc)->HookFunc:
     hooks[HOOKS.pre_load].append(f)
     return f
 
 
-def post_load(f:Callable[..., Any])->Callable[..., Any]:
+def post_load(f:HookFunc)->HookFunc:
     hooks[HOOKS.post_load].append(f)
     return f
 
 
-def loaded(f:Callable[..., Any])->Callable[..., Any]:
+def loaded(f:HookFunc)->HookFunc:
     hooks[HOOKS.loaded].append(f)
     return f
 
 
-def pre_build(f:Callable[..., Any])->Callable[..., Any]:
+def pre_build(f:HookFunc)->HookFunc:
     hooks[HOOKS.pre_build].append(f)
     return f
 
 
-def post_build(f:Callable[..., Any])->Callable[..., Any]:
+def post_build(f:HookFunc)->HookFunc:
     hooks[HOOKS.post_build].append(f)
     return f
 
 
-def finished(f:Callable[..., Any])->Callable[..., Any]:
+def finished(f:HookFunc)->HookFunc:
     hooks[HOOKS.finished].append(f)
     return f

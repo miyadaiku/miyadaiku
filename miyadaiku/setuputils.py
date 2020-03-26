@@ -1,3 +1,5 @@
+# type: ignore 
+
 from typing import Any
 import os
 import shutil
@@ -41,7 +43,7 @@ def read_file(packagedir: str, fname: str) -> str:
     return open(os.path.join(packagedir, fname)).read()
 
 
-distutils.dist.Distribution.exec_func = None  # type: ignore
+distutils.dist.Distribution.exec_func = None
 
 
 class exec_func(Command):
@@ -60,7 +62,7 @@ class exec_func(Command):
             self.distribution.exec_func(self.distribution)
 
 
-distutils.dist.Distribution.copy_files = None  # type: ignore
+distutils.dist.Distribution.copy_files = None
 
 
 class copy_files(Command):

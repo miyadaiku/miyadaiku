@@ -1,4 +1,5 @@
 from typing import (
+    cast,
     List,
     Iterator,
     Dict,
@@ -142,9 +143,9 @@ def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
 
 
 FILELOADERS = {
-    ".rst": rst.load,
-    ".rest": rst.load,
-    ".md": md.load,
+    ".rst": rst.load,  # type: ignore
+    ".rest": rst.load, # type: ignore
+    ".md": md.load, # type: ignore
     ".yml": yamlloader,
     ".yaml": yamlloader,
 }
@@ -284,7 +285,10 @@ def loadfiles(
         metadata, body = loader(src)
         src.metadata.update(metadata)
 
-        return body
+        if body is not None:
+            return str(body)
+        else:
+            return None
 
     def load(walk:Iterator[ContentSrc], bin:bool=False) -> None:
         for f in walk:

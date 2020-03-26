@@ -1,8 +1,10 @@
+# type: ignore 
+
 from typing import Tuple, Dict
 import re
-import markdown  # type: ignore
-from markdown import util, preprocessors, postprocessors, blockprocessors  # type: ignore
-import markdown.extensions.codehilite  # type: ignore
+import markdown
+from markdown import util, preprocessors, postprocessors, blockprocessors
+import markdown.extensions.codehilite
 from miyadaiku import ContentSrc
 
 

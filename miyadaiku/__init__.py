@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, NamedTuple
+from typing import Dict, Tuple, NamedTuple, Any
 import pkg_resources
 import tzlocal  # type: ignore
 
@@ -38,7 +38,7 @@ ContentPath = Tuple[PathTuple, str]
 class ContentSrc(NamedTuple):
     package: str
     srcpath: str
-    metadata: Dict
+    metadata: Dict[str, Any]
     contentpath: ContentPath = ((), "")
     mtime: float = 0.0
 

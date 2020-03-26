@@ -1,3 +1,5 @@
+# type: ignore 
+
 from typing import Tuple, Dict
 import re
 from miyadaiku import ContentSrc

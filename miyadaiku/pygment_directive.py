@@ -42,7 +42,7 @@
 # ~~~~~~~
 
 
-from pygments.formatters import HtmlFormatter  # type: ignore
+from pygments.formatters import HtmlFormatter
 
 from docutils import nodes
 from docutils.parsers.rst import directives, Directive

@@ -57,7 +57,7 @@ DEFAULTS = dict(
 THEME_CONF_ENTRIES = ["themes"]
 
 
-def remove_theme_confs(cfg: Dict) -> Dict:
+def remove_theme_confs(cfg: Dict[str, Any]) -> Dict[str, Any]:
     ret = {}
     for k, v in cfg.items():
         if k not in THEME_CONF_ENTRIES:
@@ -67,13 +67,13 @@ def remove_theme_confs(cfg: Dict) -> Dict:
 
 class Config:
     updated: float
-    _configs: DefaultDict[PathTuple, List[Dict]]
+    _configs: DefaultDict[PathTuple, List[Dict[str, Any]]]
 
-    def __init__(self, d: Dict):
+    def __init__(self, d: Dict[str, Any]):
         self._configs = collections.defaultdict(list)
         self.updated = 0
         self.root = d
-        self.themes:List[Dict] = []
+        self.themes:List[Dict[str, Any]] = []
 
     def add_themecfg(self, cfg:Dict[str, Any])->None:
         self.themes.append(cfg)
@@ -104,7 +104,7 @@ class Config:
 
     _omit = object()
 
-    def get(self, dirname: PathTuple, name: str, default: Any = _omit):
+    def get(self, dirname: PathTuple, name: str, default: Any = _omit)->Any:
         while True:
             configs = self._configs.get(dirname, None)
             if configs:
@@ -130,7 +130,7 @@ class Config:
 
             dirname = dirname[:-1]
 
-    def getbool(self, dirname: PathTuple, name: str, default: Any = _omit):
+    def getbool(self, dirname: PathTuple, name: str, default: Any = _omit)->bool:
         ret = self.get(dirname, name, default)
         return to_bool(ret)
 
@@ -159,32 +159,32 @@ def to_bool(s: Any) -> bool:
 VALUE_CONVERTERS: Dict[str, Callable[[Any], Any]] = {}
 
 
-def value_converter(f):
+def value_converter(f:Any)->Any:
     VALUE_CONVERTERS[f.__name__] = f
     return f
 
 
 @value_converter
-def site_url(value):
+def site_url(value:Any)->Any:
     if value.endswith("/"):
         return value
     return value + "/"
 
 
 @value_converter
-def draft(value):
+def draft(value:Any)->Any:
     return to_bool(value)
 
 
 @value_converter
-def tags(value):
+def tags(value:Any)->Any:
     if isinstance(value, str):
         return list(filter(None, (t.strip() for t in value.split(","))))
     return value
 
 
 @value_converter
-def date(value: str):
+def date(value: str)->Any:
     if value:
         ret = dateutil.parser.parse(value)
         if isinstance(ret, datetime.time):
@@ -193,19 +193,19 @@ def date(value: str):
 
 
 @value_converter
-def order(value):
+def order(value:Any)->Any:
     return int(value)
 
 
 @value_converter
-def imports(value: Optional[str]):
+def imports(value: Optional[str])->Any:
     if value:
         return [s.strip() for s in value.split(",")]
     else:
         return []
 
 
-def format_value(name: str, value):
+def format_value(name: str, value:Any)->Any:
     f = VALUE_CONVERTERS.get(name)
     if f:
         return f(value)
