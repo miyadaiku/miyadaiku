@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang }}">
+<head>
+  {% block head %}
+    <meta charset="{{ page.charset }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ page.title | striptags }} - {{ page.site_title | striptags }}{% endblock %}</title>
+  {% endblock head %}
+</head>
+
+<body>
+  {% block body %}
+  {% endblock body %}
+</body>
+</html>

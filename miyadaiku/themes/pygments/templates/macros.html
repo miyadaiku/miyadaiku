@@ -1,0 +1,5 @@
+
+
+{% macro load_css(page) -%}
+  <link rel="stylesheet" href="{{ page.path_to(page.pygments_css_path) }}">
+{%- endmacro %}

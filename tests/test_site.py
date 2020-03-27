@@ -24,20 +24,20 @@ project_prop: value
     site = Site()
     site.load(sitedir, {'prop':'prop_value'})
 
+    print(site.files._contentfiles.keys())
+    assert len(site.files._contentfiles) == 5
+    assert ((), "root1.txt") in site.files._contentfiles
+    assert ((), "package_root.rst") in site.files._contentfiles
+    assert ((), "package3_root.rst") in site.files._contentfiles
+    assert ((), "package3_files_1.rst") in site.files._contentfiles
+    assert ((), "package4_root.rst") in site.files._contentfiles
 
-    assert len(files._contentfiles) == 7
-    assert files._contentfiles[((), "root1.txt")][0].read_text() == "content_root1"
-    assert files._contentfiles[((), "root_content1.txt")][0].read_text() == "root_content1"
-    assert files._contentfiles[((), "root_file1.txt")][0].read_text() == "root_file1"
+    assert site.config.get((), 'prop') == "prop_value"
+    assert site.config.get((), 'root_prop') == "root_prop_value"
+    assert site.config.get((), 'package3_prop') == "package3_prop_value"
+    assert site.config.get((), 'package3_prop_a1') == "value_package3_a1"
+    assert site.config.get((), 'package4_prop') == "package4_prop_value"
 
-    assert files._contentfiles[((), "package3_root.rst")][0].read_text() == "package3/contents/package3_root.rst"
-    assert files._contentfiles[((), "package_root.rst")][0].read_text() == "package3/contents/package_root.rst"
-    assert files._contentfiles[((), "package3_files_1.rst")][0].read_text() == "package3/files/package3_file_1.rst"
-    
-    assert files._contentfiles[((), "package4_root.rst")][0].read_text() == "package4/contents/package4_root.rst"
-
-    assert cfg.get((), 'root_prop') == "root_prop_value"
-    assert cfg.get((), 'package3_prop_a1') == "value_package3_a1"
 
 
 

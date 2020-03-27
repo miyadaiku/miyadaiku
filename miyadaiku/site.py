@@ -79,7 +79,7 @@ class Site:
             seen = set()
             themes = themes[:]
             while themes:
-                theme = themes.pop(0)
+                theme = themes.pop(0).strip()
                 if theme in seen:
                     continue
                 seen.add(theme)
@@ -89,8 +89,11 @@ class Site:
                 yield theme, cfg
 
 
+        themes = self.siteconfig.get("themes", [])
+        themes.append(miyadaiku.DEFAULT_THEME)
+
         self.themes = []
-        for theme, cfg in _load_theme_configs(self.siteconfig.get("themes", [])):
+        for theme, cfg in _load_theme_configs(themes):
             self.themes.append(theme)
             self.config.add_themecfg(cfg)
 
@@ -147,6 +150,7 @@ class Site:
         self._load_jinja_globals()
         self._load_modules()
 
+        self.files = ContentFiles()
         loadfiles(
             self.files,
             self.config,

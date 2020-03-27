@@ -1,0 +1,35 @@
+
+{% extends 'common.html' %}
+
+{% block container_body %}
+
+  {% block articles %}
+  <div class="articles">
+    {% for article in articles %}
+      {{ article_metadata(article) }}
+      <h2 class="article-title"><a href="{{page.path_to(article)}}">{{ article.title }}</a></h2>
+      <div class="article-body">{{ article.abstract}}</div>
+    {% endfor %}
+  </div>
+  {% endblock articles %}
+
+  {% block pagination %}
+  <div class="index-pagination">
+    {% if cur_page != 1 %}
+      <a class="index-navi"
+         href="{{page.path_to(page, values=group_values, npage=cur_page-1)}}">&larr;</a>
+    {% else %}
+      <span class="index-navi disabled-link">&larr;</span>
+    {% endif %}
+    
+    {% if not is_last %}
+      <a class="index-navi"
+         href="{{ page.path_to(page, values=group_values, npage=cur_page+1) }}">&rarr;</a>
+    {% else %}
+      <span class="index-navi disabled-link">&rarr;</span>
+    {% endif %}
+  {% endblock pagination %}
+  </div>
+
+{% endblock container_body %}
+

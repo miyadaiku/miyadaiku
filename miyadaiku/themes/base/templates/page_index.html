@@ -1,0 +1,28 @@
+
+{% extends "base.html" %}
+
+{% block body %}
+<div>
+  <h1>
+    {{ page.site_title }}
+  </h1>
+
+  <div>
+    {% for article in articles %}
+      <h2><a href="{{page.path_to(article)}}">{{ article.title }}</a></h2>
+      <div>{{ article.abstract }}</div>
+    {% endfor %}
+  </div>
+
+  <hr>
+  <div>
+    {% if cur_page != 1 %}
+      <a href="{{page.path_to(page, values=group_values, npage=cur_page-1)}}">Prev page</a>
+    {% endif %}
+    {% if not is_last %}
+      <a href="{{page.path_to(page, values=group_values, npage=cur_page+1)}}">Next page</a>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock body %}
