@@ -1,4 +1,6 @@
-from miyadaiku.core.contents import bin_loader
+# type: ignore 
+
+from miyadaiku.contents import bin_loader
 from miyadaiku.core import config
 
 DEST_PATH = '/static/pygments/'
