@@ -6,6 +6,8 @@ from .contents import Content
 
 
 class OutputContext:
+    contentpath: ContentPath
+
     @classmethod
     def create(
         cls, site: Site, content: Content, files: ContentFiles
@@ -17,6 +19,12 @@ class OutputContext:
 
 
 class IndexOutputContext(OutputContext):
+    names: Tuple[str, ...]
+    items: Sequence[ContentPath]
+    cur_page: int
+    num_pages: int
+
+
     @classmethod
     def create(
         cls, site: Site, content: Content, files: ContentFiles
@@ -70,7 +78,10 @@ class IndexOutputContext(OutputContext):
         num_pages: int,
     ) -> None:
         self.contentpath = content.src.contentpath
-
+        self.names = names
+        self.items = [c.src.contentpath for c in items]
+        self.cur_page = cur_page
+        self.num_pages = num_pages
 
 BUILDERS = {
     "index": IndexOutputContext,
