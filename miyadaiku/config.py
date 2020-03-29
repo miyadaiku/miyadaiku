@@ -1,9 +1,6 @@
-from typing import List, Iterator, Dict, Tuple, Optional, DefaultDict, Any, Callable
+from typing import List, Dict, Optional, DefaultDict, Any, Callable
 import os
 import collections
-import yaml
-from pathlib import Path
-import pkg_resources
 import dateutil.parser
 import datetime
 
@@ -73,9 +70,9 @@ class Config:
         self._configs = collections.defaultdict(list)
         self.updated = 0
         self.root = d
-        self.themes:List[Dict[str, Any]] = []
+        self.themes: List[Dict[str, Any]] = []
 
-    def add_themecfg(self, cfg:Dict[str, Any])->None:
+    def add_themecfg(self, cfg: Dict[str, Any]) -> None:
         self.themes.append(cfg)
 
     def add(
@@ -84,7 +81,7 @@ class Config:
         cfg: Dict[str, Any],
         contentsrc: Optional[ContentSrc] = None,
         tail: bool = True,
-    )->None:
+    ) -> None:
         cfg = cfg.copy()
         if "type" in cfg:
             del cfg["type"]
@@ -104,7 +101,7 @@ class Config:
 
     _omit = object()
 
-    def get(self, dirname: PathTuple, name: str, default: Any = _omit)->Any:
+    def get(self, dirname: PathTuple, name: str, default: Any = _omit) -> Any:
         while True:
             configs = self._configs.get(dirname, None)
             if configs:
@@ -120,17 +117,17 @@ class Config:
                     if name in config:
                         return format_value(name, config[name])
 
-                if default is not self._omit:
-                    return default
-
                 if name in DEFAULTS:
                     return DEFAULTS[name]
+
+                if default is not self._omit:
+                    return default
 
                 raise AttributeError(f"Invalid config name: {dirname}:{name}")
 
             dirname = dirname[:-1]
 
-    def getbool(self, dirname: PathTuple, name: str, default: Any = _omit)->bool:
+    def getbool(self, dirname: PathTuple, name: str, default: Any = _omit) -> bool:
         ret = self.get(dirname, name, default)
         return to_bool(ret)
 
@@ -159,32 +156,32 @@ def to_bool(s: Any) -> bool:
 VALUE_CONVERTERS: Dict[str, Callable[[Any], Any]] = {}
 
 
-def value_converter(f:Any)->Any:
+def value_converter(f: Any) -> Any:
     VALUE_CONVERTERS[f.__name__] = f
     return f
 
 
 @value_converter
-def site_url(value:Any)->Any:
+def site_url(value: Any) -> Any:
     if value.endswith("/"):
         return value
     return value + "/"
 
 
 @value_converter
-def draft(value:Any)->Any:
+def draft(value: Any) -> Any:
     return to_bool(value)
 
 
 @value_converter
-def tags(value:Any)->Any:
+def tags(value: Any) -> Any:
     if isinstance(value, str):
         return list(filter(None, (t.strip() for t in value.split(","))))
     return value
 
 
 @value_converter
-def date(value: str)->Any:
+def date(value: str) -> Any:
     if value:
         ret = dateutil.parser.parse(value)
         if isinstance(ret, datetime.time):
@@ -193,19 +190,19 @@ def date(value: str)->Any:
 
 
 @value_converter
-def order(value:Any)->Any:
+def order(value: Any) -> Any:
     return int(value)
 
 
 @value_converter
-def imports(value: Optional[str])->Any:
+def imports(value: Optional[str]) -> Any:
     if value:
         return [s.strip() for s in value.split(",")]
     else:
         return []
 
 
-def format_value(name: str, value:Any)->Any:
+def format_value(name: str, value: Any) -> Any:
     f = VALUE_CONVERTERS.get(name)
     if f:
         return f(value)
@@ -213,7 +210,7 @@ def format_value(name: str, value:Any)->Any:
     return value
 
 
-#def load(path: Optional[Path]) -> Config:
+# def load(path: Optional[Path]) -> Config:
 #    if path:
 #        d: dict = yaml.load(
 #            path.read_text(encoding=miyadaiku.YAML_ENCODING), Loader=yaml.FullLoader
@@ -223,7 +220,7 @@ def format_value(name: str, value:Any)->Any:
 #    return Config(d)
 #
 #
-#def _load_theme_config(package: str) -> Dict:
+# def _load_theme_config(package: str) -> Dict:
 #    try:
 #        s = pkg_resources.resource_string(package, miyadaiku.CONFIG_FILE)
 #    except FileNotFoundError:
@@ -236,7 +233,7 @@ def format_value(name: str, value:Any)->Any:
 #    return cfg
 #
 #
-#def _load_theme_configs(themes: List[str]) -> Iterator[Tuple[str, Dict]]:
+# def _load_theme_configs(themes: List[str]) -> Iterator[Tuple[str, Dict]]:
 #    seen = set()
 #    themes = themes[:]
 #    while themes:
@@ -250,7 +247,7 @@ def format_value(name: str, value:Any)->Any:
 #        yield theme, cfg
 #
 #
-#def load_themes(config: Config):
+# def load_themes(config: Config):
 #    themenames = list(config.get((), "themes"))
 #    if not themenames:
 #        themenames = [miyadaiku.DEFAULT_THEME]

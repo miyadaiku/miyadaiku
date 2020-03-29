@@ -1,4 +1,4 @@
-# type: ignore 
+# type: ignore
 
 from typing import Tuple, Dict
 import re

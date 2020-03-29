@@ -1,4 +1,4 @@
-# type: ignore 
+# type: ignore
 
 import re
 from nbconvert.exporters import HTMLExporter

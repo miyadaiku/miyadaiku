@@ -8,7 +8,7 @@ import markupsafe
 from miyadaiku import config, ContentPath
 
 
-#class Context:
+# class Context:
 #    def __init__(self, config: config.Config, contents, path: ContentPath):
 #        self.config = config
 #        self.contents = contents
@@ -30,6 +30,7 @@ class Content:
     def __init__(self, path: ContentPath, metadata: Dict[str, Any]):
         self.path = path
         self.metadata = metadata
+
 
 #    def __str__(self):
 #        return f"<{self.__class__.__name__} {self.srcfilename}>"
@@ -294,5 +295,5 @@ CONTENT_CLASSES = {
 }
 
 
-def get_content_cls(typename:str)->Type[object]:
+def get_content_cls(typename: str) -> Type[object]:
     return CONTENT_CLASSES[typename]

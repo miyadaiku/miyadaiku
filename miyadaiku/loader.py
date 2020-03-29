@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import (
-    cast,
     List,
     Iterator,
     Dict,
@@ -8,24 +9,29 @@ from typing import (
     Set,
     Any,
     KeysView,
-    ItemsView
+    ItemsView,
+    Sequence,
+    Iterable
 )
 import os
 import fnmatch
 import pkg_resources
-from pathlib import Path, PurePath
+from pathlib import Path
 import logging
 import posixpath
+import collections.abc
 import yaml
 
 import miyadaiku
-from miyadaiku import ContentPath, ContentSrc
-from . import config, rst, md
+from miyadaiku import ContentPath, ContentSrc, PathTuple
+from . import config, contents, rst, md, contents
+from . import site
+from .contents import Content
 
 logger = logging.getLogger(__name__)
 
 
-def is_ignored(ignores: Set[str], name: str)->bool:
+def is_ignored(ignores: Set[str], name: str) -> bool:
     if name.lower().endswith(miyadaiku.METADATA_FILE_SUFFIX):
         return True
 
@@ -33,6 +39,7 @@ def is_ignored(ignores: Set[str], name: str)->bool:
         if fnmatch.fnmatch(name, p):
             return True
     return False
+
 
 def to_contentpath(path: str) -> ContentPath:
     spath = str(path)
@@ -45,7 +52,6 @@ def to_contentpath(path: str) -> ContentPath:
 
     dir = tuple(ret[:-1])
     return (dir, ret[-1])
-
 
 
 def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
@@ -68,7 +74,9 @@ def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
             filename = (rootpath / name).resolve()
 
             dirname, fname = os.path.split(filename)
-            metadatafile = os.path.join(dirname, f"{fname}{miyadaiku.METADATA_FILE_SUFFIX}")
+            metadatafile = os.path.join(
+                dirname, f"{fname}{miyadaiku.METADATA_FILE_SUFFIX}"
+            )
 
             if os.path.isfile(metadatafile):
                 text = open(metadatafile, encoding=miyadaiku.YAML_ENCODING).read()
@@ -109,10 +117,12 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
         return
 
     for srcpath in _iter_package_files(package, path, ignores):
-        destname = srcpath [pathlen:]
+        destname = srcpath[pathlen:]
 
-        dirname, fname = posixpath.split(srcpath )
-        metadatapath  = posixpath.join(dirname,f"{fname}{miyadaiku.METADATA_FILE_SUFFIX}")
+        dirname, fname = posixpath.split(srcpath)
+        metadatapath = posixpath.join(
+            dirname, f"{fname}{miyadaiku.METADATA_FILE_SUFFIX}"
+        )
 
         if pkg_resources.resource_exists(package, metadatapath):
             text = pkg_resources.resource_string(package, metadatapath)
@@ -144,128 +154,127 @@ def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
 
 FILELOADERS = {
     ".rst": rst.load,  # type: ignore
-    ".rest": rst.load, # type: ignore
-    ".md": md.load, # type: ignore
+    ".rest": rst.load,  # type: ignore
+    ".md": md.load,  # type: ignore
     ".yml": yamlloader,
     ".yaml": yamlloader,
 }
 
 
-class ContentFiles:
-    _contentfiles: Dict[ContentPath, Tuple[ContentSrc, Optional[str]]]
+class ContentNotFound(Exception):
+    content:Optional[Content] = None
 
-    def __init__(self)->None:
+    def set_content(self, content: Content)->None:
+        if not self.content:
+            self.content = content
+            self.args = (f'{self.content.src.contentpath}: `{self.args[0]}` is not found',)
+
+
+class ContentFiles:
+    _contentfiles: Dict[ContentPath, Content]
+
+    def __init__(self) -> None:
         self._contentfiles = {}
 
-    def add(self, contentsrc: ContentSrc, body: Optional[str])->None:
+    def add(self, contentsrc: ContentSrc, body: Optional[str]) -> None:
         if contentsrc.contentpath not in self._contentfiles:
-            self._contentfiles[contentsrc.contentpath] = (contentsrc, body)
+            content = contents.build_content(contentsrc, body)
+            self._contentfiles[contentsrc.contentpath] = content
 
-    def get_contentfiles_keys(self)->KeysView[ContentPath]:
+    def get_contentfiles_keys(self) -> KeysView[ContentPath]:
         return self._contentfiles.keys()
 
-    def items(self)->ItemsView[ContentPath, Tuple[ContentSrc, Optional[str]]]:
+    def items(self) -> ItemsView[ContentPath, Content]:
         return self._contentfiles.items()
 
-    # def has_content(self, key, base=None):
-    #     dirname, filename = utils.abs_path(key, base.dirname if base else None)
-    #     return (dirname, filename) in self._contentfiles
+    def has_content(self, path:ContentPath)->bool:
+        return path in self._contentfiles
 
-    # def get_content(self, key, base=None):
-    #     dirname, filename = utils.abs_path(key, base.dirname if base else None)
-    #     try:
-    #         return self._contentfiles[(dirname, filename)]
-    #     except KeyError:
-    #         raise ContentNotFound(key) from None
+    def get_content(self, path: ContentPath)->Content:
+        try:
+            return self._contentfiles[path]
+        except KeyError:
+            raise ContentNotFound(path) from None
 
-    # def get_contentfiless(self, subdirs=None, base=None, filters=None, recurse=True):
-    #     contents = [c for c in self._contentfiles.values()]
+    def get_contents(self, site:site.Site, subdirs:Optional[Sequence[PathTuple]]=None, filters:Optional[Dict[str, Any]]=None,
+                          recurse:bool=True)->List[Content]:
+        contents:Iterable[Content] = [c for c in self._contentfiles.values()]
 
-    #     if not filters:
-    #         filters = {}
+        if  filters is None:
+            filters_copy = {}
+        else:
+            filters_copy = filters.copy()
 
-    #     filters = filters.copy()
-    #     if "draft" not in filters:
-    #         filters["draft"] = {False}
-    #     if "type" not in filters:
-    #         filters["type"] = {"article"}
+        if "draft" not in filters_copy:
+            filters_copy["draft"] = {False}
+        if "type" not in filters_copy:
+            filters_copy["type"] = {"article"}
 
-    #     def f(content):
-    #         for k, v in filters.items():
-    #             if not hasattr(content, k):
-    #                 return False
-    #             prop = getattr(content, k)
-    #             if isinstance(prop, str):
-    #                 if prop not in v:
-    #                     return False
-    #             elif isinstance(prop, collections.abc.Collection):
-    #                 for e in prop:
-    #                     if e in v:
-    #                         break
-    #                 else:
-    #                     return False
-    #             else:
-    #                 if prop not in v:
-    #                     return False
-    #         return True
+        def f(content: Content)->bool:
+            notfound = object()
+            for k, v in filters_copy.items():
+                prop = content.get_metadata(site, k, notfound)
+                if prop is notfound:
+                    return False
 
-    #     contents = [c for c in self._contentfiles.values() if f(c)]
+                if isinstance(prop, str):
+                    if prop not in v:
+                        return False
+                elif isinstance(prop, collections.abc.Collection):
+                    for e in prop:
+                        if e in v:
+                            break
+                    else:
+                        return False
+                else:
+                    if prop not in v:
+                        return False
+            return True
 
-    #     if subdirs:
-    #         cur = base.dirname if base else None
-    #         subdirs = [utils.abs_dir(d, cur) for d in subdirs]
-    #         if recurse:
-    #             cond = lambda c: any(c.dirname[: len(d)] == d for d in subdirs)
-    #         else:
-    #             cond = lambda c: c.dirname in subdirs
+        contents = [c for c in self._contentfiles.values() if f(c)]
 
-    #         contents = filter(cond, contents)
+        if subdirs is not None:
+            dirs = subdirs
+            if recurse:
+                cond = lambda c: any(c.get_parent()[: len(d)] == d for d in dirs)
+            else:
+                cond = lambda c: c.get_parent() in dirs
 
-    #     recs = []
-    #     for c in contents:
-    #         d = c.date
-    #         if d:
-    #             ts = d.timestamp()
-    #         else:
-    #             ts = 0
-    #         recs.append((ts, c))
+            contents = filter(cond, contents)
 
-    #     recs.sort(reverse=True, key=lambda r: (r[0], r[1].title))
-    #     return [c for (ts, c) in recs]
+        recs = []
+        for c in contents:
+            d = c.get_metadata(site, 'date', None)
+            if d:
+                ts = d.timestamp()
+            else:
+                ts = 0
+            recs.append((ts, c))
 
-    # def group_items(self, group, subdirs=None, base=None, filters=None, recurse=True):
-    #     if not group:
-    #         return [((), list(self.get_contentfiles(subdirs, base, filters, recurse)))]
+        recs.sort(reverse=True, key=lambda r: (r[0], r[1].get_metadata(site, 'title')))
+        return [c for (ts, c) in recs]
 
-    #     d = collections.defaultdict(list)
-    #     for c in self.get_contentfiles(subdirs, base, filters, recurse):
-    #         g = getattr(c, group, None)
 
-    #         if g is not None:
-    #             if isinstance(g, str):
-    #                 d[(g,)].append(c)
-    #             elif isinstance(g, collections.abc.Collection):
-    #                 for e in g:
-    #                     d[(e,)].append(c)
-    #             else:
-    #                 d[(g,)].append(c)
+    def group_items(self, site:site.Site, group:str, subdirs:Optional[Sequence[PathTuple]]=None, filters:Optional[Dict[str, Any]]=None,
+                          recurse:bool=True)->List[Tuple[Tuple[str,...], List[Content]]]:
 
-    #     return sorted(d.items())
+        if not group:
+            return [((), list(self.get_contents(site, subdirs, filters, recurse)))]
 
-    # @property
-    # def categories(self):
-    #     contents = self.get_contentfiles(filters={"type": {"article"}})
-    #     categories = (getattr(c, "category", None) for c in contents)
-    #     return sorted(set(c for c in categories if c))
+        d = collections.defaultdict(list)
+        for c in self.get_contents(site, subdirs, filters, recurse):
+            g = c.get_metadata(site, group, None)
 
-    # @property
-    # def tags(self):
-    #     tags = set()
-    #     for c in self.get_contentfiles(filters={"type": {"article"}}):
-    #         t = getattr(c, "tags", None)
-    #         if t:
-    #             tags.update(t)
-    #     return sorted(tags)
+            if g is not None:
+                if isinstance(g, str):
+                    d[(g,)].append(c)
+                elif isinstance(g, collections.abc.Collection):
+                    for e in g:
+                        d[(e,)].append(c)
+                else:
+                    d[(g,)].append(c)
+
+        return sorted(d.items())
 
 
 def loadfiles(
@@ -275,7 +284,7 @@ def loadfiles(
     ignores: Set[str],
     themes: List[str],
 ) -> None:
-    def loadfile(src: ContentSrc, bin:bool)->Optional[str]:
+    def loadfile(src: ContentSrc, bin: bool) -> Optional[str]:
         if not bin:
             ext = os.path.splitext(src.srcpath)[1]
             loader = FILELOADERS.get(ext, binloader)
@@ -290,7 +299,7 @@ def loadfiles(
         else:
             return None
 
-    def load(walk:Iterator[ContentSrc], bin:bool=False) -> None:
+    def load(walk: Iterator[ContentSrc], bin: bool = False) -> None:
         for f in walk:
             body = loadfile(f, bin)
 

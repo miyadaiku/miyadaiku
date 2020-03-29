@@ -1,4 +1,4 @@
-# type: ignore 
+# type: ignore
 
 from typing import Any
 import os

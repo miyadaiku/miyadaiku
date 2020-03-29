@@ -1,4 +1,4 @@
-# type: ignore 
+# type: ignore
 import re
 import os
 import html
