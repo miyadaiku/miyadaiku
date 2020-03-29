@@ -1,4 +1,5 @@
 from typing import Dict, Callable, Any
+
 # from miyadaiku.hooks import *
 
 _jinja_globals: Dict[str, Callable[..., Any]] = {}

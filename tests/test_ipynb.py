@@ -5,6 +5,6 @@ DIR = Path(__file__).parent
 
 
 def test_load():
-    metadata, text = ipynb.load(DIR / 'test.ipynb')
-    assert metadata['type'] == 'article'
+    metadata, text = ipynb.load(DIR / "test.ipynb")
+    assert metadata["type"] == "article"
     print(text)

@@ -11,7 +11,7 @@ from typing import (
     KeysView,
     ItemsView,
     Sequence,
-    Iterable
+    Iterable,
 )
 import os
 import fnmatch
@@ -162,12 +162,14 @@ FILELOADERS = {
 
 
 class ContentNotFound(Exception):
-    content:Optional[Content] = None
+    content: Optional[Content] = None
 
-    def set_content(self, content: Content)->None:
+    def set_content(self, content: Content) -> None:
         if not self.content:
             self.content = content
-            self.args = (f'{self.content.src.contentpath}: `{self.args[0]}` is not found',)
+            self.args = (
+                f"{self.content.src.contentpath}: `{self.args[0]}` is not found",
+            )
 
 
 class ContentFiles:
@@ -187,20 +189,25 @@ class ContentFiles:
     def items(self) -> ItemsView[ContentPath, Content]:
         return self._contentfiles.items()
 
-    def has_content(self, path:ContentPath)->bool:
+    def has_content(self, path: ContentPath) -> bool:
         return path in self._contentfiles
 
-    def get_content(self, path: ContentPath)->Content:
+    def get_content(self, path: ContentPath) -> Content:
         try:
             return self._contentfiles[path]
         except KeyError:
             raise ContentNotFound(path) from None
 
-    def get_contents(self, site:site.Site, subdirs:Optional[Sequence[PathTuple]]=None, filters:Optional[Dict[str, Any]]=None,
-                          recurse:bool=True)->List[Content]:
-        contents:Iterable[Content] = [c for c in self._contentfiles.values()]
+    def get_contents(
+        self,
+        site: site.Site,
+        subdirs: Optional[Sequence[PathTuple]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        recurse: bool = True,
+    ) -> List[Content]:
+        contents: Iterable[Content] = [c for c in self._contentfiles.values()]
 
-        if  filters is None:
+        if filters is None:
             filters_copy = {}
         else:
             filters_copy = filters.copy()
@@ -210,7 +217,7 @@ class ContentFiles:
         if "type" not in filters_copy:
             filters_copy["type"] = {"article"}
 
-        def f(content: Content)->bool:
+        def f(content: Content) -> bool:
             notfound = object()
             for k, v in filters_copy.items():
                 prop = content.get_metadata(site, k, notfound)
@@ -244,19 +251,24 @@ class ContentFiles:
 
         recs = []
         for c in contents:
-            d = c.get_metadata(site, 'date', None)
+            d = c.get_metadata(site, "date", None)
             if d:
                 ts = d.timestamp()
             else:
                 ts = 0
             recs.append((ts, c))
 
-        recs.sort(reverse=True, key=lambda r: (r[0], r[1].get_metadata(site, 'title')))
+        recs.sort(reverse=True, key=lambda r: (r[0], r[1].get_metadata(site, "title")))
         return [c for (ts, c) in recs]
 
-
-    def group_items(self, site:site.Site, group:str, subdirs:Optional[Sequence[PathTuple]]=None, filters:Optional[Dict[str, Any]]=None,
-                          recurse:bool=True)->List[Tuple[Tuple[str,...], List[Content]]]:
+    def group_items(
+        self,
+        site: site.Site,
+        group: str,
+        subdirs: Optional[Sequence[PathTuple]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        recurse: bool = True,
+    ) -> List[Tuple[Tuple[str, ...], List[Content]]]:
 
         if not group:
             return [((), list(self.get_contents(site, subdirs, filters, recurse)))]

@@ -44,16 +44,10 @@ class Site:
 
     def _load_config(self, props: Dict[str, Any]) -> None:
         cfgfile = self.root / miyadaiku.CONFIG_FILE
-        src = ''
+        src = ""
         if cfgfile.is_file():
             src = cfgfile.read_text(encoding=miyadaiku.YAML_ENCODING)
-        self.siteconfig = (
-            yaml.load(
-                src,
-                Loader=yaml.FullLoader,
-            )
-            or {}
-        )
+        self.siteconfig = yaml.load(src, Loader=yaml.FullLoader,) or {}
         self.siteconfig.update(props)
 
         self.config = Config(self.siteconfig)
@@ -154,4 +148,3 @@ class Site:
 
         self.files = loader.ContentFiles()
         loader.loadfiles(self.files, self.config, self.root, self.ignores, self.themes)
-
