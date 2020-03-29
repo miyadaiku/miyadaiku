@@ -39,7 +39,7 @@ class ContentSrc(NamedTuple):
     package: str
     srcpath: str
     metadata: Dict[str, Any]
-    contentpath: ContentPath = ((), "")
+    contentpath: ContentPath
     mtime: float = 0.0
 
     def read_text(self, encoding: str = "utf-8") -> str:

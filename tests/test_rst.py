@@ -1,11 +1,9 @@
 from pathlib import Path
 from miyadaiku import rst, ContentSrc
 
-DIR = Path(__file__).parent
-
 
 def to_contentsrc(path: Path) -> ContentSrc:
-    return ContentSrc("", str(path), {})
+    return ContentSrc("", str(path), {}, ((), ""))
 
 
 def test_load(sitedir):
