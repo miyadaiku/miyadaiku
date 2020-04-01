@@ -16,11 +16,11 @@ import os, time, random, shutil
 from miyadaiku import ContentPath, PathTuple
 from pathlib import Path, PurePosixPath
 
-from .context import CONTEXTS
+from .context import CONTEXTS, BinaryOutput
+
 if TYPE_CHECKING:
     from .contents import Content
     from .site import Site
-    from .context import BinaryOutput
 
 
 class Builder:
@@ -33,7 +33,7 @@ class Builder:
     def __init__(self, content: Content) -> None:
         self.contentpath = content.src.contentpath
 
-    def build(self, site: Site) -> List[Tuple[Path, ContentPath]]:
+    def build(self, site: Site) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
         content = site.files.get_content(self.contentpath)
         contexttype = CONTEXTS.get(content.src.metadata["type"], BinaryOutput)
         context = contexttype(site, self, self.contentpath)

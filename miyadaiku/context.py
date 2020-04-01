@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .site import Site
     from .builder import Builder
 
+
 class ContentProxy:
     def __init__(self, site: Site, context: OutputContext, content: Content):
         self.site = site
@@ -125,9 +126,8 @@ class OutputContext:
         return prepare_output_path(self.site.outputdir, dir, file)
 
     @abstractmethod
-    def build(self) -> List[Tuple[Path, ContentPath]]:
+    def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
         pass
-
 
 
 class BinaryOutput(OutputContext):
@@ -143,10 +143,10 @@ class BinaryOutput(OutputContext):
         else:
             outpath.write_text(body)
 
-    def build(self) -> List[Tuple[Path, ContentPath]]:
+    def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
         outfilename = self.get_outfilename()
         self.write_body(outfilename)
-        return [(outfilename, self.content.src.contentpath)]
+        return [outfilename], [self.content.src.contentpath]
 
 
 class HTMLOutput(OutputContext):
@@ -167,7 +167,7 @@ class HTMLOutput(OutputContext):
 
         return ret
 
-    def build(self) -> List[Tuple[Path, ContentPath]]:
+    def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
 
         templatename = self.content.get_metadata(self.site, "article_template")
         template = self.site.jinjaenv.get_template(templatename)
@@ -178,11 +178,34 @@ class HTMLOutput(OutputContext):
 
         outfilename = self.get_outfilename()
         outfilename.write_text(output)
-        return [(outfilename, self.content.src.contentpath)]
+        return [outfilename], [self.content.src.contentpath]
 
 
 class IndexOutput(HTMLOutput):
-    pass
+    names: Tuple[str, ...]
+    items: Sequence[Content]
+    cur_page: int
+    num_pages: int
+
+    def __init__(
+        self,
+        site: Site,
+        builder: Builder,
+        contentpath: ContentPath,
+        names: Tuple[str, ...],
+        items: Sequence[Content],
+        cur_page: int,
+        num_pages: int,
+    ) -> None:
+        super().__init__(site, builder, contentpath)
+
+        self.names = names
+        self.items = items
+        self.cur_page = cur_page
+        self.num_pages = num_pages
+
+    def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
+        return [], []
 
 
 CONTEXTS: Dict[str, Type[OutputContext]] = {
@@ -190,4 +213,3 @@ CONTEXTS: Dict[str, Type[OutputContext]] = {
     "article": HTMLOutput,
     "index": IndexOutput,
 }
-
