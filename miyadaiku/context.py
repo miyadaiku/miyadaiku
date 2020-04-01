@@ -18,7 +18,6 @@ from pathlib import Path, PurePosixPath
 if TYPE_CHECKING:
     from .contents import Content
     from .site import Site
-    from .builder import Builder
 
 
 class ContentProxy:
@@ -108,14 +107,12 @@ def prepare_output_path(path: Path, directory: PathTuple, filename: str) -> Path
 
 class OutputContext:
     site: Site
-    builder: Builder
     contentpath: ContentPath
     content: Content
     _outputs: Dict[ContentPath, Union[None, bytes]]
 
-    def __init__(self, site: Site, builder: Builder, contentpath: ContentPath) -> None:
+    def __init__(self, site: Site, contentpath: ContentPath) -> None:
         self.site = site
-        self.builder = builder
         self.contentpath = contentpath
         self.content = site.files.get_content(self.contentpath)
         self._outputs = {}
@@ -189,14 +186,13 @@ class IndexOutput(HTMLOutput):
     def __init__(
         self,
         site: Site,
-        builder: Builder,
         contentpath: ContentPath,
         names: Tuple[str, ...],
         items: Sequence[Content],
         cur_page: int,
         num_pages: int,
     ) -> None:
-        super().__init__(site, builder, contentpath)
+        super().__init__(site, contentpath)
 
         self.names = names
         self.items = items

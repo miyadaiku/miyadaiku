@@ -1,6 +1,6 @@
 from typing import Set, List, cast
 from pathlib import Path
-from miyadaiku import ContentSrc, config, loader, site, builder
+from miyadaiku import ContentSrc, config, loader, site, context
 
 
 def create_site(sitedir: Path):
@@ -44,30 +44,11 @@ directory: rstdir
     return siteobj
 
 
-def test_builder(sitedir: Path):
+def test_binarycontext(sitedir: Path):
     site = create_site(sitedir)
 
-    (b,) = builder.createBuilder(
-        site, site.files.get_content((("subdir",), "file1.txt"))
-    )
-    (path,), (contentpath,) = b.build(site)
-    assert path == site.outputdir / "subdir" / "file1.txt"
-    assert path.read_text() == "subdir/file1"
-    assert contentpath == (("subdir",), "file1.txt")
+    bin = context.BinaryOutput(site, (("subdir",), "file1.txt"))
+    (filename,), (path,) = bin.build()
 
-    (b,) = builder.createBuilder(
-        site, site.files.get_content(((), "package1_file1.txt"))
-    )
-    (path,), (contentpath,) = b.build(site)
-    assert path == site.outputdir / "package1_file1.txt"
-    assert path.read_text() == "package1_file1.txt"
-    assert contentpath == ((), "package1_file1.txt")
-
-
-def test_indexbuilder(sitedir: Path):
-    site = create_site(sitedir)
-    pages = builder.createBuilder(
-        site, site.files.get_content((("rstdir",), "index.yml"))
-    )
-    assert len(cast(builder.IndexBuilder, pages[0]).items) == 10
-    assert len(cast(builder.IndexBuilder, pages[1]).items) == 11
+    assert Path(filename) == site.outputdir / 'subdir/file1.txt'
+    assert Path(filename).read_text() == 'subdir/file1'

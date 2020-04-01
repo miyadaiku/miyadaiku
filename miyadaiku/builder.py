@@ -33,7 +33,7 @@ class Builder:
     def build(self, site: Site) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
         content = site.files.get_content(self.contentpath)
         contexttype = CONTEXTS.get(content.src.metadata["type"], BinaryOutput)
-        context = contexttype(site, self, self.contentpath)
+        context = contexttype(site, self.contentpath)
         return context.build()
 
 
