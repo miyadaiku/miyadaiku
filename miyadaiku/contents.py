@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Optional, Any
 from miyadaiku import ContentSrc, PathTuple
 from . import site
-from . import loader
 from . import config
 
 

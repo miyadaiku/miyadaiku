@@ -24,7 +24,7 @@ import yaml
 
 import miyadaiku
 from miyadaiku import ContentPath, ContentSrc, PathTuple
-from . import config, contents, rst, md, contents
+from . import config, rst, md, contents
 from . import site
 from .contents import Content
 
@@ -201,8 +201,8 @@ class ContentFiles:
     def get_contents(
         self,
         site: site.Site,
-        subdirs: Optional[Sequence[PathTuple]] = None,
         filters: Optional[Dict[str, Any]] = None,
+        subdirs: Optional[Sequence[PathTuple]] = None,
         recurse: bool = True,
     ) -> List[Content]:
         contents: Iterable[Content] = [c for c in self._contentfiles.values()]
@@ -265,16 +265,16 @@ class ContentFiles:
         self,
         site: site.Site,
         group: str,
-        subdirs: Optional[Sequence[PathTuple]] = None,
         filters: Optional[Dict[str, Any]] = None,
+        subdirs: Optional[Sequence[PathTuple]] = None,
         recurse: bool = True,
     ) -> List[Tuple[Tuple[str, ...], List[Content]]]:
 
         if not group:
-            return [((), list(self.get_contents(site, subdirs, filters, recurse)))]
+            return [((), list(self.get_contents(site, filters, subdirs, recurse)))]
 
         d = collections.defaultdict(list)
-        for c in self.get_contents(site, subdirs, filters, recurse):
+        for c in self.get_contents(site, filters, subdirs, recurse):
             g = c.get_metadata(site, group, None)
 
             if g is not None:

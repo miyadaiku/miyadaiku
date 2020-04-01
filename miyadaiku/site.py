@@ -12,8 +12,8 @@ import pkg_resources
 import dateutil
 import miyadaiku
 from .config import Config
-from miyadaiku import ContentSrc
 from . import loader
+from .builder import createBuilder
 from .jinjaenv import create_env
 
 
@@ -139,6 +139,7 @@ class Site:
 
     def load(self, root: Path, props: Dict[str, Any]) -> None:
         self.root = root
+        self.outputdir = self.root / miyadaiku.OUTPUTS_DIR
         self._load_config(props)
         self._load_themes()
         self._load_jinjaenv()
@@ -148,3 +149,11 @@ class Site:
 
         self.files = loader.ContentFiles()
         loader.loadfiles(self.files, self.config, self.root, self.ignores, self.themes)
+
+    def build(self) -> None:
+        if not self.outputdir.is_dir():
+            self.outputdir.mkdir(parents=True, exist_ok=True)
+
+        builders = []
+        for contentpath, content in self.files.items():
+            builders.extend(createBuilder(self, content))

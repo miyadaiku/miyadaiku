@@ -6,7 +6,7 @@ def to_contentsrc(path: Path) -> ContentSrc:
     return ContentSrc("", str(path), {}, ((), ""))
 
 
-def test_load(sitedir):
+def test_load(sitedir: Path) -> None:
     f = sitedir / "test1.rst"
     f.write_text(
         """

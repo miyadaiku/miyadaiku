@@ -1,5 +1,8 @@
-import pytest  # type: ignore
+# type: ignore
+
+import pytest
 import pathlib
+from typing import Any
 
 # import miyadaiku
 
@@ -8,7 +11,7 @@ import pathlib
 
 
 @pytest.fixture
-def sitedir(tmpdir):
+def sitedir(tmpdir: Any) -> pathlib.Path:
     d = tmpdir.mkdir("site")
     d.mkdir("modules")
     d.mkdir("contents")
