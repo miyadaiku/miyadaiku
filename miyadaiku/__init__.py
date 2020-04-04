@@ -42,6 +42,12 @@ class ContentSrc(NamedTuple):
     contentpath: ContentPath
     mtime: float = 0.0
 
+    def repr_filename(self)->str:
+        if self.package:
+            return f"{self.package}!{self.srcpath}"
+        else:
+            return self.srcpath
+
     def read_text(self, encoding: str = "utf-8") -> str:
         if self.package:
             ret = pkg_resources.resource_string(self.package, self.srcpath)

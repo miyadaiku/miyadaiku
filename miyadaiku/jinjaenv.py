@@ -9,8 +9,12 @@ from jinja2 import (
     PackageLoader,
     select_autoescape,
     make_logging_undefined,
-    DebugUndefined,
+    StrictUndefined
 )
+
+from jinja2 import DebugUndefined  # NOQA
+
+
 import logging
 import miyadaiku.site
 from pathlib import Path
@@ -52,8 +56,8 @@ def create_env(
     loaders.append(PackageLoader("miyadaiku.themes.base"))
 
     env = Environment(
-        undefined=make_logging_undefined(logger, DebugUndefined),
-        #        undefined=make_logging_undefined(logger, StrictUndefined),
+#        undefined=make_logging_undefined(logger, DebugUndefined),
+        undefined=make_logging_undefined(logger, StrictUndefined),
         loader=ChoiceLoader(loaders),
         autoescape=select_autoescape(["html", "xml"]),
         extensions=EXTENSIONS,
@@ -71,3 +75,5 @@ def create_env(
     env.globals["isinstance"] = isinstance
 
     return env
+
+

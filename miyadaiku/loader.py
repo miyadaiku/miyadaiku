@@ -24,7 +24,7 @@ import yaml
 
 import miyadaiku
 from miyadaiku import ContentPath, ContentSrc, PathTuple
-from . import config, rst, md, contents
+from . import config, rst, md, contents, html
 from . import site
 from .contents import Content
 
@@ -156,6 +156,8 @@ FILELOADERS = {
     ".rst": rst.load,  # type: ignore
     ".rest": rst.load,  # type: ignore
     ".md": md.load,  # type: ignore
+    ".html": html.load,  # type: ignore
+    ".htm": html.load,  # type: ignore
     ".yml": yamlloader,
     ".yaml": yamlloader,
 }

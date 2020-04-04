@@ -1,7 +1,7 @@
 import pprint
 from typing import Set, List
 from pathlib import Path
-from miyadaiku import ContentSrc, config, loader, site
+from miyadaiku import ContentSrc, config, loader, site, contents
 
 
 def test_walk_directory(sitedir):
@@ -76,6 +76,7 @@ project_prop: value
     filesdir.mkdir(exist_ok=True)
     (filesdir / "root1.txt").write_text("file_root1")
     (filesdir / "root_file1.txt").write_text("root_file1")
+    (filesdir / "root_file2.rst").write_text("root_file2")
 
     files = loader.ContentFiles()
     cfg = config.Config({})
@@ -85,10 +86,11 @@ project_prop: value
 
     loader.loadfiles(files, cfg, root, ignores, themes)
 
-    assert len(files._contentfiles) == 7
+    assert len(files._contentfiles) == 8
     assert files._contentfiles[((), "root1.txt")].get_body() == b"content_root1"
     assert files._contentfiles[((), "root_content1.txt")].get_body() == b"root_content1"
     assert files._contentfiles[((), "root_file1.txt")].get_body() == b"root_file1"
+    assert isinstance(files._contentfiles[((), "root_file2.rst")], contents.BinContent)
 
     assert (
         files._contentfiles[((), "package3_root.rst")].get_body().strip()
@@ -98,10 +100,9 @@ project_prop: value
         files._contentfiles[((), "package_root.rst")].get_body().strip()
         == b"<p>package3/contents/package_root.rst</p>"
     )
-    assert (
-        files._contentfiles[((), "package3_files_1.rst")].get_body().strip()
-        == b"package3/files/package3_file_1.rst"
-    )
+    package3_files_1 = files._contentfiles[((), "package3_files_1.rst")]
+    assert isinstance(package3_files_1, contents.BinContent)
+    assert package3_files_1.get_body().strip() == b"package3/files/package3_file_1.rst"
 
     assert (
         files._contentfiles[((), "package4_root.rst")].get_body().strip()

@@ -3,15 +3,20 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
+    NamedTuple,
     Type,
     Sequence,
     Tuple,
     Dict,
     Union,
     Any,
+    Set,
+    List
 )
+
 from abc import abstractmethod
 import os, time, random, shutil
+import markupsafe
 from miyadaiku import ContentPath, PathTuple
 from pathlib import Path, PurePosixPath
 
@@ -21,21 +26,29 @@ if TYPE_CHECKING:
 
 
 class ContentProxy:
-    def __init__(self, site: Site, context: OutputContext, content: Content):
-        self.site = site
-        self.context = context
+    def __init__(self, ctx: OutputContext, content: Content):
+        self.context = ctx
         self.content = content
 
+    def __getattr__(self, name: str) -> Any:
+        return self.content.get_metadata(self.context.site, name)
 
-#    def __getattr__(self, name: str) -> Any:
-#        return self.content.get_metadata(self.site, name)
-#
-#    _omit = object()
-#
-#    def load(self, target:Content)->ContentProxy:
-#        ret = self.content.get_content(target)
-#        return ContentProxy(self.context, ret)
-#
+    def _to_markupsafe(self, s:str) -> str:
+        if not hasattr(s, "__html__"):
+            s = markupsafe.Markup(s)
+        return s
+
+    @property
+    def html(self)->Union[None, str]:
+        ret = self.content.build_html(self.context)
+        if ret is not None:
+            return self._to_markupsafe(ret)
+        return None
+
+    def load(self, target:Content)->ContentProxy:
+        ret = self.context.site.files.get_content(target.src.contentpath)
+        return ContentProxy(self.context, ret)
+
 #    def path(self, *args, **kwargs):
 #        return self.context.page_content.path_to(self, *args, **kwargs)
 #
@@ -56,24 +69,19 @@ class ContentProxy:
 #        return s
 #
 #    @property
-#    def html(self):
-#        ret = self.__getattr__("html")
-#        return self._to_markupsafe(ret)
-#
-#    @property
 #    def abstract(self):
 #        ret = self.__getattr__("abstract")
 #        return self._to_markupsafe(ret)
 
 
 class ConfigProxy:
-    def __init__(self, context: "OutputContext"):
-        self.context = context
+    def __init__(self, ctx: "OutputContext"):
+        self.context = ctx
 
 
 class ContentsProxy:
-    def __init__(self, context: "OutputContext"):
-        self.context = context
+    def __init__(self, ctx: "OutputContext"):
+        self.context = ctx
 
 
 MKDIR_MAX_RETRY = 5
@@ -105,26 +113,86 @@ def prepare_output_path(path: Path, directory: PathTuple, filename: str) -> Path
     return Path(dest)
 
 
+def get_jinja_vars(ctx: OutputContext, content: Content) -> Dict[str, Any]:
+
+    ret = {}
+    for name in content.get_metadata(ctx.site, "imports"):
+        template = ctx.site.jinjaenv.get_template(name)
+        fname = name.split("!", 1)[-1]
+        modulename = PurePosixPath(fname).stem
+        ret[modulename] = template.module
+
+    ret["page"] = ContentProxy(ctx, ctx.site.files.get_content(ctx.contentpath))
+    ret["content"] = ContentProxy(ctx, content)
+
+    ret["contents"] = ContentsProxy(ctx)
+    ret["config"] = ConfigProxy(ctx)
+
+    return ret
+
+
+def eval_jinja(ctx:OutputContext, content:Content, propname:str, text:str, kwargs:Dict[str, Any])->str:
+    args = get_jinja_vars(ctx, content)
+    args.update(kwargs)
+    template = ctx.site.jinjaenv.from_string(text)
+    template.filename = f"{content.repr_filename()}#{propname}"
+    return template.render(**kwargs)
+
+def eval_jinja_template(ctx:OutputContext, content:Content, templatename:str)->str:
+    template = ctx.site.jinjaenv.get_template(templatename)
+    template.filename = templatename
+
+    kwargs = get_jinja_vars(ctx, content)
+    output = template.render(**kwargs)
+    return output
+
+
+class HTMLIDInfo(NamedTuple):
+    id: str
+    tag: str
+    text: str
+
+class HTMLInfo(NamedTuple):
+    html: str
+    headers: List[HTMLIDInfo]
+    header_anchors: List[HTMLIDInfo]
+    fragments: List[HTMLIDInfo]
+
+
 class OutputContext:
     site: Site
     contentpath: ContentPath
     content: Content
-    _outputs: Dict[ContentPath, Union[None, bytes]]
-
+    html_cache: Dict[ContentPath, HTMLInfo]
+    depends:Set[ContentPath]
+    
     def __init__(self, site: Site, contentpath: ContentPath) -> None:
         self.site = site
         self.contentpath = contentpath
         self.content = site.files.get_content(self.contentpath)
-        self._outputs = {}
+        self.depends = set()
+        self.html_cache = {}
 
     def get_outfilename(self) -> Path:
         dir, file = self.content.src.contentpath
         return prepare_output_path(self.site.outputdir, dir, file)
 
+    def add_depend(self, content: Content)->None:
+        self.depends.add(content.src.contentpath)
+
+    def get_html_cache(self, content:Content)->Union[HTMLInfo, None]:
+        return self.html_cache.get(content.src.contentpath, None)
+
+    def set_html_cache(self, content:Content, info:HTMLInfo)->None:
+        self.html_cache[content.src.contentpath] = info
+
+
     @abstractmethod
     def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
         pass
 
+
+        
 
 class BinaryOutput(OutputContext):
     def write_body(self, outpath: Path) -> None:
@@ -145,31 +213,15 @@ class BinaryOutput(OutputContext):
         return [outfilename], [self.content.src.contentpath]
 
 
+
 class HTMLOutput(OutputContext):
-    def get_jinja_vars(self, site: Site, content: Content) -> Dict[str, Any]:
-
-        ret = {}
-        for name in content.get_metadata(site, "imports"):
-            template = site.jinjaenv.get_template(name)
-            fname = name.split("!", 1)[-1]
-            modulename = PurePosixPath(fname).stem
-            ret[modulename] = template.module
-
-        ret["page"] = ContentProxy(site, self, site.files.get_content(self.contentpath))
-        ret["content"] = ContentProxy(site, self, content)
-
-        ret["contents"] = ContentsProxy(self)
-        ret["config"] = ConfigProxy(self)
-
-        return ret
-
     def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
 
         templatename = self.content.get_metadata(self.site, "article_template")
         template = self.site.jinjaenv.get_template(templatename)
         template.filename = templatename
 
-        kwargs = self.get_jinja_vars(self.site, self.content)
+        kwargs = get_jinja_vars(self, self.content)
         output = template.render(**kwargs)
 
         outfilename = self.get_outfilename()
@@ -177,7 +229,7 @@ class HTMLOutput(OutputContext):
         return [outfilename], [self.content.src.contentpath]
 
 
-class IndexOutput(HTMLOutput):
+class IndexOutput(OutputContext):
     names: Tuple[str, ...]
     items: Sequence[Content]
     cur_page: int

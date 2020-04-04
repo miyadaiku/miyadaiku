@@ -15,11 +15,6 @@ project_prop: value
 """
     )
 
-    contentsdir.mkdir(exist_ok=True)
-    (contentsdir / "root1.yml").write_text("root_prop: root_prop_value")
-    (contentsdir / "root1.txt").write_text("content_root1")
-    (contentsdir / "root_content1.txt").write_text("root_content1")
-
     rstdir = contentsdir / "rstdir"
     rstdir.mkdir(exist_ok=True)
 
@@ -34,9 +29,7 @@ directory: rstdir
 """
     )
 
-    filesdir.mkdir(exist_ok=True)
     (filesdir / "subdir").mkdir(exist_ok=True)
-    (filesdir / "root1.txt").write_text("file_root1")
     (filesdir / "subdir" / "file1.txt").write_text("subdir/file1")
 
     siteobj = site.Site()

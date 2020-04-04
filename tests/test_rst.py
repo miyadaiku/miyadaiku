@@ -96,7 +96,7 @@ def test_xref(tmpdir):
     assert text == """<div class="header_target" id="anchor-name"></div>"""
 
 
-def test_itle(sitedir):
+def test_title(sitedir):
     f = sitedir / "file1.rst"
     f.write_text(
         """
