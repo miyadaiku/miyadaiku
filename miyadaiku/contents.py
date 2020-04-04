@@ -61,19 +61,21 @@ class BinContent(Content):
     pass
 
 
-class JinjaContent(Content):
+class HTMLContent(Content):
     def build_html(self, ctx: context.OutputContext)->str:
         ctx.add_depend(self)
         ret = ctx.get_html_cache(self)
         if ret is not None:
             return ret.html
 
-        src = self.body or ''
-        html = context.eval_jinja(ctx, self, 'html', src, {})
-
+        html = self.generate_html(ctx)
         htmlinfo = self._set_header_id(ctx, html)
         ctx.set_html_cache(self, htmlinfo)
+
         return htmlinfo.html
+
+    def generate_html(self, ctx: context.OutputContext)->str:
+        return self.body or ''
 
     def _set_header_id(self, ctx:context.OutputContext, htmlsrc:str)->context.HTMLInfo:
 
@@ -123,6 +125,15 @@ class JinjaContent(Content):
                 header_anchors.append(context.HTMLIDInfo(anchor_id, c.name, contents))
 
         return context.HTMLInfo(str(soup), headers, header_anchors, fragments)
+
+
+class JinjaContent(HTMLContent):
+    def generate_html(self, ctx: context.OutputContext)->str:
+        src = self.body or ''
+        html = context.eval_jinja(ctx, self, 'html', src, {})
+
+        return html
+
 
 
 class Article(JinjaContent):
