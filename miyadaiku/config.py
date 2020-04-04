@@ -3,7 +3,8 @@ import os
 import collections
 import dateutil.parser
 import datetime
-
+import pytz
+    
 import miyadaiku
 from miyadaiku import ContentSrc, PathTuple
 
@@ -118,7 +119,7 @@ class Config:
                         return format_value(name, config[name])
 
                 if name in DEFAULTS:
-                    return DEFAULTS[name]
+                    return format_value(name, DEFAULTS[name])
 
                 if default is not self._omit:
                     return default
@@ -188,6 +189,10 @@ def date(value: str) -> Any:
             raise ValueError(f"string does not contain a date: {value!r}")
         return ret
 
+@value_converter
+def timezone(value:str):
+    return pytz.timezone(value)
+
 
 @value_converter
 def order(value: Any) -> Any:
@@ -202,6 +207,7 @@ def imports(value: Optional[str]) -> Any:
         return []
 
 
+
 def format_value(name: str, value: Any) -> Any:
     f = VALUE_CONVERTERS.get(name)
     if f:
@@ -210,51 +216,3 @@ def format_value(name: str, value: Any) -> Any:
     return value
 
 
-# def load(path: Optional[Path]) -> Config:
-#    if path:
-#        d: dict = yaml.load(
-#            path.read_text(encoding=miyadaiku.YAML_ENCODING), Loader=yaml.FullLoader
-#        ) or {}
-#    else:
-#        d = {}
-#    return Config(d)
-#
-#
-# def _load_theme_config(package: str) -> Dict:
-#    try:
-#        s = pkg_resources.resource_string(package, miyadaiku.CONFIG_FILE)
-#    except FileNotFoundError:
-#        cfg = {}
-#    else:
-#        cfg = yaml.load(s.decode(miyadaiku.YAML_ENCODING), Loader=yaml.FullLoader)
-#
-#    if not cfg:
-#        cfg = {}
-#    return cfg
-#
-#
-# def _load_theme_configs(themes: List[str]) -> Iterator[Tuple[str, Dict]]:
-#    seen = set()
-#    themes = themes[:]
-#    while themes:
-#        theme = themes.pop(0)
-#        if theme in seen:
-#            continue
-#        seen.add(theme)
-#
-#        cfg = _load_theme_config(theme)
-#        themes = list(t for t in cfg.get("themes", [])) + themes
-#        yield theme, cfg
-#
-#
-# def load_themes(config: Config):
-#    themenames = list(config.get((), "themes"))
-#    if not themenames:
-#        themenames = [miyadaiku.DEFAULT_THEME]
-#
-#    themes = []
-#    for theme, cfg in _load_theme_configs(themenames):
-#        themes.append(theme)
-#        config.add((), cfg)
-#
-#    return themes

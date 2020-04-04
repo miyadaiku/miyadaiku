@@ -16,9 +16,12 @@ project_prop: value
 """
     )
 
-    contentsdir.mkdir(exist_ok=True)
-    (contentsdir / "root1.yml").write_text("root_prop: root_prop_value")
+    (contentsdir / "root1.yml").write_text("""
+root_prop: root_prop_value
+generate_metadata_file: true
+""")
     (contentsdir / "root1.txt").write_text("content_root1")
+    (contentsdir / "root2.rst").write_text("content_root2")
 
     filesdir.mkdir(exist_ok=True)
     (filesdir / "root1.txt").write_text("file_root1")
@@ -26,8 +29,10 @@ project_prop: value
     site = Site()
     site.load(sitedir, {"prop": "prop_value"})
 
-    print(site.files._contentfiles.keys())
-    assert len(site.files._contentfiles) == 5
+    assert not (contentsdir / "root.txt.props.yml").exists()
+    assert (contentsdir / "root2.rst.props.yml").exists()
+
+    assert len(site.files._contentfiles) == 6
     assert ((), "root1.txt") in site.files._contentfiles
     assert ((), "package_root.rst") in site.files._contentfiles
     assert ((), "package3_root.rst") in site.files._contentfiles

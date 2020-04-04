@@ -48,6 +48,9 @@ class ContentSrc(NamedTuple):
         else:
             return self.srcpath
 
+    def is_package(self)->bool:
+        return bool(self.package)
+
     def read_text(self, encoding: str = "utf-8") -> str:
         if self.package:
             ret = pkg_resources.resource_string(self.package, self.srcpath)

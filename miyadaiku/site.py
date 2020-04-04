@@ -130,6 +130,11 @@ class Site:
 
                 self.add_jinja_global(name, m)
 
+
+    def _generate_metadata_files(self):
+        for src, content in self.files.items():
+            content.generate_metadata_file(self)
+
     def add_template_module(self, name: str, templatename: str) -> None:
         template = self.jinjaenv.get_template(templatename)
         self.jinjaenv.globals[name] = template.module
@@ -150,6 +155,8 @@ class Site:
         self.files = loader.ContentFiles()
         loader.loadfiles(self.files, self.config, self.root, self.ignores, self.themes)
 
+        self._generate_metadata_files()
+
     def build(self) -> None:
         if not self.outputdir.is_dir():
             self.outputdir.mkdir(parents=True, exist_ok=True)
@@ -157,3 +164,5 @@ class Site:
         builders = []
         for contentpath, content in self.files.items():
             builders.extend(createBuilder(self, content))
+
+

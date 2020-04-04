@@ -5,9 +5,10 @@ import re
 import unicodedata
 import urllib.parse
 from bs4 import BeautifulSoup # type: ignore
-from pathlib import PurePosixPath
+from pathlib import PurePosixPath, Path
+import datetime, os
 
-from miyadaiku import ContentSrc, PathTuple
+from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
 from . import site
 from . import config
 from . import context
@@ -29,6 +30,10 @@ class Content:
 
     def repr_filename(self)->str:
         return repr(self)
+
+    def generate_metadata_file(self, site:site.Site)->None:
+        pass
+
 
     def get_body(self) -> bytes:
         if self.body is None:
@@ -83,6 +88,26 @@ class BinContent(Content):
 
 
 class HTMLContent(Content):
+    def generate_metadata_file(self, site:site.Site)->None:
+        if not self.get_metadata(site, 'generate_metadata_file'):
+            return
+
+        if self.src.is_package():
+            return
+        dir, fname = os.path.split(self.src.srcpath)
+        metafilename = Path(dir) / (fname+METADATA_FILE_SUFFIX)
+        if metafilename.exists():
+            return
+        tz:str = self.get_metadata(site, "timezone")
+        date = datetime.datetime.now().astimezone(tz).replace(microsecond=0)
+        datestr = date.isoformat(timespec='seconds')
+        yaml = f'''
+date: {datestr}
+'''
+        metafilename.write_text(yaml, 'utf-8')
+
+        self.src.metadata['date'] = datestr
+
     def build_html(self, ctx: context.OutputContext)->str:
         ctx.add_depend(self)
         ret = ctx.get_html_cache(self)
