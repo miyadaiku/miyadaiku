@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Optional, Any, TYPE_CHECKING, Union, List
+from typing import Optional, Any, TYPE_CHECKING, Union, List, Dict
 import re
 import unicodedata
 import urllib.parse
 from bs4 import BeautifulSoup # type: ignore
+from pathlib import PurePosixPath
 
 from miyadaiku import ContentSrc, PathTuple
 from . import site
@@ -12,8 +13,6 @@ from . import config
 from . import context
 
 class Content:
-    jinjasrc = False
-
     src: ContentSrc
     body: Optional[str]
 
@@ -23,6 +22,10 @@ class Content:
 
     def __str__(self) -> str:
         return f"<{self.__class__.__module__}.{self.__class__.__name__} {self.src.srcpath}>"
+
+    @property
+    def has_jinja(self)->bool:
+        return bool(self.src.metadata.get('has_jinja'))
 
     def repr_filename(self)->str:
         return repr(self)
@@ -56,6 +59,24 @@ class Content:
     def build_html(self, context:context.OutputContext)->Union[None, str]:
         return None
 
+    def get_jinja_vars(self, ctx: context.OutputContext, content: Content) -> Dict[str, Any]:
+
+        ret = {}
+        for name in content.get_metadata(ctx.site, "imports"):
+            template = ctx.site.jinjaenv.get_template(name)
+            fname = name.split("!", 1)[-1]
+            modulename = PurePosixPath(fname).stem
+            ret[modulename] = template.module
+
+        ret["page"] = context.ContentProxy(ctx, ctx.site.files.get_content(ctx.contentpath))
+        ret["content"] = context.ContentProxy(ctx, content)
+
+        ret["contents"] = context.ContentsProxy(ctx)
+        ret["config"] = context.ConfigProxy(ctx)
+
+        return ret
+
+
 
 class BinContent(Content):
     pass
@@ -68,14 +89,23 @@ class HTMLContent(Content):
         if ret is not None:
             return ret.html
 
-        html = self.generate_html(ctx)
+        if self.has_jinja:
+            html = self.generate_html(ctx)
+        else:
+            html = self.body or ''
+    
         htmlinfo = self._set_header_id(ctx, html)
         ctx.set_html_cache(self, htmlinfo)
 
         return htmlinfo.html
 
+
     def generate_html(self, ctx: context.OutputContext)->str:
-        return self.body or ''
+        src = self.body or ''
+        html = context.eval_jinja(ctx, self, 'html', src, {})
+
+        return html
+
 
     def _set_header_id(self, ctx:context.OutputContext, htmlsrc:str)->context.HTMLInfo:
 
@@ -127,24 +157,17 @@ class HTMLContent(Content):
         return context.HTMLInfo(str(soup), headers, header_anchors, fragments)
 
 
-class JinjaContent(HTMLContent):
-    def generate_html(self, ctx: context.OutputContext)->str:
-        src = self.body or ''
-        html = context.eval_jinja(ctx, self, 'html', src, {})
-
-        return html
 
 
-
-class Article(JinjaContent):
+class Article(HTMLContent):
     pass
 
 
-class Snippet(JinjaContent):
+class Snippet(HTMLContent):
     pass
 
 
-class IndexPage(Content):
+class IndexPage(HTMLContent):
     pass
 
 

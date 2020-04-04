@@ -7,12 +7,12 @@ def create_site(sitedir: Path):
     contentsdir = sitedir / "contents"
     filesdir = sitedir / "files"
 
-    (contentsdir / "doc.html").write_text("hello<a></a>")
+    (contentsdir / "doc.html").write_text("hello<a>{{1+1}}</a>")
 
     (filesdir / "subdir").mkdir(exist_ok=True)
     (filesdir / "subdir" / "file1.txt").write_text("subdir/file1")
 
-    (sitedir/ "templates" / "page_article.html").write_text("{{ page.html }}")
+    (sitedir/ "templates" / "page_article.html").write_text("<div>{{ page.html }}</div>")
 
     siteobj = site.Site()
     siteobj.load(sitedir, {})
@@ -21,10 +21,10 @@ def create_site(sitedir: Path):
 
 def test_htmlcontext(sitedir:Path):
     site = create_site(sitedir)
-    ctx = context.HTMLOutput(site, ((), "doc.html"))
+    ctx = context.JinjaOutput(site, ((), "doc.html"))
     (filename,), (path,) = ctx.build()
     html = Path(filename).read_text()
-    assert html == 'hello<a></a>'
+    assert html == '<div>hello<a></a></div>'
 
 
 def test_binarycontext(sitedir: Path):

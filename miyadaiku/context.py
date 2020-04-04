@@ -21,7 +21,7 @@ from miyadaiku import ContentPath, PathTuple
 from pathlib import Path, PurePosixPath
 
 if TYPE_CHECKING:
-    from .contents import Content
+    from .contents import Content, Article
     from .site import Site
 
 
@@ -113,26 +113,9 @@ def prepare_output_path(path: Path, directory: PathTuple, filename: str) -> Path
     return Path(dest)
 
 
-def get_jinja_vars(ctx: OutputContext, content: Content) -> Dict[str, Any]:
-
-    ret = {}
-    for name in content.get_metadata(ctx.site, "imports"):
-        template = ctx.site.jinjaenv.get_template(name)
-        fname = name.split("!", 1)[-1]
-        modulename = PurePosixPath(fname).stem
-        ret[modulename] = template.module
-
-    ret["page"] = ContentProxy(ctx, ctx.site.files.get_content(ctx.contentpath))
-    ret["content"] = ContentProxy(ctx, content)
-
-    ret["contents"] = ContentsProxy(ctx)
-    ret["config"] = ConfigProxy(ctx)
-
-    return ret
-
 
 def eval_jinja(ctx:OutputContext, content:Content, propname:str, text:str, kwargs:Dict[str, Any])->str:
-    args = get_jinja_vars(ctx, content)
+    args = content.get_jinja_vars(ctx, content)
     args.update(kwargs)
     template = ctx.site.jinjaenv.from_string(text)
     template.filename = f"{content.repr_filename()}#{propname}"
@@ -142,7 +125,7 @@ def eval_jinja_template(ctx:OutputContext, content:Content, templatename:str)->s
     template = ctx.site.jinjaenv.get_template(templatename)
     template.filename = templatename
 
-    kwargs = get_jinja_vars(ctx, content)
+    kwargs = content.get_jinja_vars(ctx, content)
     output = template.render(**kwargs)
     return output
 
@@ -214,15 +197,11 @@ class BinaryOutput(OutputContext):
 
 
 
-class HTMLOutput(OutputContext):
+class JinjaOutput(OutputContext):
     def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
 
         templatename = self.content.get_metadata(self.site, "article_template")
-        template = self.site.jinjaenv.get_template(templatename)
-        template.filename = templatename
-
-        kwargs = get_jinja_vars(self, self.content)
-        output = template.render(**kwargs)
+        output = eval_jinja_template(self, self.content, templatename)
 
         outfilename = self.get_outfilename()
         outfilename.write_text(output)
@@ -257,6 +236,6 @@ class IndexOutput(OutputContext):
 
 CONTEXTS: Dict[str, Type[OutputContext]] = {
     "binary": BinaryOutput,
-    "article": HTMLOutput,
+    "article": JinjaOutput,
     "index": IndexOutput,
 }
