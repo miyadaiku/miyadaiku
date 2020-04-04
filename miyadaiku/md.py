@@ -28,7 +28,10 @@ class Ext(markdown.Extension):
 
 class JinjaPreprocessor(preprocessors.Preprocessor):
     def run(self, lines):
-        meta = {}
+        meta = {
+            "type": "article",
+            "has_jinja": True
+        }
         n = 0
         for l in lines:
             if not l.strip():
@@ -41,9 +44,6 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
 
             name, value = m[1].strip(), m[2].strip()
             meta[name] = value
-
-        if "type" not in meta:
-            meta["type"] = "article"
 
         self.md.meta = meta
 

@@ -10,7 +10,10 @@ def load(src: ContentSrc) -> Tuple[Dict, str]:
 
 
 def load_string(string):
-    meta = {}
+    meta = {
+        "type": "article",
+        "has_jinja": True
+    }
     lines = string.splitlines()
 
     n = 0
@@ -25,8 +28,5 @@ def load_string(string):
 
         name, value = m[1].strip(), m[2].strip()
         meta[name] = value
-
-    if "type" not in meta:
-        meta["type"] = "article"
 
     return meta, "\n".join(lines[n:])

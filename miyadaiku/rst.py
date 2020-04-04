@@ -193,6 +193,7 @@ def _parse(pub: Any) -> Tuple[Dict, str]:
     metadata = {
         "type": "article",
         "title": title,
+        "has_jinja": True
     }
 
     if hasattr(pub.document, "article_metadata"):

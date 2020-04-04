@@ -24,7 +24,7 @@ def test_htmlcontext(sitedir:Path):
     ctx = context.JinjaOutput(site, ((), "doc.html"))
     (filename,), (path,) = ctx.build()
     html = Path(filename).read_text()
-    assert html == '<div>hello<a></a></div>'
+    assert html == '<div>hello<a>2</a></div>'
 
 
 def test_binarycontext(sitedir: Path):
