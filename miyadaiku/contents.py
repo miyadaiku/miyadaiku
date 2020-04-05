@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import Optional, Any, TYPE_CHECKING, Union, List, Dict
+from typing import Optional, Any, TYPE_CHECKING, Union, List, Dict, cast
 import re
 import unicodedata
 import urllib.parse
 from bs4 import BeautifulSoup
 from pathlib import PurePosixPath, Path
 import datetime, os
+import posixpath
 
 from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
 from . import site
@@ -46,7 +47,7 @@ class Content:
 
     _omit = object()
 
-    def get_metadata(self, site: "site.Site", name: str, default: Any = _omit) -> Any:
+    def get_metadata(self, site: site.Site, name: str, default: Any = _omit) -> Any:
         methodname = f"metadata_{name}"
         method = getattr(self, methodname, None)
         if method:
@@ -60,6 +61,43 @@ class Content:
             return site.config.get(dirname, name)
         else:
             return site.config.get(dirname, name, default)
+
+
+    def _generate_filename(self, ctx:context.OutputContext)->str:
+        filename_templ = self.get_metadata(ctx.site, 'filename_templ')
+        filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
+
+
+        ret = context.eval_jinja(ctx, self, 'filename', filename_templ, {})
+        return ret
+
+    def get_filename(self, ctx: context.OutputContext)->str:
+        filename = self.get_metadata(ctx.site, 'filename', None)
+        if filename:
+            return cast(str, filename)
+
+        return self._generate_filename(ctx)
+
+    def metadata_stem(self, site:site.Site)->str:
+        stem = self.get_metadata(site, 'stem', None)
+        if stem is not None:
+            return cast(str, stem)
+        name = self.get_metadata(site, 'name', None)
+        if not name:
+            return ''
+        d, name = posixpath.split(name)
+        return cast(str, posixpath.splitext(name)[0])
+
+    def metadata_ext(self, site:site.Site)->str:
+        ext = self.get_metadata(site, 'ext', None)
+        if ext is not None:
+            return cast(str, ext)
+        name = self.get_metadata(site, 'name', None)
+        if not name:
+            return ''
+        d, name = posixpath.split(name)
+        return cast(str, posixpath.splitext(name)[1])
+
 
     def build_html(self, context: context.OutputContext) -> Union[None, str]:
         return None

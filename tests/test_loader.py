@@ -2,27 +2,17 @@ import pprint
 from typing import Set, List
 from pathlib import Path
 from miyadaiku import ContentSrc, config, loader, site, contents
+from conftest import SiteRoot
 
+def test_walk_directory(siteroot:SiteRoot) -> None:
 
-def test_walk_directory(sitedir: Path) -> None:
-    dir1 = sitedir / "dir1"
-    dir1.mkdir()
+    file1 = siteroot.write_text(siteroot.contents / 'dir1/file1', '')
+    file11 = siteroot.write_text(siteroot.contents / 'dir1/file1.props.yml', 'name: value')
+    file2 = siteroot.write_text(siteroot.contents / 'dir1/dir2/file2', '')
+    siteroot.write_text(siteroot.contents / 'dir1/file3.bak', '')
 
-    dir2 = dir1 / "dir2"
-    dir2.mkdir()
+    results = loader.walk_directory(siteroot.contents, set(["*.bak"]))
 
-    file1 = dir1 / "file1"
-    file1.write_text("")
-
-    file11 = dir1 / "file1.props.yml"
-    file11.write_text("name: value")
-
-    file2 = dir2 / "file2"
-    file2.write_text("")
-
-    (dir1 / "test.bak").write_text("")
-
-    results = loader.walk_directory(sitedir, set(["*.bak"]))
     all = sorted(results, key=lambda d: d.srcpath)
     assert len(all) == 2
 
@@ -42,7 +32,8 @@ def test_walk_directory(sitedir: Path) -> None:
     )
 
 
-def test_walkpackage(sitedir: Path) -> None:
+
+def test_walkpackage() -> None:
     results = loader.walk_package("package1", "contents", set(["*.bak"]))
     all = sorted(results, key=lambda d: d.srcpath)
 
@@ -56,31 +47,19 @@ def test_walkpackage(sitedir: Path) -> None:
     )
 
 
-def test_loadfiles(sitedir: Path) -> None:
-    contentsdir = sitedir / "contents"
-    filesdir = sitedir / "files"
+def test_loadfiles(siteroot: SiteRoot) -> None:
+    siteroot.write_text(siteroot.contents/ "root1.yml", "root_prop: root_prop_value")
+    siteroot.write_text(siteroot.contents/ "root1.txt", "content_root1")
+    siteroot.write_text(siteroot.contents/ "root_content1.txt", "root_content1")
 
-    (sitedir / "config.yml").write_text(
-        """
-themes: 
-    - package3
-project_prop: value
-"""
-    )
+    siteroot.write_text(siteroot.files / "root1.txt", "file_root1")
+    siteroot.write_text(siteroot.files/ "root_file1.txt","root_file1")
+    siteroot.write_text(siteroot.files/ "root_file2.rst", "root_file2")
 
-    contentsdir.mkdir(exist_ok=True)
-    (contentsdir / "root1.yml").write_text("root_prop: root_prop_value")
-    (contentsdir / "root1.txt").write_text("content_root1")
-    (contentsdir / "root_content1.txt").write_text("root_content1")
-
-    filesdir.mkdir(exist_ok=True)
-    (filesdir / "root1.txt").write_text("file_root1")
-    (filesdir / "root_file1.txt").write_text("root_file1")
-    (filesdir / "root_file2.rst").write_text("root_file2")
 
     files = loader.ContentFiles()
     cfg = config.Config({})
-    root = sitedir
+    root = siteroot.path
     ignores: Set[str] = set()
     themes = ["package3", "package4"]
 
@@ -113,10 +92,11 @@ project_prop: value
     assert cfg.get((), "package3_prop_a1") == "value_package3_a1"
 
 
-def test_get_contents(sitedir: Path) -> None:
-    contentsdir = sitedir / "contents"
-    contentsdir.mkdir(exist_ok=True)
-    (contentsdir / "a.rst").write_text(
+
+
+
+def test_get_contents(siteroot: SiteRoot) -> None:
+    siteroot.write_text(siteroot.contents/ "a.rst", 
         """
 .. article::
    :date: 2017-01-01
@@ -127,7 +107,7 @@ test
 """
     )
 
-    (contentsdir / "b.rst").write_text(
+    siteroot.write_text(siteroot.contents/ "b.rst", 
         """
 .. article::
    :date: 2017-01-02
@@ -138,9 +118,7 @@ test
 """
     )
 
-    sub1 = contentsdir / "sub1"
-    sub1.mkdir(exist_ok=True)
-    (sub1 / "c.rst").write_text(
+    siteroot.write_text(siteroot.contents/ "sub1/c.rst", 
         """
 .. article::
    :date: 2017-01-03
@@ -152,7 +130,7 @@ test
     )
 
     s = site.Site()
-    s.load(sitedir, {})
+    s = siteroot.load({}, {})
 
     found = s.files.get_contents(s)
     assert set(f.src.contentpath for f in found) == set(
@@ -188,3 +166,5 @@ test
     assert set(f.src.contentpath for f in d[("tag3",)]) == set(
         [((), "b.rst"), (("sub1",), "c.rst")]
     )
+
+

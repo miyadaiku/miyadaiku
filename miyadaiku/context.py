@@ -115,7 +115,7 @@ def prepare_output_path(path: Path, directory: PathTuple, filename: str) -> Path
 
 
 def eval_jinja(
-    ctx: OutputContext,
+    ctx:OutputContext,
     content: Content,
     propname: str,
     text: str,
@@ -128,13 +128,12 @@ def eval_jinja(
     return template.render(**kwargs)
 
 
-def eval_jinja_template(ctx: OutputContext, content: Content, templatename: str) -> str:
+def eval_jinja_template(ctx:OutputContext, content: Content, templatename: str) -> str:
     template = ctx.site.jinjaenv.get_template(templatename)
     template.filename = templatename
 
     kwargs = content.get_jinja_vars(ctx, content)
-    output = template.render(**kwargs)
-    return output
+    return template.render(**kwargs)
 
 
 class HTMLIDInfo(NamedTuple):
