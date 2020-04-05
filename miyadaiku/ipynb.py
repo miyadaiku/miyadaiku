@@ -1,12 +1,12 @@
-# type: ignore
-
+from typing import Dict, Any, Tuple
 import re
+from pathlib import Path
 from nbconvert.exporters import HTMLExporter
 import nbformat
 from bs4 import BeautifulSoup
 
 
-def _export(json):
+def _export(json: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     config = {"TemplateExporter": {"template_file": "basic.tpl"}}
     html, _ = HTMLExporter(config).from_notebook_node(json)
 
@@ -24,11 +24,11 @@ def _export(json):
     return metadata, "<div>" + html + "</div>"
 
 
-def load(path):
+def load(path: Path) -> Tuple[Dict[str, Any], str]:
     json = nbformat.read(str(path), nbformat.current_nbformat)
     return _export(json)
 
 
-def load_string(s):
+def load_string(s: str) -> Tuple[Dict[str, Any], str]:
     json = nbformat.reads(s, nbformat.current_nbformat)
     return _export(json)

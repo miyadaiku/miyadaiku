@@ -2,7 +2,7 @@ import datetime
 from miyadaiku import config
 
 
-def test_get():
+def test_get() -> None:
     cfg = config.Config({"root": "root_value"})
 
     cfg.add(("dir1",), {"prop_a1": "value_a1"})
@@ -16,14 +16,14 @@ def test_get():
     assert cfg.get(("dir1", "dir2",), "root") == "root_value"
 
 
-def test_theme():
+def test_theme() -> None:
     cfg = config.Config({"root": "root_value"})
     cfg.add_themecfg({"theme": "theme_value"})
 
     assert cfg.get(("dir1", "dir2",), "theme") == "theme_value"
 
 
-def test_value():
+def test_value() -> None:
     cfg = config.Config(
         {
             "site_url": "http://localhost",

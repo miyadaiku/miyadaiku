@@ -130,8 +130,7 @@ class Site:
 
                 self.add_jinja_global(name, m)
 
-
-    def _generate_metadata_files(self)->None:
+    def _generate_metadata_files(self) -> None:
         for src, content in self.files.items():
             content.generate_metadata_file(self)
 
@@ -164,5 +163,3 @@ class Site:
         builders = []
         for contentpath, content in self.files.items():
             builders.extend(createBuilder(self, content))
-
-

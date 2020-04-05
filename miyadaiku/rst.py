@@ -1,4 +1,4 @@
-# type: ignore
+from typing import List, Any, Dict
 import re
 import os
 import html
@@ -18,8 +18,8 @@ from miyadaiku import ContentSrc
 from . import pygment_directive  # noqa
 
 
-class _RstDirective(Directive):
-    def run(self):
+class _RstDirective(Directive):  # type: ignore
+    def run(self) -> List[Any]:
         if "type" not in self.options:
             self.options["type"] = self.CONTENT_TYPE
 
@@ -67,11 +67,11 @@ class SnippetDirective(_RstDirective):
 directives.register_directive("snippet", SnippetDirective)
 
 
-class jinjalit(docutils.nodes.Inline, docutils.nodes.TextElement):
+class jinjalit(docutils.nodes.Inline, docutils.nodes.TextElement):  # type: ignore
     pass
 
 
-def jinja_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
+def jinja_role(role, rawtext, text, lineno, inliner, options={}, content=[]):  # type: ignore
     node = jinjalit(rawtext, docutils.utils.unescape(text, 1), **options)
     node.source, node.line = inliner.reporter.get_source_and_line(lineno)
     return [node], []
@@ -80,12 +80,12 @@ def jinja_role(role, rawtext, text, lineno, inliner, options={}, content=[]):
 roles.register_local_role("jinja", jinja_role)
 
 
-class JinjaDirective(Directive):
+class JinjaDirective(Directive):  # type: ignore
     required_arguments = 0
     optional_arguments = 0
     has_content = True
 
-    def run(self):
+    def run(self):  # type: ignore
         text = "\n".join(self.content)
         node = jinjalit(text, docutils.utils.unescape(text, 1))
         node.source, node.line = self.state_machine.get_source_and_line(self.lineno)
@@ -100,7 +100,7 @@ class TargetDirective(JinjaDirective):
     required_arguments = 1
     has_content = False
 
-    def run(self):
+    def run(self):  # type: ignore
         text = f'<div class="header_target" id="{self.arguments[0]}"></div>'
         node = jinjalit(text, docutils.utils.unescape(text, 1))
         node.source, node.line = self.state_machine.get_source_and_line(self.lineno)
@@ -119,13 +119,13 @@ RST_SETTINGS = {
 }
 
 
-class DocTitleOnly(frontmatter.DocTitle):
-    def promote_subtitle(self, node):
+class DocTitleOnly(frontmatter.DocTitle):  # type: ignore
+    def promote_subtitle(self, node):  # type: ignore
         return None
 
 
-class Reader(standalone.Reader):
-    def get_transforms(self):
+class Reader(standalone.Reader):  # type: ignore
+    def get_transforms(self):  # type: ignore
         transforms = standalone.Reader.get_transforms(self)
         # We have PEP-specific frontmatter handling.
         transforms.remove(frontmatter.DocTitle)
@@ -133,7 +133,7 @@ class Reader(standalone.Reader):
         return transforms
 
 
-class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
+class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):  # type: ignore
     docutils.writers.html5_polyglot.HTMLTranslator.special_characters[
         ord("{")
     ] = "&#123;"
@@ -141,10 +141,10 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
         ord("}")
     ] = "&#125;"
 
-    def __init__(self, document):
+    def __init__(self, document):  # type: ignore
         super().__init__(document)
 
-    def visit_comment(self, node, sub=re.compile("-(?=-)").sub):
+    def visit_comment(self, node, sub=re.compile("-(?=-)").sub):  # type: ignore
         """Escape double-dashes in comment text."""
         s = "<!-- %s -->\n" % sub("- ", node.astext())
 
@@ -156,16 +156,16 @@ class HTMLTranslator(docutils.writers.html5_polyglot.HTMLTranslator):
         # Content already processed:
         raise docutils.nodes.SkipNode
 
-    def visit_jinjalit(self, node):
+    def visit_jinjalit(self, node):  # type: ignore
         self.body.append(node.astext())
         # Keep non-HTML raw text out of output:
         raise docutils.nodes.SkipNode
 
-    def depart_jinjalit(self, node):
+    def depart_jinjalit(self, node):  # type: ignore
         pass
 
 
-def _make_pub(source_class):
+def _make_pub(source_class):  # type: ignore
     pub = docutils.core.Publisher(
         reader=Reader(),
         source_class=source_class,
@@ -182,7 +182,7 @@ def _make_pub(source_class):
     return pub
 
 
-def _parse(pub: Any) -> Tuple[Dict, str]:
+def _parse(pub: Any) -> Tuple[Dict[str, Any], str]:
     pub.publish(enable_exit_status=True)
 
     parts = pub.writer.parts
@@ -190,11 +190,7 @@ def _parse(pub: Any) -> Tuple[Dict, str]:
     if title:
         title = BeautifulSoup(html.unescape(title), "html.parser").text
 
-    metadata = {
-        "type": "article",
-        "title": title,
-        "has_jinja": True
-    }
+    metadata = {"type": "article", "title": title, "has_jinja": True}
 
     if hasattr(pub.document, "article_metadata"):
         metadata.update(pub.document.article_metadata)
@@ -208,19 +204,19 @@ def _parse(pub: Any) -> Tuple[Dict, str]:
     return metadata, parts.get("body")
 
 
-def load_string(string: str) -> Tuple[Dict, str]:
-    pub = _make_pub(docutils.io.StringInput)
+def load_string(string: str) -> Tuple[Dict[str, Any], str]:
+    pub = _make_pub(docutils.io.StringInput)  # type: ignore
     pub.set_source(source=string)
     return _parse(pub)
 
 
-def load_file(filename: str) -> Tuple[Dict, str]:
-    pub = _make_pub(docutils.io.FileInput)
+def load_file(filename: str) -> Tuple[Dict[str, Any], str]:
+    pub = _make_pub(docutils.io.FileInput)  # type: ignore
     pub.set_source(source_path=os.fspath(filename))
     return _parse(pub)
 
 
-def load(src: ContentSrc) -> Tuple[Dict, str]:
+def load(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
     if src.package:
         s = src.read_text()
         return load_string(s)

@@ -3,7 +3,7 @@ from miyadaiku import html
 import datetime
 
 
-def test_load(sitedir):
+def test_load(sitedir: Path) -> None:
     sitedir.joinpath("a.html").write_text(
         """
 title: title<>

@@ -1,19 +1,15 @@
-# type: ignore
-
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Any, Union
+from pathlib import Path
 import re
 from miyadaiku import ContentSrc
 
 
-def load(src: ContentSrc) -> Tuple[Dict, str]:
+def load(src: Union[ContentSrc, Path]) -> Tuple[Dict[str, Any], str]:
     return load_string(src.read_text())
 
 
-def load_string(string):
-    meta = {
-        "type": "article",
-        "has_jinja": True
-    }
+def load_string(string: str) -> Tuple[Dict[str, Any], str]:
+    meta = {"type": "article", "has_jinja": True}
     lines = string.splitlines()
 
     n = 0

@@ -4,7 +4,7 @@ from pathlib import Path
 from miyadaiku.site import Site
 
 
-def test_site(sitedir: Path):
+def test_site(sitedir: Path) -> None:
     contentsdir = sitedir / "contents"
     filesdir = sitedir / "files"
 
@@ -16,10 +16,12 @@ project_prop: value
 """
     )
 
-    (contentsdir / "root1.yml").write_text("""
+    (contentsdir / "root1.yml").write_text(
+        """
 root_prop: root_prop_value
 generate_metadata_file: true
-""")
+"""
+    )
     (contentsdir / "root1.txt").write_text("content_root1")
     (contentsdir / "root2.rst").write_text("content_root2")
 

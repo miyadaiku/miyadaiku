@@ -5,6 +5,7 @@ import pathlib
 from typing import Any
 
 import logging
+
 logging.getLogger().setLevel(logging.DEBUG)
 
 # import miyadaiku

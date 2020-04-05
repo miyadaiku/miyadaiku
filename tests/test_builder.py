@@ -3,7 +3,7 @@ from pathlib import Path
 from miyadaiku import ContentSrc, config, loader, site, builder
 
 
-def create_site(sitedir: Path):
+def create_site(sitedir: Path) -> site.Site:
     contentsdir = sitedir / "contents"
     filesdir = sitedir / "files"
 
@@ -37,7 +37,7 @@ directory: rstdir
     return siteobj
 
 
-def test_builder(sitedir: Path):
+def test_builder(sitedir: Path) -> None:
     site = create_site(sitedir)
 
     (b,) = builder.createBuilder(
@@ -57,7 +57,7 @@ def test_builder(sitedir: Path):
     assert contentpath == ((), "package1_file1.txt")
 
 
-def test_indexbuilder(sitedir: Path):
+def test_indexbuilder(sitedir: Path) -> None:
     site = create_site(sitedir)
     pages = builder.createBuilder(
         site, site.files.get_content((("rstdir",), "index.yml"))

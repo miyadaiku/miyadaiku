@@ -11,7 +11,7 @@ from typing import (
     Union,
     Any,
     Set,
-    List
+    List,
 )
 
 from abc import abstractmethod
@@ -33,21 +33,22 @@ class ContentProxy:
     def __getattr__(self, name: str) -> Any:
         return self.content.get_metadata(self.context.site, name)
 
-    def _to_markupsafe(self, s:str) -> str:
+    def _to_markupsafe(self, s: str) -> str:
         if not hasattr(s, "__html__"):
             s = markupsafe.Markup(s)
         return s
 
     @property
-    def html(self)->Union[None, str]:
+    def html(self) -> Union[None, str]:
         ret = self.content.build_html(self.context)
         if ret is not None:
             return self._to_markupsafe(ret)
         return None
 
-    def load(self, target:Content)->ContentProxy:
+    def load(self, target: Content) -> ContentProxy:
         ret = self.context.site.files.get_content(target.src.contentpath)
         return ContentProxy(self.context, ret)
+
 
 #    def path(self, *args, **kwargs):
 #        return self.context.page_content.path_to(self, *args, **kwargs)
@@ -113,15 +114,21 @@ def prepare_output_path(path: Path, directory: PathTuple, filename: str) -> Path
     return Path(dest)
 
 
-
-def eval_jinja(ctx:OutputContext, content:Content, propname:str, text:str, kwargs:Dict[str, Any])->str:
+def eval_jinja(
+    ctx: OutputContext,
+    content: Content,
+    propname: str,
+    text: str,
+    kwargs: Dict[str, Any],
+) -> str:
     args = content.get_jinja_vars(ctx, content)
     args.update(kwargs)
     template = ctx.site.jinjaenv.from_string(text)
     template.filename = f"{content.repr_filename()}#{propname}"
     return template.render(**kwargs)
 
-def eval_jinja_template(ctx:OutputContext, content:Content, templatename:str)->str:
+
+def eval_jinja_template(ctx: OutputContext, content: Content, templatename: str) -> str:
     template = ctx.site.jinjaenv.get_template(templatename)
     template.filename = templatename
 
@@ -135,6 +142,7 @@ class HTMLIDInfo(NamedTuple):
     tag: str
     text: str
 
+
 class HTMLInfo(NamedTuple):
     html: str
     headers: List[HTMLIDInfo]
@@ -147,8 +155,8 @@ class OutputContext:
     contentpath: ContentPath
     content: Content
     html_cache: Dict[ContentPath, HTMLInfo]
-    depends:Set[ContentPath]
-    
+    depends: Set[ContentPath]
+
     def __init__(self, site: Site, contentpath: ContentPath) -> None:
         self.site = site
         self.contentpath = contentpath
@@ -160,22 +168,19 @@ class OutputContext:
         dir, file = self.content.src.contentpath
         return prepare_output_path(self.site.outputdir, dir, file)
 
-    def add_depend(self, content: Content)->None:
+    def add_depend(self, content: Content) -> None:
         self.depends.add(content.src.contentpath)
 
-    def get_html_cache(self, content:Content)->Union[HTMLInfo, None]:
+    def get_html_cache(self, content: Content) -> Union[HTMLInfo, None]:
         return self.html_cache.get(content.src.contentpath, None)
 
-    def set_html_cache(self, content:Content, info:HTMLInfo)->None:
+    def set_html_cache(self, content: Content, info: HTMLInfo) -> None:
         self.html_cache[content.src.contentpath] = info
-
 
     @abstractmethod
     def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
         pass
 
-
-        
 
 class BinaryOutput(OutputContext):
     def write_body(self, outpath: Path) -> None:
@@ -194,7 +199,6 @@ class BinaryOutput(OutputContext):
         outfilename = self.get_outfilename()
         self.write_body(outfilename)
         return [outfilename], [self.content.src.contentpath]
-
 
 
 class JinjaOutput(OutputContext):

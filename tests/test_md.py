@@ -3,7 +3,7 @@ from miyadaiku import md
 import datetime
 
 
-def test_meta(sitedir):
+def test_meta(sitedir: Path) -> None:
     sitedir.joinpath("a.md").write_text(
         """
 title: title<>
@@ -18,20 +18,20 @@ adfas
 """
     )
 
-    metadata, text = md.load(sitedir.joinpath("a.md"))
+    metadata, text = md.load(sitedir / "a.md")
 
     assert metadata["type"] == "article"
     assert metadata["title"] == "title<>"
 
 
-def test_inline(sitedir):
+def test_inline(sitedir: Path) -> None:
     (sitedir / "a.md").write_text("""a :jinja:`{{abc}}` b""")
 
     metadata, text = md.load(sitedir / "a.md")
     assert text == "<p>a {{abc}} b</p>"
 
 
-def test_multiline(sitedir):
+def test_multiline(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
         """
 :jinja:`{{abc
@@ -46,7 +46,7 @@ def}}"""
     )
 
 
-def test_esc(sitedir):
+def test_esc(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
         """
 :jinja:`{{abcdef}}`
@@ -56,7 +56,7 @@ def test_esc(sitedir):
     print(text)
 
 
-def test_fence(sitedir):
+def test_fence(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
         """
 
@@ -75,7 +75,7 @@ def test_fence(sitedir):
     )
 
 
-def test_code(sitedir):
+def test_code(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
         """
 
@@ -90,7 +90,7 @@ def test_code(sitedir):
     )
 
 
-def test_target(sitedir):
+def test_target(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
         """
 .. target:: abcdefg

@@ -4,7 +4,7 @@ import collections
 import dateutil.parser
 import datetime
 import pytz
-    
+
 import miyadaiku
 from miyadaiku import ContentSrc, PathTuple
 
@@ -189,8 +189,9 @@ def date(value: str) -> Any:
             raise ValueError(f"string does not contain a date: {value!r}")
         return ret
 
+
 @value_converter
-def timezone(value:str)->datetime.tzinfo:
+def timezone(value: str) -> datetime.tzinfo:
     return pytz.timezone(value)
 
 
@@ -207,12 +208,9 @@ def imports(value: Optional[str]) -> Any:
         return []
 
 
-
 def format_value(name: str, value: Any) -> Any:
     f = VALUE_CONVERTERS.get(name)
     if f:
         return f(value)
 
     return value
-
-

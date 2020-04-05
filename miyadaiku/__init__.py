@@ -1,6 +1,6 @@
 from typing import Dict, Tuple, NamedTuple, Any
 import pkg_resources
-import tzlocal  # type: ignore
+import tzlocal
 
 YAML_ENCODING = "utf-8"
 
@@ -42,13 +42,13 @@ class ContentSrc(NamedTuple):
     contentpath: ContentPath
     mtime: float = 0.0
 
-    def repr_filename(self)->str:
+    def repr_filename(self) -> str:
         if self.package:
             return f"{self.package}!{self.srcpath}"
         else:
             return self.srcpath
 
-    def is_package(self)->bool:
+    def is_package(self) -> bool:
         return bool(self.package)
 
     def read_text(self, encoding: str = "utf-8") -> str:

@@ -4,7 +4,7 @@ from typing import Optional, Any, TYPE_CHECKING, Union, List, Dict
 import re
 import unicodedata
 import urllib.parse
-from bs4 import BeautifulSoup # type: ignore
+from bs4 import BeautifulSoup
 from pathlib import PurePosixPath, Path
 import datetime, os
 
@@ -12,6 +12,7 @@ from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
 from . import site
 from . import config
 from . import context
+
 
 class Content:
     src: ContentSrc
@@ -25,15 +26,14 @@ class Content:
         return f"<{self.__class__.__module__}.{self.__class__.__name__} {self.src.srcpath}>"
 
     @property
-    def has_jinja(self)->bool:
-        return bool(self.src.metadata.get('has_jinja'))
+    def has_jinja(self) -> bool:
+        return bool(self.src.metadata.get("has_jinja"))
 
-    def repr_filename(self)->str:
+    def repr_filename(self) -> str:
         return repr(self)
 
-    def generate_metadata_file(self, site:site.Site)->None:
+    def generate_metadata_file(self, site: site.Site) -> None:
         pass
-
 
     def get_body(self) -> bytes:
         if self.body is None:
@@ -61,10 +61,12 @@ class Content:
         else:
             return site.config.get(dirname, name, default)
 
-    def build_html(self, context:context.OutputContext)->Union[None, str]:
+    def build_html(self, context: context.OutputContext) -> Union[None, str]:
         return None
 
-    def get_jinja_vars(self, ctx: context.OutputContext, content: Content) -> Dict[str, Any]:
+    def get_jinja_vars(
+        self, ctx: context.OutputContext, content: Content
+    ) -> Dict[str, Any]:
 
         ret = {}
         for name in content.get_metadata(ctx.site, "imports"):
@@ -73,7 +75,9 @@ class Content:
             modulename = PurePosixPath(fname).stem
             ret[modulename] = template.module
 
-        ret["page"] = context.ContentProxy(ctx, ctx.site.files.get_content(ctx.contentpath))
+        ret["page"] = context.ContentProxy(
+            ctx, ctx.site.files.get_content(ctx.contentpath)
+        )
         ret["content"] = context.ContentProxy(ctx, content)
 
         ret["contents"] = context.ContentsProxy(ctx)
@@ -82,33 +86,32 @@ class Content:
         return ret
 
 
-
 class BinContent(Content):
     pass
 
 
 class HTMLContent(Content):
-    def generate_metadata_file(self, site:site.Site)->None:
-        if not self.get_metadata(site, 'generate_metadata_file'):
+    def generate_metadata_file(self, site: site.Site) -> None:
+        if not self.get_metadata(site, "generate_metadata_file"):
             return
 
         if self.src.is_package():
             return
         dir, fname = os.path.split(self.src.srcpath)
-        metafilename = Path(dir) / (fname+METADATA_FILE_SUFFIX)
+        metafilename = Path(dir) / (fname + METADATA_FILE_SUFFIX)
         if metafilename.exists():
             return
-        tz:datetime.tzinfo = self.get_metadata(site, "timezone")
+        tz: datetime.tzinfo = self.get_metadata(site, "timezone")
         date = datetime.datetime.now().astimezone(tz).replace(microsecond=0)
-        datestr = date.isoformat(timespec='seconds')
-        yaml = f'''
+        datestr = date.isoformat(timespec="seconds")
+        yaml = f"""
 date: {datestr}
-'''
-        metafilename.write_text(yaml, 'utf-8')
+"""
+        metafilename.write_text(yaml, "utf-8")
 
-        self.src.metadata['date'] = datestr
+        self.src.metadata["date"] = datestr
 
-    def build_html(self, ctx: context.OutputContext)->str:
+    def build_html(self, ctx: context.OutputContext) -> str:
         ctx.add_depend(self)
         ret = ctx.get_html_cache(self)
         if ret is not None:
@@ -117,71 +120,75 @@ date: {datestr}
         if self.has_jinja:
             html = self.generate_html(ctx)
         else:
-            html = self.body or ''
-    
+            html = self.body or ""
+
         htmlinfo = self._set_header_id(ctx, html)
         ctx.set_html_cache(self, htmlinfo)
 
         return htmlinfo.html
 
-
-    def generate_html(self, ctx: context.OutputContext)->str:
-        src = self.body or ''
-        html = context.eval_jinja(ctx, self, 'html', src, {})
+    def generate_html(self, ctx: context.OutputContext) -> str:
+        src = self.body or ""
+        html = context.eval_jinja(ctx, self, "html", src, {})
 
         return html
 
+    def _set_header_id(
+        self, ctx: context.OutputContext, htmlsrc: str
+    ) -> context.HTMLInfo:
 
-    def _set_header_id(self, ctx:context.OutputContext, htmlsrc:str)->context.HTMLInfo:
-
-        soup = BeautifulSoup(htmlsrc, 'html.parser')
-        headers:List[context.HTMLIDInfo] = []
-        header_anchors:List[context.HTMLIDInfo] = []
-        fragments:List[context.HTMLIDInfo] = []
-        target_id:Union[str, None] = None
+        soup = BeautifulSoup(htmlsrc, "html.parser")
+        headers: List[context.HTMLIDInfo] = []
+        header_anchors: List[context.HTMLIDInfo] = []
+        fragments: List[context.HTMLIDInfo] = []
+        target_id: Union[str, None] = None
 
         slugs = set()
 
         for c in soup.recursiveChildGenerator():
-            if c.name and ('header_target' in (c.get('class', '') or [])):
-                target_id = c.get('id', None)
+            if c.name and ("header_target" in (c.get("class", "") or [])):
+                target_id = c.get("id", None)
 
-            elif re.match(r'h\d', c.name or ''):
+            elif re.match(r"h\d", c.name or ""):
                 contents = c.text
 
                 if target_id:
                     fragments.append(context.HTMLIDInfo(target_id, c.name, contents))
                     target_id = None
 
-                slug = unicodedata.normalize('NFKC', c.text[:40])
-                slug = re.sub(r'[^\w?.]', '', slug)
+                slug = unicodedata.normalize("NFKC", c.text[:40])
+                slug = re.sub(r"[^\w?.]", "", slug)
                 slug = urllib.parse.quote_plus(slug)
 
                 n = 1
                 while slug in slugs:
-                    slug = f'{slug}_{n}'
+                    slug = f"{slug}_{n}"
                     n += 1
                 slugs.add(slug)
 
-                id = f'h_{slug}'
-                anchor_id = f'a_{slug}'
+                id = f"h_{slug}"
+                anchor_id = f"a_{slug}"
 
                 parent = c.parent
-                if (parent.name) != 'div' or ('md_header_block' not in parent.get('class', [])):
-                    parent = soup.new_tag('div', id=id, **{'class': 'md_header_block'})
-                    parent.insert(0, soup.new_tag('a', id=anchor_id,
-                                                  **{'class': 'md_header_anchor'}))
+                if (parent.name) != "div" or (
+                    "md_header_block" not in parent.get("class", [])
+                ):
+                    parent = soup.new_tag("div", id=id, **{"class": "md_header_block"})
+                    parent.insert(
+                        0,
+                        soup.new_tag(
+                            "a", id=anchor_id, **{"class": "md_header_anchor"}
+                        ),
+                    )
                     c.wrap(parent)
                 else:
-                    parent['id'] = id
-                    parent.a['id'] = anchor_id
+                    parent["id"] = id
+                    parent.a["id"] = anchor_id
 
                 headers.append(context.HTMLIDInfo(id, c.name, contents))
                 header_anchors.append(context.HTMLIDInfo(anchor_id, c.name, contents))
 
         return context.HTMLInfo(str(soup), headers, header_anchors, fragments)
-
-
 
 
 class Article(HTMLContent):

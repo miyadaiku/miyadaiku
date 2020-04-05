@@ -1,6 +1,5 @@
-# type: ignore
-
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Any, Union
+from pathlib import Path
 import re
 import markdown
 from markdown import util, preprocessors, postprocessors, blockprocessors
@@ -8,8 +7,8 @@ import markdown.extensions.codehilite
 from miyadaiku import ContentSrc
 
 
-class Ext(markdown.Extension):
-    def extendMarkdown(self, md):
+class Ext(markdown.Extension):  # type: ignore
+    def extendMarkdown(self, md):  # type: ignore
         # prior to fenced_code_block
         md.preprocessors.register(JinjaPreprocessor(md), "jinja", 27.5)
 
@@ -26,12 +25,9 @@ class Ext(markdown.Extension):
 #                                      '_begin')
 
 
-class JinjaPreprocessor(preprocessors.Preprocessor):
-    def run(self, lines):
-        meta = {
-            "type": "article",
-            "has_jinja": True
-        }
+class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
+    def run(self, lines):  # type: ignore
+        meta = {"type": "article", "has_jinja": True}
         n = 0
         for l in lines:
             if not l.strip():
@@ -64,8 +60,8 @@ class JinjaPreprocessor(preprocessors.Preprocessor):
         return text.split("\n")
 
 
-class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):
-    def run(self, text):
+class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):  # type: ignore
+    def run(self, text):  # type: ignore
         while True:
             ret = super().run(text)
             if ret == text:
@@ -74,7 +70,7 @@ class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):
             text = ret
         return ret
 
-    def isblocklevel(self, html):
+    def isblocklevel(self, html):  # type: ignore
         if re.match(r"\{.*}$", html.strip(), re.DOTALL):
             return True
         return super().isblocklevel(html)
@@ -84,16 +80,17 @@ class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):
 postprocessors.RawHtmlPostprocessor = JinjaRawHtmlPostprocessor
 
 
-class TargetProcessor(blockprocessors.BlockProcessor):
+class TargetProcessor(blockprocessors.BlockProcessor):  # type: ignore
 
     RE = re.compile(r"^.. target::\s*([-a-zA-Z0-9_]+)\s*$")
 
-    def test(self, parent, block):
+    def test(self, parent, block):  # type: ignore
         return self.RE.search(block)
 
-    def run(self, parent, blocks):
+    def run(self, parent, blocks):  # type: ignore
         block = blocks.pop(0)
         m = self.RE.match(block)
+        assert m
         attrs = {
             "class": "header_target",
             "id": m.group(1),
@@ -101,12 +98,12 @@ class TargetProcessor(blockprocessors.BlockProcessor):
         util.etree.SubElement(parent, "div", attrib=attrs)
 
 
-def load(src: ContentSrc) -> Tuple[Dict, str]:
+def load(src: Union[ContentSrc, Path]) -> Tuple[Dict[str, Any], str]:
     s = src.read_text()
     return load_string(s)
 
 
-def load_string(string):
+def load_string(string: str) -> Tuple[Dict[str, Any], str]:
     extensions = [
         markdown.extensions.codehilite.CodeHiliteExtension(guess_lang=False),
         "markdown.extensions.extra",

@@ -4,7 +4,7 @@ from pathlib import Path
 from miyadaiku import ContentSrc, config, loader, site, contents
 
 
-def test_walk_directory(sitedir):
+def test_walk_directory(sitedir: Path) -> None:
     dir1 = sitedir / "dir1"
     dir1.mkdir()
 
@@ -42,7 +42,7 @@ def test_walk_directory(sitedir):
     )
 
 
-def test_walkpackage(sitedir):
+def test_walkpackage(sitedir: Path) -> None:
     results = loader.walk_package("package1", "contents", set(["*.bak"]))
     all = sorted(results, key=lambda d: d.srcpath)
 
@@ -56,7 +56,7 @@ def test_walkpackage(sitedir):
     )
 
 
-def test_loadfiles(sitedir: Path):
+def test_loadfiles(sitedir: Path) -> None:
     contentsdir = sitedir / "contents"
     filesdir = sitedir / "files"
 
@@ -113,7 +113,7 @@ project_prop: value
     assert cfg.get((), "package3_prop_a1") == "value_package3_a1"
 
 
-def test_get_contents(sitedir: Path):
+def test_get_contents(sitedir: Path) -> None:
     contentsdir = sitedir / "contents"
     contentsdir.mkdir(exist_ok=True)
     (contentsdir / "a.rst").write_text(

@@ -1,5 +1,6 @@
 from pathlib import Path
-from miyadaiku import rst, ContentSrc
+from miyadaiku import rst
+from miyadaiku import ContentSrc
 
 
 def to_contentsrc(path: Path) -> ContentSrc:
@@ -33,9 +34,9 @@ def test_load(sitedir: Path) -> None:
     )
 
 
-def test_load2(tmpdir):
-    f = tmpdir.join("file1.rst")
-    f.write(
+def test_load2(sitedir: Path) -> None:
+    f = sitedir / "file1.rst"
+    f.write_text(
         """
 ..  {{ page.site_title }} --
 
@@ -46,9 +47,9 @@ def test_load2(tmpdir):
     assert text == "<!-- &#123;&#123; page.site_title &#125;&#125; - - -->\n"
 
 
-def test_articledirective(tmpdir):
-    f = tmpdir.join("file1.rst")
-    f.write(
+def test_articledirective(sitedir: Path) -> None:
+    f = sitedir / "file1.rst"
+    f.write_text(
         """
 .. article::
    :date: 2017-01-01
@@ -63,9 +64,9 @@ test
     assert metadata["title"] == "title<>"
 
 
-def test_jinjadirective(tmpdir):
-    f = tmpdir.join("file1.rst")
-    f.write(
+def test_jinjadirective(sitedir: Path) -> None:
+    f = sitedir / "file1.rst"
+    f.write_text(
         """
 .. jinja::
    {{<a><b>}}
@@ -84,9 +85,9 @@ def test_jinjadirective(tmpdir):
     )
 
 
-def test_xref(tmpdir):
-    f = tmpdir / "file1.rst"
-    f.write(
+def test_xref(sitedir: Path) -> None:
+    f = sitedir / "file1.rst"
+    f.write_text(
         """
 .. target:: anchor-name
 """
@@ -96,7 +97,7 @@ def test_xref(tmpdir):
     assert text == """<div class="header_target" id="anchor-name"></div>"""
 
 
-def test_title(sitedir):
+def test_title(sitedir: Path) -> None:
     f = sitedir / "file1.rst"
     f.write_text(
         """
@@ -110,7 +111,7 @@ abc
     assert metadata["title"] == "title1 http://example.com"
 
 
-def test_subtitle(sitedir):
+def test_subtitle(sitedir: Path) -> None:
     f = sitedir / "file1.rst"
     f.write_text(
         """
@@ -129,7 +130,7 @@ abc
     assert "<h1>title2</h1>" in text
 
 
-def test_pygments(sitedir):
+def test_pygments(sitedir: Path) -> None:
     f = sitedir / "file1.rst"
     f.write_text(
         """

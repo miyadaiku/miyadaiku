@@ -153,11 +153,11 @@ def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
 
 
 FILELOADERS = {
-    ".rst": rst.load,  # type: ignore
-    ".rest": rst.load,  # type: ignore
-    ".md": md.load,  # type: ignore
-    ".html": html.load,  # type: ignore
-    ".htm": html.load,  # type: ignore
+    ".rst": rst.load,
+    ".rest": rst.load,
+    ".md": md.load,
+    ".html": html.load,
+    ".htm": html.load,
     ".yml": yamlloader,
     ".yaml": yamlloader,
 }
@@ -289,8 +289,6 @@ class ContentFiles:
                     d[(g,)].append(c)
 
         return sorted(d.items())
-
-
 
 
 def loadfiles(
