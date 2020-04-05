@@ -1,5 +1,3 @@
-# type: ignore
-
 import pytest
 import pathlib
 import logging
@@ -16,7 +14,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 # miyadaiku.core.DEBUG = True
 
 
-@pytest.fixture
+@pytest.fixture # type: ignore
 def sitedir(tmpdir: Any) -> pathlib.Path:
     d = tmpdir.mkdir("site")
     d.mkdir("modules")
@@ -68,7 +66,7 @@ class SiteRoot:
         return path
 
 
-@pytest.fixture
+@pytest.fixture # type: ignore
 def siteroot(tmpdir: Any) -> SiteRoot:
     ret = SiteRoot(tmpdir)
     return ret
