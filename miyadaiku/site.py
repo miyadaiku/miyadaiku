@@ -131,7 +131,7 @@ class Site:
                 self.add_jinja_global(name, m)
 
 
-    def _generate_metadata_files(self):
+    def _generate_metadata_files(self)->None:
         for src, content in self.files.items():
             content.generate_metadata_file(self)
 

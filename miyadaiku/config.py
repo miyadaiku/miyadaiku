@@ -190,7 +190,7 @@ def date(value: str) -> Any:
         return ret
 
 @value_converter
-def timezone(value:str):
+def timezone(value:str)->datetime.tzinfo:
     return pytz.timezone(value)
 
 

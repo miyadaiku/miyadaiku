@@ -98,7 +98,7 @@ class HTMLContent(Content):
         metafilename = Path(dir) / (fname+METADATA_FILE_SUFFIX)
         if metafilename.exists():
             return
-        tz:str = self.get_metadata(site, "timezone")
+        tz:datetime.tzinfo = self.get_metadata(site, "timezone")
         date = datetime.datetime.now().astimezone(tz).replace(microsecond=0)
         datestr = date.isoformat(timespec='seconds')
         yaml = f'''
