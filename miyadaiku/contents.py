@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from typing import Optional, Any, TYPE_CHECKING, Union, List, Dict, cast
+from typing import Optional, Any, TYPE_CHECKING, Union, List, Dict, cast, Tuple
 import re
 import unicodedata
 import urllib.parse
-from bs4 import BeautifulSoup
 from pathlib import PurePosixPath, Path
 import datetime, os
 import posixpath
+
+from bs4 import BeautifulSoup
+from bs4.element import NavigableString
 
 from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
 from . import site
@@ -102,6 +104,10 @@ class Content:
     def build_html(self, context: context.OutputContext) -> Union[None, str]:
         return None
 
+
+    def build_abstract(self, context: context.OutputContext, abstract_length:Optional[int]=None)->Union[None, str]:
+        return None
+    
     def get_jinja_vars(
         self, ctx: context.OutputContext, content: Content
     ) -> Dict[str, Any]:
@@ -149,23 +155,7 @@ date: {datestr}
 
         self.src.metadata["date"] = datestr
 
-    def build_html(self, ctx: context.OutputContext) -> str:
-        ctx.add_depend(self)
-        ret = ctx.get_html_cache(self)
-        if ret is not None:
-            return ret.html
-
-        if self.has_jinja:
-            html = self.generate_html(ctx)
-        else:
-            html = self.body or ""
-
-        htmlinfo = self._set_header_id(ctx, html)
-        ctx.set_html_cache(self, htmlinfo)
-
-        return htmlinfo.html
-
-    def generate_html(self, ctx: context.OutputContext) -> str:
+    def _generate_html(self, ctx: context.OutputContext) -> str:
         src = self.body or ""
         html = context.eval_jinja(ctx, self, "html", src, {})
 
@@ -228,6 +218,89 @@ date: {datestr}
 
         return context.HTMLInfo(str(soup), headers, header_anchors, fragments)
 
+    def build_html(self, ctx: context.OutputContext) -> str:
+        ctx.add_depend(self)
+        ret = ctx.get_html_cache(self)
+        if ret is not None:
+            return ret.html
+
+        if self.has_jinja:
+            html = self._generate_html(ctx)
+        else:
+            html = self.body or ""
+
+        htmlinfo = self._set_header_id(ctx, html)
+        ctx.set_html_cache(self, htmlinfo)
+
+        return htmlinfo.html
+
+    _in_get_headers = False
+    def _get_headers(self, ctx:context.OutputContext)->Tuple[List[context.HTMLIDInfo],List[context.HTMLIDInfo],List[context.HTMLIDInfo]]:
+        if self._in_get_headers:
+            return [], [], []
+
+        self._in_get_headers = True
+
+        try:
+            ret = ctx.get_html_cache(self)
+            if ret is not None:
+                return ret.headers, ret.header_anchors, ret.fragments
+
+            self.build_html(ctx)
+            ret = ctx.get_html_cache(self)
+            assert ret
+            return ret.headers, ret.header_anchors, ret.fragments
+
+        finally:
+            self._in_get_headers = False
+
+    def build_abstract(self, context:context.OutputContext, abstract_length:Optional[int]=None) -> str:
+        html = self.build_html(context)
+        soup = BeautifulSoup(html, 'html.parser')
+
+        for elem in soup(["head", "style", "script", "title"]):
+            elem.extract()
+
+        if abstract_length is None:
+            abstract_length = self.get_metadata(context.site, 'abstract_length')
+
+        if abstract_length == 0:
+            return str(soup)
+
+        slen = 0
+        gen = soup.recursiveChildGenerator()
+        for c in gen:
+            if isinstance(c, NavigableString):
+                curlen = len(c.strip())
+                if slen + curlen > abstract_length:
+                    last_c = c
+                    valid_len = abstract_length - slen-curlen
+                    break
+                slen += curlen
+        else:
+            return str(soup)
+
+        while c:
+            while c.next_sibling:
+                c.next_sibling.extract()
+            c = c.parent
+
+        last_c.string.replace_with(last_c[:valid_len])
+        return str(soup)
+
+    def get_headers(self, ctx:context.OutputContext)->List[context.HTMLIDInfo]:
+        headers, header_anchors, fragments = self._get_headers(ctx)
+        return headers
+
+    def get_header_anchors(self, ctx:context.OutputContext)->List[context.HTMLIDInfo]:
+        headers, header_anchors, fragments = self._get_headers(ctx)
+        return header_anchors
+
+    def get_fragments(self, ctx:context.OutputContext)->List[context.HTMLIDInfo]:
+        headers, header_anchors, fragments = self._get_headers(ctx)
+        return fragments
+
+    
 
 class Article(HTMLContent):
     pass

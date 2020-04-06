@@ -125,7 +125,6 @@ abc
 """
     )
     metadata, text = rst.load(to_contentsrc(f))
-    print(text)
     assert "title1" not in text
     assert "<h1>title2</h1>" in text
 

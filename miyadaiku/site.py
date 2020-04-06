@@ -13,7 +13,7 @@ import dateutil
 import miyadaiku
 from .config import Config
 from . import loader
-from .builder import createBuilder
+from .builder import createBuilder, Builder
 from .jinjaenv import create_env
 
 
@@ -41,6 +41,7 @@ class Site:
     files: loader.ContentFiles
     ignores: Set[str]
     themes: List[str]
+    builder: List[Builder]
 
     def _load_config(self, props: Dict[str, Any]) -> None:
         cfgfile = self.root / miyadaiku.CONFIG_FILE
@@ -160,6 +161,8 @@ class Site:
         if not self.outputdir.is_dir():
             self.outputdir.mkdir(parents=True, exist_ok=True)
 
-        builders = []
+        self.builders = []
         for contentpath, content in self.files.items():
-            builders.extend(createBuilder(self, content))
+            self.builders.extend(createBuilder(self, content))
+
+

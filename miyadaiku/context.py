@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
+    Optional,
     NamedTuple,
     Type,
     Sequence,
@@ -12,6 +13,7 @@ from typing import (
     Any,
     Set,
     List,
+    Callable
 )
 
 from abc import abstractmethod
@@ -21,9 +23,16 @@ from miyadaiku import ContentPath, PathTuple
 from pathlib import Path, PurePosixPath
 
 if TYPE_CHECKING:
-    from .contents import Content, Article
+    from .contents import Content, Article, IndexPage
     from .site import Site
 
+SAFE_STR = Union[str, markupsafe.Markup]
+
+def to_markupsafe(s:Optional[str])->Optional[SAFE_STR]:
+    if s is not None:
+        if not hasattr(s, "__html__"):
+            s = markupsafe.Markup(s)
+    return s
 
 class ContentProxy:
     def __init__(self, ctx: OutputContext, content: Content):
@@ -33,17 +42,15 @@ class ContentProxy:
     def __getattr__(self, name: str) -> Any:
         return self.content.get_metadata(self.context.site, name)
 
-    def _to_markupsafe(self, s: str) -> str:
-        if not hasattr(s, "__html__"):
-            s = markupsafe.Markup(s)
-        return s
+    @property
+    def abstract(self) -> Union[None, str]:
+        ret = self.content.build_abstract(self.context)
+        return to_markupsafe(ret)
 
     @property
     def html(self) -> Union[None, str]:
         ret = self.content.build_html(self.context)
-        if ret is not None:
-            return self._to_markupsafe(ret)
-        return None
+        return to_markupsafe(ret)
 
     def load(self, target: Content) -> ContentProxy:
         ret = self.context.site.files.get_content(target.src.contentpath)
@@ -164,6 +171,7 @@ class OutputContext:
         self.html_cache = {}
 
     def get_outfilename(self) -> Path:
+        # todo: get metadata
         dir, file = self.content.src.contentpath
         return prepare_output_path(self.site.outputdir, dir, file)
 
@@ -201,6 +209,7 @@ class BinaryOutput(OutputContext):
 
 
 class JinjaOutput(OutputContext):
+    content: Article
     def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
 
         templatename = self.content.get_metadata(self.site, "article_template")
@@ -212,6 +221,7 @@ class JinjaOutput(OutputContext):
 
 
 class IndexOutput(OutputContext):
+    content: IndexPage
     names: Tuple[str, ...]
     items: Sequence[Content]
     cur_page: int
