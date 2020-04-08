@@ -18,9 +18,11 @@ from typing import (
 
 from abc import abstractmethod
 import os, time, random, shutil
-import markupsafe
-from miyadaiku import ContentPath, PathTuple
 from pathlib import Path, PurePosixPath
+from functools import update_wrapper
+import markupsafe
+
+from miyadaiku import ContentPath, PathTuple
 
 if TYPE_CHECKING:
     from .contents import Content, Article, IndexPage
@@ -34,6 +36,21 @@ def to_markupsafe(s:Optional[str])->Optional[SAFE_STR]:
             s = markupsafe.Markup(s)
     return s
 
+
+def safe_prop(f: Callable[..., Any])->property:
+    """AttributeError in the function raises TypeError instead.
+       This prevents __getattr__() being called in case if error
+       in the decorator"""
+
+    def wrapper(*args:Any, **kwargs:Any)->Any:
+        try:
+            return f(*args, **kwargs)
+        except AttributeError as e:
+            raise TypeError(str(e)) from e
+    update_wrapper(wrapper, f)
+    return property(wrapper)
+
+
 class ContentProxy:
     def __init__(self, ctx: OutputContext, content: Content):
         self.context = ctx
@@ -42,15 +59,28 @@ class ContentProxy:
     def __getattr__(self, name: str) -> Any:
         return self.content.get_metadata(self.context.site, name)
 
-    @property
+    @safe_prop
+    def filename(self)->str:
+        return self.content.build_filename(self.context)
+
+    @safe_prop
     def abstract(self) -> Union[None, str]:
         ret = self.content.build_abstract(self.context)
         return to_markupsafe(ret)
 
-    @property
+    @safe_prop
     def html(self) -> Union[None, str]:
         ret = self.content.build_html(self.context)
         return to_markupsafe(ret)
+
+    @safe_prop
+    def url(self) -> str:
+        return self.content.build_url(self.context)
+
+    @safe_prop
+    def output_path(self) -> str:
+        return self.content.build_output_path(self.context)
+
 
     def load(self, target: Content) -> ContentProxy:
         ret = self.context.site.files.get_content(target.src.contentpath)
@@ -160,7 +190,8 @@ class OutputContext:
     site: Site
     contentpath: ContentPath
     content: Content
-    html_cache: Dict[ContentPath, HTMLInfo]
+    _html_cache: Dict[ContentPath, HTMLInfo]
+    _filename_cache: Dict[ContentPath, str]
     depends: Set[ContentPath]
 
     def __init__(self, site: Site, contentpath: ContentPath) -> None:
@@ -168,7 +199,8 @@ class OutputContext:
         self.contentpath = contentpath
         self.content = site.files.get_content(self.contentpath)
         self.depends = set()
-        self.html_cache = {}
+        self._html_cache = {}
+        self._filename_cache = {}
 
     def get_outfilename(self) -> Path:
         # todo: get metadata
@@ -179,10 +211,18 @@ class OutputContext:
         self.depends.add(content.src.contentpath)
 
     def get_html_cache(self, content: Content) -> Union[HTMLInfo, None]:
-        return self.html_cache.get(content.src.contentpath, None)
+        return self._html_cache.get(content.src.contentpath, None)
 
     def set_html_cache(self, content: Content, info: HTMLInfo) -> None:
-        self.html_cache[content.src.contentpath] = info
+        self._html_cache[content.src.contentpath] = info
+
+    def get_filename_cache(self, content: Content) -> Union[str, None]:
+        return self._filename_cache.get(content.src.contentpath, None)
+
+    def set_filename_cache(self, content: Content, filename: str) -> None:
+        self._filename_cache[content.src.contentpath] = filename
+
+
 
     @abstractmethod
     def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:

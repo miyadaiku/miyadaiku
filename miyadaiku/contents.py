@@ -8,6 +8,7 @@ from pathlib import PurePosixPath, Path
 import datetime, os
 import posixpath
 
+import pytz
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
@@ -15,6 +16,7 @@ from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
 from . import site
 from . import config
 from . import context
+
 
 
 class Content:
@@ -49,12 +51,7 @@ class Content:
 
     _omit = object()
 
-    def get_metadata(self, site: site.Site, name: str, default: Any = _omit) -> Any:
-        methodname = f"metadata_{name}"
-        method = getattr(self, methodname, None)
-        if method:
-            return method(site, name, default)
-
+    def _get_config_metadata(self, site: site.Site, name: str, default: Any = _omit) ->Any:
         if name in self.src.metadata:
             return config.format_value(name, self.src.metadata.get(name))
 
@@ -64,42 +61,96 @@ class Content:
         else:
             return site.config.get(dirname, name, default)
 
+    def get_metadata(self, site: site.Site, name: str, default: Any = _omit) -> Any:
+        methodname = f"metadata_{name}"
+        method = getattr(self, methodname, None)
+        if method:
+            return method(site, default)
+
+
+        return self._get_config_metadata(site, name, default)
+
+    def metadata_date(self, site:site.Site, default:Any)->Any:
+        date = self._get_config_metadata(site, 'date')
+        if not date:
+            return
+        tz = self.get_metadata(site, 'tzinfo')
+        return date.astimezone(tz)
+
+
+    def build_output_path(self, ctx: context.OutputContext)->str:
+        filename = self.build_filename(ctx)
+        return posixpath.join(*self.src.contentpath[0], filename)
+
+    def build_url(self, ctx: context.OutputContext)->str:
+        site_url = self.get_metadata(ctx.site, 'site_url')
+        path = self.get_metadata(ctx.site, 'canonical_url')
+        if path:
+            parsed = urllib.parse.urlsplit(path)
+            if parsed.scheme or parsed.netloc:
+                return str(path)  # abs url
+
+            if not parsed.path.startswith('/'):  # relative path?
+                path = posixpath.join(*self.src.contentpath[0], path)
+        else:
+            path = self.build_output_path(ctx)
+        return cast(str, urllib.parse.urljoin(site_url, path))
+
 
     def _generate_filename(self, ctx:context.OutputContext)->str:
         filename_templ = self.get_metadata(ctx.site, 'filename_templ')
         filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
 
-
-        ret = context.eval_jinja(ctx, self, 'filename', filename_templ, {})
+        args = self.get_jinja_vars(ctx, self)
+        ret = context.eval_jinja(ctx, self, 'filename', filename_templ, args)
         return ret
 
-    def get_filename(self, ctx: context.OutputContext)->str:
-        filename = self.get_metadata(ctx.site, 'filename', None)
+    def build_filename(self, ctx: context.OutputContext)->str:
+        cached = ctx.get_filename_cache(self)
+        if cached:
+            return cached
+        filename = self._get_config_metadata(ctx.site, 'filename', '')
         if filename:
+            ctx.set_filename_cache(self, filename)
             return cast(str, filename)
 
-        return self._generate_filename(ctx)
+        ret = self._generate_filename(ctx)
+        ctx.set_filename_cache(self, ret)
+        return ret
 
-    def metadata_stem(self, site:site.Site)->str:
-        stem = self.get_metadata(site, 'stem', None)
+
+    def metadata_stem(self, site:site.Site, default:Any)->str:
+        stem = self._get_config_metadata(site, 'stem', None)
         if stem is not None:
             return cast(str, stem)
-        name = self.get_metadata(site, 'name', None)
+
+        name = self.src.contentpath[1]
         if not name:
             return ''
         d, name = posixpath.split(name)
-        return cast(str, posixpath.splitext(name)[0])
+        return posixpath.splitext(name)[0]
 
-    def metadata_ext(self, site:site.Site)->str:
-        ext = self.get_metadata(site, 'ext', None)
+    def metadata_ext(self, site:site.Site, default:Any)->str:
+        ext = self._get_config_metadata(site, 'ext', None)
         if ext is not None:
             return cast(str, ext)
-        name = self.get_metadata(site, 'name', None)
+
+        name = self.src.contentpath[1]
         if not name:
             return ''
         d, name = posixpath.split(name)
-        return cast(str, posixpath.splitext(name)[1])
+        return posixpath.splitext(name)[1]
 
+
+    def metadata_parents_dirs(self, site:site.Site, default:Any)->List[Tuple[str,...]]:
+        ret:List[Tuple[str,...]] = [()]
+        for dirname in self.src.contentpath[0]:
+            ret.append(ret[-1] + (dirname,))
+        return ret
+
+    def metadata_tzinfo(self, site:site.Site, default:Any)->datetime.tzinfo:
+        timezone = self.get_metadata(site, 'timezone')
+        return pytz.timezone(timezone)
 
     def build_html(self, context: context.OutputContext) -> Union[None, str]:
         return None
@@ -135,6 +186,13 @@ class BinContent(Content):
 
 
 class HTMLContent(Content):
+    def metadata_ext(self, site:site.Site, default:Any)->str:
+        ext = self._get_config_metadata(site, 'ext', None)
+        if ext is not None:
+            return cast(str, ext)
+
+        return '.html'
+
     def generate_metadata_file(self, site: site.Site) -> None:
         if not self.get_metadata(site, "generate_metadata_file"):
             return
@@ -145,7 +203,7 @@ class HTMLContent(Content):
         metafilename = Path(dir) / (fname + METADATA_FILE_SUFFIX)
         if metafilename.exists():
             return
-        tz: datetime.tzinfo = self.get_metadata(site, "timezone")
+        tz: datetime.tzinfo = self.get_metadata(site, "tzinfo")
         date = datetime.datetime.now().astimezone(tz).replace(microsecond=0)
         datestr = date.isoformat(timespec="seconds")
         yaml = f"""
@@ -157,7 +215,8 @@ date: {datestr}
 
     def _generate_html(self, ctx: context.OutputContext) -> str:
         src = self.body or ""
-        html = context.eval_jinja(ctx, self, "html", src, {})
+        args = self.get_jinja_vars(ctx, self)
+        html = context.eval_jinja(ctx, self, "html", src, args)
 
         return html
 

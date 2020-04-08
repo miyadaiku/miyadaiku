@@ -18,6 +18,7 @@ DEFAULTS = dict(
     draft=False,
     site_url="http://localhost:8888",
     site_title="(FIXME-site_title)",
+    canonical_url=None,
     filename_templ="{{content.stem}}{{content.ext}}",
     article_template="page_article.html",
     abstract_length=500,
@@ -190,10 +191,10 @@ def date(value: str) -> Any:
         return ret
 
 
-@value_converter
-def timezone(value: str) -> datetime.tzinfo:
-    return pytz.timezone(value)
-
+#@value_converter
+#def timezone(value: str) -> datetime.tzinfo:
+#    return pytz.timezone(value)
+#
 
 @value_converter
 def order(value: Any) -> Any:

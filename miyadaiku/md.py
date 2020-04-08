@@ -11,7 +11,6 @@ class Ext(markdown.Extension):  # type: ignore
     def extendMarkdown(self, md):  # type: ignore
         # prior to fenced_code_block
         md.preprocessors.register(JinjaPreprocessor(md), "jinja", 27.5)
-
         #        md.preprocessors.add('jinja',
         #                             JinjaPreprocessor(md),
         #                             ">normalize_whitespace")
@@ -27,7 +26,6 @@ class Ext(markdown.Extension):  # type: ignore
 
 class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
     def run(self, lines):  # type: ignore
-        meta = {"type": "article", "has_jinja": True}
         n = 0
         for l in lines:
             if not l.strip():
@@ -39,9 +37,7 @@ class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
             n += 1
 
             name, value = m[1].strip(), m[2].strip()
-            meta[name] = value
-
-        self.md.meta = meta
+            self.md.meta[name] = value
 
         text = "\n".join(lines[n:])
         while True:
@@ -111,5 +107,6 @@ def load_string(string: str) -> Tuple[Dict[str, Any], str]:
     ]
 
     md = markdown.Markdown(extensions=extensions)
+    md.meta = {"type": "article", "has_jinja": True}
     html = md.convert(string)
     return md.meta, html
