@@ -23,7 +23,7 @@ import collections.abc
 import yaml
 
 import miyadaiku
-from miyadaiku import ContentPath, ContentSrc, PathTuple
+from miyadaiku import ContentPath, ContentSrc, PathTuple, to_contentpath
 from . import config, rst, md, contents, html
 from . import site
 from .contents import Content
@@ -40,18 +40,6 @@ def is_ignored(ignores: Set[str], name: str) -> bool:
             return True
     return False
 
-
-def to_contentpath(path: str) -> ContentPath:
-    spath = str(path)
-    spath = spath.replace("\\", "/").strip("/")
-    ret = path.split("/")
-
-    for c in ret:
-        if set(c.strip()) == set("."):
-            raise ValueError("Invalid path: {path}")
-
-    dir = tuple(ret[:-1])
-    return (dir, ret[-1])
 
 
 def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:

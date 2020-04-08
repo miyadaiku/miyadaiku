@@ -1,4 +1,5 @@
 from typing import Dict, Tuple, NamedTuple, Any
+import posixpath
 import pkg_resources
 import tzlocal
 
@@ -63,3 +64,30 @@ class ContentSrc(NamedTuple):
             return pkg_resources.resource_string(self.package, self.srcpath)
         else:
             return open(self.srcpath, "rb").read()
+
+    
+def to_contentpath(path: str) -> ContentPath:
+    spath = str(path)
+    spath = spath.replace("\\", "/").strip("/")
+    ret = spath.split("/")
+
+    for c in ret:
+        if set(c.strip()) == set("."):
+            raise ValueError("Invalid path: {path}")
+
+    dir = tuple(ret[:-1])
+    return (dir, ret[-1])
+
+
+def parse_path(path:str, cwd:PathTuple)->ContentPath:
+    path = path.replace("\\", "/")
+    dir, name = posixpath.split(path)
+
+    if not dir.startswith('/'):
+        curdir = '/'.join(cwd) or '/'
+        dir = posixpath.join(curdir, dir)
+    
+    dir = posixpath.normpath(dir)  # A/B/C/../D -> A/B/D
+    path = posixpath.join(dir, name)
+
+    return to_contentpath(path)

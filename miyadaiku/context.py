@@ -22,7 +22,7 @@ from pathlib import Path, PurePosixPath
 from functools import update_wrapper
 import markupsafe
 
-from miyadaiku import ContentPath, PathTuple
+from miyadaiku import ContentPath, PathTuple, parse_path
 
 if TYPE_CHECKING:
     from .contents import Content, Article, IndexPage
@@ -60,6 +60,10 @@ class ContentProxy:
         return self.content.get_metadata(self.context.site, name)
 
     @safe_prop
+    def contentpath(self) -> ContentPath:
+        return self.content.src.contentpath
+
+    @safe_prop
     def filename(self)->str:
         return self.content.build_filename(self.context)
 
@@ -82,24 +86,45 @@ class ContentProxy:
         return self.content.build_output_path(self.context)
 
 
-    def load(self, target: Content) -> ContentProxy:
-        ret = self.context.site.files.get_content(target.src.contentpath)
-        return ContentProxy(self.context, ret)
+    def _load(self, target: str) -> Content:
+        assert isinstance(target, str)
+        path = parse_path(target, self.content.src.contentpath[0])
+        return self.context.site.files.get_content(path)
 
+    def load(self, target: str) -> ContentProxy:
+        return ContentProxy(self.context, self._load(target))
 
-#    def path(self, *args, **kwargs):
-#        return self.context.page_content.path_to(self, *args, **kwargs)
+    def _to_content(self, content:Union[ContentProxy, Content, str]) -> Content:
+        if isinstance(content,str):
+            return self._load(content)
+        elif isinstance(content, ContentProxy):
+            return content.content
+        else:
+            return content
+
+    def path(self, target: Union[ContentProxy, Content, str], *, fragment:Optional[str]=None,
+                abs_path:Optional[bool]=None, values:Optional[Any]=None,
+                npage:Optional[int]=None)->str:
+        return self.context.content.path_to(self.context, self.content, fragment=fragment, abs_path=abs_path, values=values, npage=npage)
+
+    def path_to(self, target: Union[ContentProxy, Content, str], *, fragment:Optional[str]=None,
+                abs_path:Optional[bool]=None, values:Optional[Any]=None,
+                npage:Optional[int]=None)->str:
+
+        target_content = self._to_content(target)
+        return self.context.content.path_to(self.context, target_content, fragment=fragment, abs_path=abs_path, values=values, npage=npage)
+
 #
 #    def link(self, *args, **kwargs):
 #        return self.context.page_content.link_to(self.context, self, *args, **kwargs)
 #
-#    def path_to(self, target, *args, **kwargs):
-#        target = self.load(target)
-#        return self.context.page_content.path_to(target, *args, **kwargs)
 #
-#    def link_to(self, target, *args, **kwargs):
-#        target = self.load(target)
-#        return self.context.page_content.link_to(self.context, target, *args, **kwargs)
+    def link_to(self, target: Union[ContentProxy, Content, str], *, text:Optional[str]=None, fragment:Optional[str]=None,
+                abs_path:bool=False, attrs:Optional[Dict[str,Any]]=None, plain:bool=True, values:Optional[Any]=None,
+                npage:Optional[int]=None)->str:
+
+        target_content = self._to_content(target)
+        return self.context.content.link_to(self.context, target_content, text=text, fragment=fragment, abs_path=abs_path, attrs=attrs, plain=plain, values=values, npage=npage)
 #
 #    def _to_markupsafe(self, s):
 #        if not hasattr(s, "__html__"):

@@ -1,7 +1,7 @@
 from typing import Set, List, cast, Sequence, Tuple
 import re
 from pathlib import Path
-from miyadaiku import ContentSrc, config, loader, site, context
+from miyadaiku import ContentSrc, config, loader, site, context, to_contentpath
 from conftest import SiteRoot
 import tzlocal
 
@@ -13,13 +13,13 @@ def create_contexts(siteroot: SiteRoot, srcs: Sequence[Tuple[str, str]])->List[c
     site = siteroot.load({}, {})
     ret = []
     for path, src in srcs:
-        ctx = context.JinjaOutput(site, loader.to_contentpath(path))
+        ctx = context.JinjaOutput(site, to_contentpath(path))
         ret.append(ctx)
 
     return ret
 
 def test_props(siteroot: SiteRoot)->None:
-    ctx, = create_contexts(siteroot, srcs=[("doc.html", "hi")])
+    ctx, = create_contexts(siteroot, srcs=[("docfile.html", "hi")])
 
     proxy = context.ContentProxy(ctx, ctx.content)
     assert proxy.abstract_length == 500
@@ -34,7 +34,7 @@ def test_props(siteroot: SiteRoot)->None:
     assert proxy.site_title == '(FIXME-site_title)'
     assert proxy.site_url == 'http://localhost:8888/'
     assert proxy.timezone == tzlocal.get_localzone().zone
-    assert proxy.title == ''
+    assert proxy.title == 'docfile'
 
 def test_props_date(siteroot: SiteRoot)->None:
     ctx, = create_contexts(siteroot, srcs=[("doc.html", "hi")])
@@ -190,4 +190,26 @@ canonical_url: abc.html
 hi""")])
     proxy = context.ContentProxy(ctx, ctx.content)
     assert proxy.url== 'http://localhost:8888/a/b/abc.html'
+
+
+def test_path_to(siteroot: SiteRoot)->None:
+    ctx1, ctx2, ctx3 = create_contexts(siteroot, srcs=[("a/b/c/doc1.html", ""), ("a/b/c/doc2.html", ""), ("a/b/d/doc3.html", "")])
+
+    proxy = context.ContentProxy(ctx1, ctx1.content)
+    path = proxy.path_to('/a/b/c/doc2.html')
+    assert path == 'doc2.html'
+
+    path = proxy.path_to('/a/b/d/doc3.html')
+    assert path == '../d/doc3.html'
+
+    path = proxy.path_to('../d/doc3.html', fragment="fragment1")
+    assert path == '../d/doc3.html#fragment1'
+
+    path = proxy.path_to('../d/doc3.html', abs_path=True)
+    assert path == 'http://localhost:8888/a/b/d/doc3.html'
+
+    ctx1.content.use_abs_path = True
+    path = proxy.path_to('../d/doc3.html')
+    assert path == 'http://localhost:8888/a/b/d/doc3.html'
+#    target:Content, fragment:Optional[str]=None, abs_path:bool=False, *args:Any, **kwargs:Any)->str:
 

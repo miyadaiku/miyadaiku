@@ -28,3 +28,17 @@ def test_binarycontext(siteroot: SiteRoot) -> None:
 
     assert Path(filename) == site.outputdir / "subdir/file1.txt"
     assert Path(filename).read_text() == "subdir/file1"
+
+
+def test_load(siteroot: SiteRoot)->None:
+    siteroot.write_text(siteroot.contents / "A/B/C/file1.html", "A/B/C/file1.html")
+    siteroot.write_text(siteroot.contents / "A/B/D/file2.html", "A/B/D/file1.html")
+
+    site = siteroot.load({}, {})
+    ctx = context.JinjaOutput(site, (('A', 'B', 'C'), "file1.html"))
+    proxy = context.ContentProxy(ctx, ctx.content)
+
+    file2 = proxy.load('../D/file2.html')
+    assert file2.contentpath == (('A', 'B', 'D'), "file2.html")
+
+

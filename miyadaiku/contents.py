@@ -11,6 +11,7 @@ import posixpath
 import pytz
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
+import markupsafe
 
 from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
 from . import site
@@ -20,6 +21,8 @@ from . import context
 
 
 class Content:
+    use_abs_path = False
+
     src: ContentSrc
     body: Optional[str]
 
@@ -77,12 +80,17 @@ class Content:
         tz = self.get_metadata(site, 'tzinfo')
         return date.astimezone(tz)
 
+    def metadata_title(self, site:site.Site, default:Any)->str:
+        title = self._get_config_metadata(site, 'title', '')
+        if not title:
+            return os.path.splitext(self.src.contentpath[1])[0]
+        return cast(str, title)
 
     def build_output_path(self, ctx: context.OutputContext)->str:
         filename = self.build_filename(ctx)
         return posixpath.join(*self.src.contentpath[0], filename)
 
-    def build_url(self, ctx: context.OutputContext)->str:
+    def build_url(self, ctx: context.OutputContext, values:Any=None, npage:Optional[int]=None)->str:
         site_url = self.get_metadata(ctx.site, 'site_url')
         path = self.get_metadata(ctx.site, 'canonical_url')
         if path:
@@ -159,6 +167,9 @@ class Content:
     def build_abstract(self, context: context.OutputContext, abstract_length:Optional[int]=None)->Union[None, str]:
         return None
     
+    def get_headertext(self, ctx:context.OutputContext, fragment:str)->Optional[str]:
+        return None
+
     def get_jinja_vars(
         self, ctx: context.OutputContext, content: Content
     ) -> Dict[str, Any]:
@@ -180,6 +191,63 @@ class Content:
 
         return ret
 
+    def path_to(self, ctx: context.OutputContext, target:Content, *, fragment:Optional[str]=None,
+                abs_path:Optional[bool]=None, values:Optional[Any]=None,
+                npage:Optional[int]=None)->str:
+        fragment = f'#{markupsafe.escape(fragment)}' if fragment else ''
+
+        target_url = target.build_url(ctx, values=values, npage=npage)
+        if abs_path or self.use_abs_path:
+            return target_url + fragment
+
+        target_parsed = urllib.parse.urlsplit(target_url)
+
+        my_parsed = urllib.parse.urlsplit(self.build_url(ctx))
+
+        # return abs url if protocol or server differs
+        if ((target_parsed.scheme != my_parsed.scheme)
+                or (target_parsed.netloc != my_parsed.netloc)):
+            return target_url + fragment
+
+        my_dir = posixpath.dirname(my_parsed.path)
+        if my_dir == target_parsed.path:
+            ret_path = my_dir
+        else:
+            ret_path = posixpath.relpath(target_parsed.path, my_dir)
+
+        if target_parsed.path.endswith('/') and (not ret_path.endswith('/')):
+            ret_path = ret_path + '/'
+        return ret_path + fragment
+
+
+
+    def link_to(self, ctx: context.OutputContext, target:Content, *, text:Optional[str]=None, fragment:Optional[str]=None,
+                abs_path:bool=False, attrs:Optional[Dict[str, Any]]=None, plain:bool=True, values:Optional[Any]=None,
+                npage:Optional[int]=None)->str:
+
+        if text is None:
+            if fragment:
+                text = target.get_headertext(ctx, fragment)
+                if text is None:
+                    raise ValueError(f'Cannot find fragment: {fragment}')
+
+                if plain:
+                    soup = BeautifulSoup(text, 'html.parser')
+                    text = markupsafe.escape(soup.text.strip())
+
+            if not text:
+                text = markupsafe.escape(target.get_metadata(ctx.site, 'title'))
+
+        else:
+            text = markupsafe.escape(text or '')
+
+        s_attrs = []
+        if attrs:
+            for k, v in attrs.items():
+                s_attrs.append(f"{markupsafe.escape(k)}='{markupsafe.escape(v)}'")
+        path = markupsafe.escape(self.path_to(ctx, target, fragment=fragment,
+                                              abs_path=abs_path, values=values, npage=npage))
+        return markupsafe.Markup(f"<a href='{path}' { ' '.join(s_attrs) }>{text}</a>")
 
 class BinContent(Content):
     pass
@@ -359,6 +427,24 @@ date: {datestr}
         headers, header_anchors, fragments = self._get_headers(ctx)
         return fragments
 
+    def get_headertext(self, ctx:context.OutputContext, fragment:str)->Optional[str]:
+        if self._in_get_headers:
+            return 'dummy'
+
+        headers, header_anchors, fragments = self._get_headers(ctx)
+        for id, elem, text in fragments:
+            if id == fragment:
+                return text
+
+        for id, elem, text in headers:
+            if id == fragment:
+                return text
+
+        for id, elem, text in header_anchors:
+            if id == fragment:
+                return text
+
+        return None
     
 
 class Article(HTMLContent):
@@ -374,7 +460,7 @@ class IndexPage(HTMLContent):
 
 
 class FeedPage(Content):
-    pass
+    use_abs_path = True
 
 
 CONTENT_CLASSES = {
