@@ -2,21 +2,9 @@ from typing import Set, List, cast, Sequence, Tuple
 import re
 from pathlib import Path
 from miyadaiku import ContentSrc, config, loader, site, context, to_contentpath
-from conftest import SiteRoot
+from conftest import SiteRoot, create_contexts
 import tzlocal
 
-def create_contexts(siteroot: SiteRoot, srcs: Sequence[Tuple[str, str]])->List[context.JinjaOutput]:
-    siteroot.clear()
-    for path, src in srcs:
-        siteroot.write_text(siteroot.contents / path, src)
-
-    site = siteroot.load({}, {})
-    ret = []
-    for path, src in srcs:
-        ctx = context.JinjaOutput(site, to_contentpath(path))
-        ret.append(ctx)
-
-    return ret
 
 def test_props(siteroot: SiteRoot)->None:
     ctx, = create_contexts(siteroot, srcs=[("docfile.html", "hi")])
@@ -102,20 +90,6 @@ def test_get_abstract(siteroot: SiteRoot)->None:
     txt = re.sub(r"<[^>]*>", "", str(proxy.abstract))
     assert len(txt) == 21
 
-
-def test_get_headers(siteroot: SiteRoot) -> None:
-    ctx, = create_contexts(siteroot, srcs=[("doc.html", """
-<h1>header1{{1+1}}</h1>
-<div>body1</div>
-
-<h2>header2{{2+2}}</h2>
-<div>body2</div>
-""")])
-
-    headers = ctx.content.get_headers(ctx)
-
-    assert headers == [context.HTMLIDInfo(id='h_header12', tag='h1', text='header12'), 
-                       context.HTMLIDInfo(id='h_header24', tag='h2', text='header24')]
 
 
 def test_imports(siteroot: SiteRoot)->None:
@@ -211,5 +185,4 @@ def test_path_to(siteroot: SiteRoot)->None:
     ctx1.content.use_abs_path = True
     path = proxy.path_to('../d/doc3.html')
     assert path == 'http://localhost:8888/a/b/d/doc3.html'
-#    target:Content, fragment:Optional[str]=None, abs_path:bool=False, *args:Any, **kwargs:Any)->str:
 

@@ -1,11 +1,13 @@
 import pytest
 import pathlib
 import logging
-from typing import Any, Dict
+from typing import Any, Dict,Set, List, cast, Sequence, Tuple
+
 import yaml
 import shutil
 
 import miyadaiku.site
+from miyadaiku import ContentSrc, config, loader, site, context, to_contentpath
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -79,4 +81,17 @@ class SiteRoot:
 @pytest.fixture # type: ignore
 def siteroot(tmpdir: Any) -> SiteRoot:
     ret = SiteRoot(tmpdir)
+    return ret
+
+def create_contexts(siteroot: SiteRoot, srcs: Sequence[Tuple[str, str]])->List[context.JinjaOutput]:
+    siteroot.clear()
+    for path, src in srcs:
+        siteroot.write_text(siteroot.contents / path, src)
+
+    site = siteroot.load({}, {})
+    ret = []
+    for path, src in srcs:
+        ctx = context.JinjaOutput(site, to_contentpath(path))
+        ret.append(ctx)
+
     return ret

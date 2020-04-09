@@ -39,3 +39,10 @@ def test_value() -> None:
     assert cfg.get((), "tags") == ["tag1", "tag2"]
     assert cfg.get((), "date") == datetime.datetime(2020, 1, 1, 0, 0, 0)
     assert cfg.get((), "order") == 100
+
+def test_import() -> None:
+    cfg = config.Config({"imports": "a"})
+    cfg.add(("dir1",), {"imports": "b"})
+    cfg.add_themecfg({"imports": "c"})
+
+    assert set(cfg.get(('dir1',), 'imports')) == {'a', 'b', 'c'}

@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, DefaultDict, Any, Callable
+from typing import List, Dict, Optional, DefaultDict, Any, Callable, Union
 import os
 import collections
 import dateutil.parser
@@ -63,6 +63,7 @@ def remove_theme_confs(cfg: Dict[str, Any]) -> Dict[str, Any]:
             ret[k] = v
     return ret
 
+CUMULATIVE_CONFIGS = {'imports'}
 
 class Config:
     updated: float
@@ -104,6 +105,9 @@ class Config:
     _omit = object()
 
     def get(self, dirname: PathTuple, name: str, default: Any = _omit) -> Any:
+        if name in CUMULATIVE_CONFIGS:
+            return self.get_cumulative(dirname, name, default)
+    
         while True:
             configs = self._configs.get(dirname, None)
             if configs:
@@ -128,6 +132,42 @@ class Config:
                 raise AttributeError(f"Invalid config name: {dirname}:{name}")
 
             dirname = dirname[:-1]
+
+    def get_cumulative(self, dirname: PathTuple, name: str, default: Any = _omit) -> Any:
+        ret:List[Any] = []
+        found = False
+        while True:
+            configs = self._configs.get(dirname, None)
+            if configs:
+                for config in configs:
+                    if name in config:
+                        found = True
+                        ret.extend(format_value(name, config[name]))
+            
+            if not dirname:
+                if name in self.root:
+                    found = True
+                    ret.extend(format_value(name, self.root[name]))
+
+                for config in self.themes:
+                    if name in config:
+                        found = True
+                        ret.extend(format_value(name, config[name]))
+
+                if name in DEFAULTS:
+                    found = True
+                    ret.extend(format_value(name, DEFAULTS[name]))
+
+                break
+    
+            dirname = dirname[:-1]
+
+        if not found:
+            if default is not self._omit:
+                return default
+
+        return ret
+
 
     def getbool(self, dirname: PathTuple, name: str, default: Any = _omit) -> bool:
         ret = self.get(dirname, name, default)
@@ -202,7 +242,9 @@ def order(value: Any) -> Any:
 
 
 @value_converter
-def imports(value: Optional[str]) -> Any:
+def imports(value: Optional[Union[str, List[str]]]) -> Any:
+    if isinstance(value, List):
+        return value
     if value:
         return [s.strip() for s in value.split(",")]
     else:
