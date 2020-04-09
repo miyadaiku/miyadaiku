@@ -93,7 +93,13 @@ def test_target(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
         """
 .. target:: abcdefg
+
+hello
 """
     )
     metadata, text = md.load(sitedir / "a.md")
-    assert text == """<div class="header_target" id="abcdefg"></div>"""
+    assert (
+        text
+        == """<div class="header_target" id="abcdefg"></div>
+<p>hello</p>"""
+    )

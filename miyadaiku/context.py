@@ -141,11 +141,27 @@ class ContentProxy:
             npage=npage,
         )
 
-    #
-    #    def link(self, *args, **kwargs):
-    #        return self.context.page_content.link_to(self.context, self, *args, **kwargs)
-    #
-    #
+    def link(
+        self,
+        *,
+        text: Optional[str] = None,
+        fragment: Optional[str] = None,
+        abs_path: bool = False,
+        attrs: Optional[Dict[str, Any]] = None,
+        values: Optional[Any] = None,
+        npage: Optional[int] = None,
+    ) -> str:
+        return self.context.content.link_to(
+            self.context,
+            self.content,
+            text=text,
+            fragment=fragment,
+            abs_path=abs_path,
+            attrs=attrs,
+            values=values,
+            npage=npage,
+        )
+
     def link_to(
         self,
         target: Union[ContentProxy, Content, str],
@@ -154,11 +170,9 @@ class ContentProxy:
         fragment: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
-        plain: bool = True,
         values: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
-
         target_content = self._to_content(target)
         return self.context.content.link_to(
             self.context,
@@ -167,22 +181,9 @@ class ContentProxy:
             fragment=fragment,
             abs_path=abs_path,
             attrs=attrs,
-            plain=plain,
             values=values,
             npage=npage,
         )
-
-
-#
-#    def _to_markupsafe(self, s):
-#        if not hasattr(s, "__html__"):
-#            s = HTMLValue(s)
-#        return s
-#
-#    @property
-#    def abstract(self):
-#        ret = self.__getattr__("abstract")
-#        return self._to_markupsafe(ret)
 
 
 class ConfigProxy:
@@ -231,6 +232,7 @@ def eval_jinja(
     text: str,
     kwargs: Dict[str, Any],
 ) -> str:
+    ctx.add_depend(content)
     args = content.get_jinja_vars(ctx, content)
     args.update(kwargs)
     template = ctx.site.jinjaenv.from_string(text)

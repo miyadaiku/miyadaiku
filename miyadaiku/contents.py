@@ -245,20 +245,14 @@ class Content:
         fragment: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
-        plain: bool = True,
         values: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
-
         if text is None:
             if fragment:
                 text = target.get_headertext(ctx, fragment)
                 if text is None:
                     raise ValueError(f"Cannot find fragment: {fragment}")
-
-                if plain:
-                    soup = BeautifulSoup(text, "html.parser")
-                    text = markupsafe.escape(soup.text.strip())
 
             if not text:
                 text = markupsafe.escape(target.get_metadata(ctx.site, "title"))
@@ -473,8 +467,9 @@ date: {datestr}
     def get_headertext(
         self, ctx: context.OutputContext, fragment: str
     ) -> Optional[str]:
+
         if self._in_get_headers:
-            return "dummy"
+            return "!!!! Circular reference detected !!!"
 
         headers, header_anchors, fragments = self._get_headers(ctx)
         for id, elem, text in fragments:
