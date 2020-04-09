@@ -164,5 +164,3 @@ class Site:
         self.builders = []
         for contentpath, content in self.files.items():
             self.builders.extend(createBuilder(self, content))
-
-

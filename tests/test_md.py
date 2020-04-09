@@ -1,6 +1,5 @@
 from pathlib import Path
 from miyadaiku import md
-import datetime
 
 
 def test_meta(sitedir: Path) -> None:

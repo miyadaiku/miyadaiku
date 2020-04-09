@@ -1,8 +1,6 @@
-from typing import Set, List, cast
 from pathlib import Path
-from miyadaiku import ContentSrc, config, loader, site, context
+from miyadaiku import context
 from conftest import SiteRoot
-
 
 
 def test_htmlcontext(siteroot: SiteRoot) -> None:
@@ -30,15 +28,13 @@ def test_binarycontext(siteroot: SiteRoot) -> None:
     assert Path(filename).read_text() == "subdir/file1"
 
 
-def test_load(siteroot: SiteRoot)->None:
+def test_load(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "A/B/C/file1.html", "A/B/C/file1.html")
     siteroot.write_text(siteroot.contents / "A/B/D/file2.html", "A/B/D/file1.html")
 
     site = siteroot.load({}, {})
-    ctx = context.JinjaOutput(site, (('A', 'B', 'C'), "file1.html"))
+    ctx = context.JinjaOutput(site, (("A", "B", "C"), "file1.html"))
     proxy = context.ContentProxy(ctx, ctx.content)
 
-    file2 = proxy.load('../D/file2.html')
-    assert file2.contentpath == (('A', 'B', 'D'), "file2.html")
-
-
+    file2 = proxy.load("../D/file2.html")
+    assert file2.contentpath == (("A", "B", "D"), "file2.html")

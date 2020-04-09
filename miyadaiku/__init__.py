@@ -65,7 +65,7 @@ class ContentSrc(NamedTuple):
         else:
             return open(self.srcpath, "rb").read()
 
-    
+
 def to_contentpath(path: str) -> ContentPath:
     spath = str(path)
     spath = spath.replace("\\", "/").strip("/")
@@ -79,14 +79,14 @@ def to_contentpath(path: str) -> ContentPath:
     return (dir, ret[-1])
 
 
-def parse_path(path:str, cwd:PathTuple)->ContentPath:
+def parse_path(path: str, cwd: PathTuple) -> ContentPath:
     path = path.replace("\\", "/")
     dir, name = posixpath.split(path)
 
-    if not dir.startswith('/'):
-        curdir = '/'.join(cwd) or '/'
+    if not dir.startswith("/"):
+        curdir = "/".join(cwd) or "/"
         dir = posixpath.join(curdir, dir)
-    
+
     dir = posixpath.normpath(dir)  # A/B/C/../D -> A/B/D
     path = posixpath.join(dir, name)
 

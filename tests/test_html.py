@@ -1,6 +1,5 @@
 from pathlib import Path
 from miyadaiku import html
-import datetime
 
 
 def test_load(sitedir: Path) -> None:

@@ -41,7 +41,6 @@ def is_ignored(ignores: Set[str], name: str) -> bool:
     return False
 
 
-
 def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
     logger.info(f"Loading {path}")
     path = path.expanduser().resolve()

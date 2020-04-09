@@ -1,13 +1,13 @@
 import pytest
 import pathlib
 import logging
-from typing import Any, Dict,Set, List, cast, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 import yaml
 import shutil
 
 import miyadaiku.site
-from miyadaiku import ContentSrc, config, loader, site, context, to_contentpath
+from miyadaiku import context, to_contentpath
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -17,7 +17,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 # miyadaiku.core.DEBUG = True
 
 
-def build_sitedir(path: pathlib.Path)->pathlib.Path:
+def build_sitedir(path: pathlib.Path) -> pathlib.Path:
     site = path / "site"
     if site.is_dir():
         shutil.rmtree(site)
@@ -28,10 +28,12 @@ def build_sitedir(path: pathlib.Path)->pathlib.Path:
     (site / "templates").mkdir()
     return site
 
-@pytest.fixture # type: ignore
+
+@pytest.fixture  # type: ignore
 def sitedir(tmpdir: Any) -> pathlib.Path:
     d = pathlib.Path(str(tmpdir))
     return build_sitedir(d)
+
 
 class SiteRoot:
     path: pathlib.Path
@@ -49,7 +51,7 @@ class SiteRoot:
         self.templates = self.path / "templates"
         self.modules = self.path / "modules"
 
-    def clear(self)->None:
+    def clear(self) -> None:
         build_sitedir(self.path.parent)
 
     def load(
@@ -78,12 +80,15 @@ class SiteRoot:
         return path
 
 
-@pytest.fixture # type: ignore
+@pytest.fixture  # type: ignore
 def siteroot(tmpdir: Any) -> SiteRoot:
     ret = SiteRoot(tmpdir)
     return ret
 
-def create_contexts(siteroot: SiteRoot, srcs: Sequence[Tuple[str, str]])->List[context.JinjaOutput]:
+
+def create_contexts(
+    siteroot: SiteRoot, srcs: Sequence[Tuple[str, str]]
+) -> List[context.JinjaOutput]:
     siteroot.clear()
     for path, src in srcs:
         siteroot.write_text(siteroot.contents / path, src)

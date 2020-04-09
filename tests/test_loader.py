@@ -1,15 +1,16 @@
-import pprint
-from typing import Set, List
-from pathlib import Path
+from typing import Set
 from miyadaiku import ContentSrc, config, loader, site, contents
 from conftest import SiteRoot
 
-def test_walk_directory(siteroot:SiteRoot) -> None:
 
-    file1 = siteroot.write_text(siteroot.contents / 'dir1/file1', '')
-    file11 = siteroot.write_text(siteroot.contents / 'dir1/file1.props.yml', 'name: value')
-    file2 = siteroot.write_text(siteroot.contents / 'dir1/dir2/file2', '')
-    siteroot.write_text(siteroot.contents / 'dir1/file3.bak', '')
+def test_walk_directory(siteroot: SiteRoot) -> None:
+
+    file1 = siteroot.write_text(siteroot.contents / "dir1/file1", "")
+    file11 = siteroot.write_text(
+        siteroot.contents / "dir1/file1.props.yml", "name: value"
+    )
+    file2 = siteroot.write_text(siteroot.contents / "dir1/dir2/file2", "")
+    siteroot.write_text(siteroot.contents / "dir1/file3.bak", "")
 
     results = loader.walk_directory(siteroot.contents, set(["*.bak"]))
 
@@ -32,7 +33,6 @@ def test_walk_directory(siteroot:SiteRoot) -> None:
     )
 
 
-
 def test_walkpackage() -> None:
     results = loader.walk_package("package1", "contents", set(["*.bak"]))
     all = sorted(results, key=lambda d: d.srcpath)
@@ -48,14 +48,13 @@ def test_walkpackage() -> None:
 
 
 def test_loadfiles(siteroot: SiteRoot) -> None:
-    siteroot.write_text(siteroot.contents/ "root1.yml", "root_prop: root_prop_value")
-    siteroot.write_text(siteroot.contents/ "root1.txt", "content_root1")
-    siteroot.write_text(siteroot.contents/ "root_content1.txt", "root_content1")
+    siteroot.write_text(siteroot.contents / "root1.yml", "root_prop: root_prop_value")
+    siteroot.write_text(siteroot.contents / "root1.txt", "content_root1")
+    siteroot.write_text(siteroot.contents / "root_content1.txt", "root_content1")
 
     siteroot.write_text(siteroot.files / "root1.txt", "file_root1")
-    siteroot.write_text(siteroot.files/ "root_file1.txt","root_file1")
-    siteroot.write_text(siteroot.files/ "root_file2.rst", "root_file2")
-
+    siteroot.write_text(siteroot.files / "root_file1.txt", "root_file1")
+    siteroot.write_text(siteroot.files / "root_file2.rst", "root_file2")
 
     files = loader.ContentFiles()
     cfg = config.Config({})
@@ -92,11 +91,9 @@ def test_loadfiles(siteroot: SiteRoot) -> None:
     assert cfg.get((), "package3_prop_a1") == "value_package3_a1"
 
 
-
-
-
 def test_get_contents(siteroot: SiteRoot) -> None:
-    siteroot.write_text(siteroot.contents/ "a.rst", 
+    siteroot.write_text(
+        siteroot.contents / "a.rst",
         """
 .. article::
    :date: 2017-01-01
@@ -104,10 +101,11 @@ def test_get_contents(siteroot: SiteRoot) -> None:
    :tags: tag1, tag2
    :prop1: propvalue1
 test
-"""
+""",
     )
 
-    siteroot.write_text(siteroot.contents/ "b.rst", 
+    siteroot.write_text(
+        siteroot.contents / "b.rst",
         """
 .. article::
    :date: 2017-01-02
@@ -115,10 +113,11 @@ test
    :tags: tag1, tag3
 
 test
-"""
+""",
     )
 
-    siteroot.write_text(siteroot.contents/ "sub1/c.rst", 
+    siteroot.write_text(
+        siteroot.contents / "sub1/c.rst",
         """
 .. article::
    :date: 2017-01-03
@@ -126,7 +125,7 @@ test
    :tags: tag2, tag3
 
 test
-"""
+""",
     )
 
     s = site.Site()
@@ -166,5 +165,3 @@ test
     assert set(f.src.contentpath for f in d[("tag3",)]) == set(
         [((), "b.rst"), (("sub1",), "c.rst")]
     )
-
-

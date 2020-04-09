@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Any, TYPE_CHECKING, Union, List, Dict, cast, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import re
 import unicodedata
 import urllib.parse
@@ -17,7 +17,6 @@ from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
 from . import site
 from . import config
 from . import context
-
 
 
 class Content:
@@ -54,7 +53,9 @@ class Content:
 
     _omit = object()
 
-    def _get_config_metadata(self, site: site.Site, name: str, default: Any = _omit) ->Any:
+    def _get_config_metadata(
+        self, site: site.Site, name: str, default: Any = _omit
+    ) -> Any:
         if name in self.src.metadata:
             return config.format_value(name, self.src.metadata.get(name))
 
@@ -70,54 +71,59 @@ class Content:
         if method:
             return method(site, default)
 
-
         return self._get_config_metadata(site, name, default)
 
-    def metadata_date(self, site:site.Site, default:Any)->Any:
-        date = self._get_config_metadata(site, 'date')
+    def metadata_date(self, site: site.Site, default: Any) -> Any:
+        date = self._get_config_metadata(site, "date")
         if not date:
             return
-        tz = self.get_metadata(site, 'tzinfo')
+        tz = self.get_metadata(site, "tzinfo")
         return date.astimezone(tz)
 
-    def metadata_title(self, site:site.Site, default:Any)->str:
-        title = self._get_config_metadata(site, 'title', '')
+    def metadata_title(self, site: site.Site, default: Any) -> str:
+        title = self._get_config_metadata(site, "title", "")
         if not title:
             return os.path.splitext(self.src.contentpath[1])[0]
         return cast(str, title)
 
-    def build_output_path(self, ctx: context.OutputContext)->str:
+    def build_output_path(self, ctx: context.OutputContext) -> str:
         filename = self.build_filename(ctx)
         return posixpath.join(*self.src.contentpath[0], filename)
 
-    def build_url(self, ctx: context.OutputContext, values:Any=None, npage:Optional[int]=None)->str:
-        site_url = self.get_metadata(ctx.site, 'site_url')
-        path = self.get_metadata(ctx.site, 'canonical_url')
+    def build_url(
+        self,
+        ctx: context.OutputContext,
+        values: Any = None,
+        npage: Optional[int] = None,
+    ) -> str:
+        site_url = self.get_metadata(ctx.site, "site_url")
+        path = self.get_metadata(ctx.site, "canonical_url")
         if path:
             parsed = urllib.parse.urlsplit(path)
             if parsed.scheme or parsed.netloc:
                 return str(path)  # abs url
 
-            if not parsed.path.startswith('/'):  # relative path?
+            if not parsed.path.startswith("/"):  # relative path?
                 path = posixpath.join(*self.src.contentpath[0], path)
         else:
             path = self.build_output_path(ctx)
         return cast(str, urllib.parse.urljoin(site_url, path))
 
-
-    def _generate_filename(self, ctx:context.OutputContext)->str:
-        filename_templ = self.get_metadata(ctx.site, 'filename_templ')
-        filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
+    def _generate_filename(self, ctx: context.OutputContext) -> str:
+        filename_templ = self.get_metadata(ctx.site, "filename_templ")
+        filename_templ = (
+            "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
+        )
 
         args = self.get_jinja_vars(ctx, self)
-        ret = context.eval_jinja(ctx, self, 'filename', filename_templ, args)
+        ret = context.eval_jinja(ctx, self, "filename", filename_templ, args)
         return ret
 
-    def build_filename(self, ctx: context.OutputContext)->str:
+    def build_filename(self, ctx: context.OutputContext) -> str:
         cached = ctx.get_filename_cache(self)
         if cached:
             return cached
-        filename = self._get_config_metadata(ctx.site, 'filename', '')
+        filename = self._get_config_metadata(ctx.site, "filename", "")
         if filename:
             ctx.set_filename_cache(self, filename)
             return cast(str, filename)
@@ -126,48 +132,51 @@ class Content:
         ctx.set_filename_cache(self, ret)
         return ret
 
-
-    def metadata_stem(self, site:site.Site, default:Any)->str:
-        stem = self._get_config_metadata(site, 'stem', None)
+    def metadata_stem(self, site: site.Site, default: Any) -> str:
+        stem = self._get_config_metadata(site, "stem", None)
         if stem is not None:
             return cast(str, stem)
 
         name = self.src.contentpath[1]
         if not name:
-            return ''
+            return ""
         d, name = posixpath.split(name)
         return posixpath.splitext(name)[0]
 
-    def metadata_ext(self, site:site.Site, default:Any)->str:
-        ext = self._get_config_metadata(site, 'ext', None)
+    def metadata_ext(self, site: site.Site, default: Any) -> str:
+        ext = self._get_config_metadata(site, "ext", None)
         if ext is not None:
             return cast(str, ext)
 
         name = self.src.contentpath[1]
         if not name:
-            return ''
+            return ""
         d, name = posixpath.split(name)
         return posixpath.splitext(name)[1]
 
-
-    def metadata_parents_dirs(self, site:site.Site, default:Any)->List[Tuple[str,...]]:
-        ret:List[Tuple[str,...]] = [()]
+    def metadata_parents_dirs(
+        self, site: site.Site, default: Any
+    ) -> List[Tuple[str, ...]]:
+        ret: List[Tuple[str, ...]] = [()]
         for dirname in self.src.contentpath[0]:
             ret.append(ret[-1] + (dirname,))
         return ret
 
-    def metadata_tzinfo(self, site:site.Site, default:Any)->datetime.tzinfo:
-        timezone = self.get_metadata(site, 'timezone')
+    def metadata_tzinfo(self, site: site.Site, default: Any) -> datetime.tzinfo:
+        timezone = self.get_metadata(site, "timezone")
         return pytz.timezone(timezone)
 
     def build_html(self, context: context.OutputContext) -> Union[None, str]:
         return None
 
-
-    def build_abstract(self, context: context.OutputContext, abstract_length:Optional[int]=None)->Union[None, str]:
+    def build_abstract(
+        self, context: context.OutputContext, abstract_length: Optional[int] = None
+    ) -> Union[None, str]:
         return None
-    
-    def get_headertext(self, ctx:context.OutputContext, fragment:str)->Optional[str]:
+
+    def get_headertext(
+        self, ctx: context.OutputContext, fragment: str
+    ) -> Optional[str]:
         return None
 
     def get_jinja_vars(
@@ -191,10 +200,17 @@ class Content:
 
         return ret
 
-    def path_to(self, ctx: context.OutputContext, target:Content, *, fragment:Optional[str]=None,
-                abs_path:Optional[bool]=None, values:Optional[Any]=None,
-                npage:Optional[int]=None)->str:
-        fragment = f'#{markupsafe.escape(fragment)}' if fragment else ''
+    def path_to(
+        self,
+        ctx: context.OutputContext,
+        target: Content,
+        *,
+        fragment: Optional[str] = None,
+        abs_path: Optional[bool] = None,
+        values: Optional[Any] = None,
+        npage: Optional[int] = None,
+    ) -> str:
+        fragment = f"#{markupsafe.escape(fragment)}" if fragment else ""
 
         target_url = target.build_url(ctx, values=values, npage=npage)
         if abs_path or self.use_abs_path:
@@ -205,8 +221,9 @@ class Content:
         my_parsed = urllib.parse.urlsplit(self.build_url(ctx))
 
         # return abs url if protocol or server differs
-        if ((target_parsed.scheme != my_parsed.scheme)
-                or (target_parsed.netloc != my_parsed.netloc)):
+        if (target_parsed.scheme != my_parsed.scheme) or (
+            target_parsed.netloc != my_parsed.netloc
+        ):
             return target_url + fragment
 
         my_dir = posixpath.dirname(my_parsed.path)
@@ -215,51 +232,68 @@ class Content:
         else:
             ret_path = posixpath.relpath(target_parsed.path, my_dir)
 
-        if target_parsed.path.endswith('/') and (not ret_path.endswith('/')):
-            ret_path = ret_path + '/'
+        if target_parsed.path.endswith("/") and (not ret_path.endswith("/")):
+            ret_path = ret_path + "/"
         return ret_path + fragment
 
-
-
-    def link_to(self, ctx: context.OutputContext, target:Content, *, text:Optional[str]=None, fragment:Optional[str]=None,
-                abs_path:bool=False, attrs:Optional[Dict[str, Any]]=None, plain:bool=True, values:Optional[Any]=None,
-                npage:Optional[int]=None)->str:
+    def link_to(
+        self,
+        ctx: context.OutputContext,
+        target: Content,
+        *,
+        text: Optional[str] = None,
+        fragment: Optional[str] = None,
+        abs_path: bool = False,
+        attrs: Optional[Dict[str, Any]] = None,
+        plain: bool = True,
+        values: Optional[Any] = None,
+        npage: Optional[int] = None,
+    ) -> str:
 
         if text is None:
             if fragment:
                 text = target.get_headertext(ctx, fragment)
                 if text is None:
-                    raise ValueError(f'Cannot find fragment: {fragment}')
+                    raise ValueError(f"Cannot find fragment: {fragment}")
 
                 if plain:
-                    soup = BeautifulSoup(text, 'html.parser')
+                    soup = BeautifulSoup(text, "html.parser")
                     text = markupsafe.escape(soup.text.strip())
 
             if not text:
-                text = markupsafe.escape(target.get_metadata(ctx.site, 'title'))
+                text = markupsafe.escape(target.get_metadata(ctx.site, "title"))
 
         else:
-            text = markupsafe.escape(text or '')
+            text = markupsafe.escape(text or "")
 
         s_attrs = []
         if attrs:
             for k, v in attrs.items():
                 s_attrs.append(f"{markupsafe.escape(k)}='{markupsafe.escape(v)}'")
-        path = markupsafe.escape(self.path_to(ctx, target, fragment=fragment,
-                                              abs_path=abs_path, values=values, npage=npage))
+        path = markupsafe.escape(
+            self.path_to(
+                ctx,
+                target,
+                fragment=fragment,
+                abs_path=abs_path,
+                values=values,
+                npage=npage,
+            )
+        )
         return markupsafe.Markup(f"<a href='{path}' { ' '.join(s_attrs) }>{text}</a>")
+
 
 class BinContent(Content):
     pass
 
 
 class HTMLContent(Content):
-    def metadata_ext(self, site:site.Site, default:Any)->str:
-        ext = self._get_config_metadata(site, 'ext', None)
+    def metadata_ext(self, site: site.Site, default: Any) -> str:
+        ext = self._get_config_metadata(site, "ext", None)
         if ext is not None:
             return cast(str, ext)
 
-        return '.html'
+        return ".html"
 
     def generate_metadata_file(self, site: site.Site) -> None:
         if not self.get_metadata(site, "generate_metadata_file"):
@@ -362,7 +396,12 @@ date: {datestr}
         return htmlinfo.html
 
     _in_get_headers = False
-    def _get_headers(self, ctx:context.OutputContext)->Tuple[List[context.HTMLIDInfo],List[context.HTMLIDInfo],List[context.HTMLIDInfo]]:
+
+    def _get_headers(
+        self, ctx: context.OutputContext
+    ) -> Tuple[
+        List[context.HTMLIDInfo], List[context.HTMLIDInfo], List[context.HTMLIDInfo]
+    ]:
         if self._in_get_headers:
             return [], [], []
 
@@ -381,15 +420,17 @@ date: {datestr}
         finally:
             self._in_get_headers = False
 
-    def build_abstract(self, context:context.OutputContext, abstract_length:Optional[int]=None) -> str:
+    def build_abstract(
+        self, context: context.OutputContext, abstract_length: Optional[int] = None
+    ) -> str:
         html = self.build_html(context)
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
 
         for elem in soup(["head", "style", "script", "title"]):
             elem.extract()
 
         if abstract_length is None:
-            abstract_length = self.get_metadata(context.site, 'abstract_length')
+            abstract_length = self.get_metadata(context.site, "abstract_length")
 
         if abstract_length == 0:
             return str(soup)
@@ -401,7 +442,7 @@ date: {datestr}
                 curlen = len(c.strip())
                 if slen + curlen > abstract_length:
                     last_c = c
-                    valid_len = abstract_length - slen-curlen
+                    valid_len = abstract_length - slen - curlen
                     break
                 slen += curlen
         else:
@@ -415,21 +456,25 @@ date: {datestr}
         last_c.string.replace_with(last_c[:valid_len])
         return str(soup)
 
-    def get_headers(self, ctx:context.OutputContext)->List[context.HTMLIDInfo]:
+    def get_headers(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
         headers, header_anchors, fragments = self._get_headers(ctx)
         return headers
 
-    def get_header_anchors(self, ctx:context.OutputContext)->List[context.HTMLIDInfo]:
+    def get_header_anchors(
+        self, ctx: context.OutputContext
+    ) -> List[context.HTMLIDInfo]:
         headers, header_anchors, fragments = self._get_headers(ctx)
         return header_anchors
 
-    def get_fragments(self, ctx:context.OutputContext)->List[context.HTMLIDInfo]:
+    def get_fragments(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
         headers, header_anchors, fragments = self._get_headers(ctx)
         return fragments
 
-    def get_headertext(self, ctx:context.OutputContext, fragment:str)->Optional[str]:
+    def get_headertext(
+        self, ctx: context.OutputContext, fragment: str
+    ) -> Optional[str]:
         if self._in_get_headers:
-            return 'dummy'
+            return "dummy"
 
         headers, header_anchors, fragments = self._get_headers(ctx)
         for id, elem, text in fragments:
@@ -445,7 +490,7 @@ date: {datestr}
                 return text
 
         return None
-    
+
 
 class Article(HTMLContent):
     pass

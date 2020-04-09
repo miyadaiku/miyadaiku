@@ -3,7 +3,6 @@ import os
 import collections
 import dateutil.parser
 import datetime
-import pytz
 
 import miyadaiku
 from miyadaiku import ContentSrc, PathTuple
@@ -63,7 +62,9 @@ def remove_theme_confs(cfg: Dict[str, Any]) -> Dict[str, Any]:
             ret[k] = v
     return ret
 
-CUMULATIVE_CONFIGS = {'imports'}
+
+CUMULATIVE_CONFIGS = {"imports"}
+
 
 class Config:
     updated: float
@@ -107,7 +108,7 @@ class Config:
     def get(self, dirname: PathTuple, name: str, default: Any = _omit) -> Any:
         if name in CUMULATIVE_CONFIGS:
             return self.get_cumulative(dirname, name, default)
-    
+
         while True:
             configs = self._configs.get(dirname, None)
             if configs:
@@ -133,8 +134,10 @@ class Config:
 
             dirname = dirname[:-1]
 
-    def get_cumulative(self, dirname: PathTuple, name: str, default: Any = _omit) -> Any:
-        ret:List[Any] = []
+    def get_cumulative(
+        self, dirname: PathTuple, name: str, default: Any = _omit
+    ) -> Any:
+        ret: List[Any] = []
         found = False
         while True:
             configs = self._configs.get(dirname, None)
@@ -143,7 +146,7 @@ class Config:
                     if name in config:
                         found = True
                         ret.extend(format_value(name, config[name]))
-            
+
             if not dirname:
                 if name in self.root:
                     found = True
@@ -159,7 +162,7 @@ class Config:
                     ret.extend(format_value(name, DEFAULTS[name]))
 
                 break
-    
+
             dirname = dirname[:-1]
 
         if not found:
@@ -167,7 +170,6 @@ class Config:
                 return default
 
         return ret
-
 
     def getbool(self, dirname: PathTuple, name: str, default: Any = _omit) -> bool:
         ret = self.get(dirname, name, default)
@@ -231,10 +233,11 @@ def date(value: str) -> Any:
         return ret
 
 
-#@value_converter
-#def timezone(value: str) -> datetime.tzinfo:
+# @value_converter
+# def timezone(value: str) -> datetime.tzinfo:
 #    return pytz.timezone(value)
 #
+
 
 @value_converter
 def order(value: Any) -> Any:
