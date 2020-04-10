@@ -68,7 +68,7 @@ class ContentProxy:
 
     @safe_prop
     def filename(self) -> str:
-        return self.content.build_filename(self.context)
+        return self.content.build_filename(self.context, {})
 
     @safe_prop
     def abstract(self) -> Union[None, str]:
@@ -82,11 +82,11 @@ class ContentProxy:
 
     @safe_prop
     def url(self) -> str:
-        return self.content.build_url(self.context)
+        return self.content.build_url(self.context, {})
 
     @safe_prop
     def output_path(self) -> str:
-        return self.content.build_output_path(self.context)
+        return self.content.build_output_path(self.context, {})
 
     def _load(self, target: str) -> Content:
         assert isinstance(target, str)
@@ -110,16 +110,15 @@ class ContentProxy:
         *,
         fragment: Optional[str] = None,
         abs_path: Optional[bool] = None,
-        values: Optional[Any] = None,
+        value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
-        return self.context.content.path_to(
+        return self.context.content.apath_to(
             self.context,
             self.content,
+            {'group_value':value, 'cur_page':npage},
             fragment=fragment,
             abs_path=abs_path,
-            values=values,
-            npage=npage,
         )
 
     def path_to(
@@ -128,7 +127,7 @@ class ContentProxy:
         *,
         fragment: Optional[str] = None,
         abs_path: Optional[bool] = None,
-        values: Optional[Any] = None,
+        value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
 
@@ -136,10 +135,9 @@ class ContentProxy:
         return self.context.content.path_to(
             self.context,
             target_content,
+            {'group_value':value, 'cur_page':npage},
             fragment=fragment,
             abs_path=abs_path,
-            values=values,
-            npage=npage,
         )
 
     def link(
@@ -149,18 +147,17 @@ class ContentProxy:
         fragment: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
-        values: Optional[Any] = None,
+        value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
         return self.context.content.link_to(
             self.context,
             self.content,
+            {'value':value, 'npage':npage},
             text=text,
             fragment=fragment,
             abs_path=abs_path,
             attrs=attrs,
-            values=values,
-            npage=npage,
         )
 
     def link_to(
@@ -171,19 +168,18 @@ class ContentProxy:
         fragment: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
-        values: Optional[Any] = None,
+        value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
         target_content = self._to_content(target)
         return self.context.content.link_to(
             self.context,
             target_content,
+            {'value':value, 'npage':npage},
             text=text,
             fragment=fragment,
             abs_path=abs_path,
             attrs=attrs,
-            values=values,
-            npage=npage,
         )
 
 
@@ -234,19 +230,20 @@ def eval_jinja(
     kwargs: Dict[str, Any],
 ) -> str:
     ctx.add_depend(content)
-    args = content.get_jinja_vars(ctx, content)
+    args = content.get_jinja_vars(ctx)
     args.update(kwargs)
     template = ctx.site.jinjaenv.from_string(text)
     template.filename = f"{content.repr_filename()}#{propname}"
     return template.render(**kwargs)
 
 
-def eval_jinja_template(ctx: OutputContext, content: Content, templatename: str) -> str:
+def eval_jinja_template(ctx: OutputContext, content: Content, templatename: str, kwargs: Dict[str, Any],) -> str:
     template = ctx.site.jinjaenv.get_template(templatename)
     template.filename = templatename
 
-    kwargs = content.get_jinja_vars(ctx, content)
-    return template.render(**kwargs)
+    args = content.get_jinja_vars(ctx)
+    args.update(kwargs)
+    return template.render(**args)
 
 
 class HTMLIDInfo(NamedTuple):
@@ -266,8 +263,8 @@ class OutputContext:
     site: Site
     contentpath: ContentPath
     content: Content
-    _html_cache: Dict[ContentPath, HTMLInfo]
-    _filename_cache: Dict[ContentPath, str]
+    _html_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], HTMLInfo]
+    _filename_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], str]
     depends: Set[ContentPath]
 
     def __init__(self, site: Site, contentpath: ContentPath) -> None:
@@ -278,25 +275,25 @@ class OutputContext:
         self._html_cache = {}
         self._filename_cache = {}
 
-    def get_outfilename(self) -> Path:
-        filename = self.content.build_filename(self)
+    def get_outfilename(self, pagearg:Dict[Any, Any]) -> Path:
+        filename = self.content.build_filename(self, pagearg)
         dir = self.content.src.contentpath[0]
         return prepare_output_path(self.site.outputdir, dir, filename)
 
     def add_depend(self, content: Content) -> None:
         self.depends.add(content.src.contentpath)
 
-    def get_html_cache(self, content: Content) -> Union[HTMLInfo, None]:
-        return self._html_cache.get(content.src.contentpath, None)
+    def get_html_cache(self, content: Content, tp_pagearg:Tuple[Any, ...]) -> Union[HTMLInfo, None]:
+        return self._html_cache.get((content.src.contentpath, tp_pagearg), None)
 
-    def set_html_cache(self, content: Content, info: HTMLInfo) -> None:
-        self._html_cache[content.src.contentpath] = info
+    def set_html_cache(self, content: Content, tp_pagearg:Tuple[Any, ...], info: HTMLInfo) -> None:
+        self._html_cache[(content.src.contentpath, tp_pagearg)] = info
 
-    def get_filename_cache(self, content: Content) -> Union[str, None]:
-        return self._filename_cache.get(content.src.contentpath, None)
+    def get_filename_cache(self, content: Content, tp_pagearg:Tuple[Any, ...]) -> Union[str, None]:
+        return self._filename_cache.get((content.src.contentpath, tp_pagearg), None)
 
-    def set_filename_cache(self, content: Content, filename: str) -> None:
-        self._filename_cache[content.src.contentpath] = filename
+    def set_filename_cache(self, content: Content, tp_pagearg:Tuple[Any, ...], filename: str) -> None:
+        self._filename_cache[(content.src.contentpath, tp_pagearg)] = filename
 
     @abstractmethod
     def build(self) -> Sequence[Path]:
@@ -317,7 +314,7 @@ class BinaryOutput(OutputContext):
             outpath.write_text(body)
 
     def build(self) -> Sequence[Path]:
-        outfilename = self.get_outfilename()
+        outfilename = self.get_outfilename({})
         self.write_body(outfilename)
         return [outfilename]
 
@@ -327,16 +324,16 @@ class JinjaOutput(OutputContext):
 
     def build(self) -> Sequence[Path]:
         templatename = self.content.get_metadata(self.site, "article_template")
-        output = eval_jinja_template(self, self.content, templatename)
+        output = eval_jinja_template(self, self.content, templatename, {})
 
-        outfilename = self.get_outfilename()
+        outfilename = self.get_outfilename({})
         outfilename.write_text(output)
         return [outfilename]
 
 
 class IndexOutput(OutputContext):
     content: IndexPage
-    values: Tuple[str, ...]
+    value: str
     items: Sequence[Content]
     cur_page: int
     num_pages: int
@@ -345,14 +342,14 @@ class IndexOutput(OutputContext):
         self,
         site: Site,
         contentpath: ContentPath,
-        values: Tuple[str, ...],
+        value: str,
         items: Sequence[Content],
         cur_page: int,
         num_pages: int,
     ) -> None:
         super().__init__(site, contentpath)
 
-        self.values = tuple(values)
+        self.value = value
         self.items = items
         self.cur_page = cur_page
         self.num_pages = num_pages
@@ -360,17 +357,25 @@ class IndexOutput(OutputContext):
     def _get_templatename(self)->str:
         if self.cur_page == 1:
             return cast(str, self.content.get_metadata(self.site, "indexpage_template"))
-        template2 = str, self.content.get_metadata(self.site, "indexpage_template2", None)
+        template2 = self.content.get_metadata(self.site, "indexpage_template2", None)
         if template2:
             return cast(str, template2)
         else:
             return cast(str, self.content.get_metadata(self.site, "indexpage_template"))
 
     def build(self) -> Sequence[Path]:
-        templatename = self.content.get_metadata(self.site, "article_template")
-        output = eval_jinja_template(self, self.content, templatename)
+        templatename = self._get_templatename()
+        pagearg = {
+            'group_value': self.value,
+            'cur_page': self.cur_page,
+            'num_pages': self.num_pages,
+            'is_last': self.num_pages == self.cur_page,
+            'articles': [ContentProxy(self, item) for item in self.items],
+            'groupby':self.content.get_metadata(self.site, "groupby", None),
+        }
+        output = eval_jinja_template(self, self.content, templatename, pagearg)
 
-        outfilename = self.get_outfilename()
+        outfilename = self.get_outfilename(pagearg)
         outfilename.write_text(output)
         return [outfilename]
 

@@ -27,10 +27,10 @@ DEFAULTS = dict(
     indexpage_filename_templ="{{content.stem}}.html",
     indexpage_filename_templ2="{{content.stem}}_{{cur_page}}.html",
     indexpage_group_filename_templ=(
-        "{{content.stem}}_{{content.groupby}}_{{value}}.html"
+        "{{content.stem}}_{{content.groupby}}_{{group_value}}.html"
     ),
     indexpage_group_filename_templ2=(
-        "{{content.stem}}_{{content.groupby}}_{{value}}_{{cur_page}}.html"
+        "{{content.stem}}_{{content.groupby}}_{{group_value}}_{{cur_page}}.html"
     ),
     indexpage_max_num_pages=0,
     indexpage_max_articles=5,

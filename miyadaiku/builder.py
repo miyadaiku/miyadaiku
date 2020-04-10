@@ -59,7 +59,7 @@ def dirname_to_tuple(dirname: Union[str, PathTuple]) -> PathTuple:
 
 
 class IndexBuilder(Builder):
-    values: Tuple[str, ...]
+    value: str
     items: Sequence[ContentPath]
     cur_page: int
     num_pages: int
@@ -107,18 +107,23 @@ class IndexBuilder(Builder):
                 t = num if is_last else f + n_per_page
                 articles = group[f:t]
 
-                ret.append(cls(content, values, articles, page + 1, num_pages))
+                if values:
+                    value = values[0]
+                else:
+                    value = ''
+
+                ret.append(cls(content, value, articles, page + 1, num_pages))
 
         return ret
 
     def build_context(self, site: Site) -> OutputContext:
         items = [site.files.get_content(path) for path in self.items]
-        return IndexOutput(site, self.contentpath, self.values, items, self.cur_page, self.num_pages)
+        return IndexOutput(site, self.contentpath, self.value, items, self.cur_page, self.num_pages)
 
     def __init__(
         self,
         content: Content,
-        values: Tuple[str, ...],
+        value: str,
         items: Sequence[Content],
         cur_page: int,
         num_pages: int,
@@ -126,7 +131,7 @@ class IndexBuilder(Builder):
         super().__init__(content)
 
         self.items = [c.src.contentpath for c in items]
-        self.values = values
+        self.value = value
         self.cur_page = cur_page
         self.num_pages = num_pages
 

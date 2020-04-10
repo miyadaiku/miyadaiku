@@ -88,22 +88,22 @@ groupby: tags
 
     assert indexbuilders[0].cur_page == 1
     assert indexbuilders[0].num_pages == 2
-    assert indexbuilders[0].values == ('tag1',)
+    assert indexbuilders[0].value == 'tag1'
     assert len(indexbuilders[0].items) == 5
 
     assert indexbuilders[1].cur_page == 2
     assert indexbuilders[1].num_pages == 2
-    assert indexbuilders[1].values == ('tag1',)
+    assert indexbuilders[1].value == 'tag1'
     assert len(indexbuilders[1].items) == 6
 
     assert indexbuilders[2].cur_page == 1
     assert indexbuilders[2].num_pages == 2
-    assert indexbuilders[2].values == ('tag2',)
+    assert indexbuilders[2].value == 'tag2'
     assert len(indexbuilders[2].items) == 5
 
     assert indexbuilders[3].cur_page == 2
     assert indexbuilders[3].num_pages == 2
-    assert indexbuilders[3].values == ('tag2',)
+    assert indexbuilders[3].value == 'tag2'
     assert len(indexbuilders[3].items) == 5
 
     context = indexbuilders[0].build_context(site)
