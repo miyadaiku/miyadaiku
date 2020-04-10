@@ -13,7 +13,7 @@ import dateutil
 import miyadaiku
 from .config import Config
 from . import loader
-from .builder import createBuilder, Builder
+from .builder import create_builders, Builder
 from .jinjaenv import create_env
 
 
@@ -163,4 +163,4 @@ class Site:
 
         self.builders = []
         for contentpath, content in self.files.items():
-            self.builders.extend(createBuilder(self, content))
+            self.builders.extend(create_builders(self, content))

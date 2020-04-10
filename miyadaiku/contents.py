@@ -51,6 +51,7 @@ class Content:
     def get_parent(self) -> PathTuple:
         return self.src.contentpath[0]
 
+
     _omit = object()
 
     def _get_config_metadata(
@@ -496,7 +497,58 @@ class Snippet(HTMLContent):
 
 
 class IndexPage(HTMLContent):
-    pass
+    def get_jinja_vars(
+        self, ctx: context.OutputContext, content: Content
+    ) -> Dict[str, Any]:
+
+        ret = super().get_jinja_vars(ctx, content)
+        idx = cast(context.IndexOutput, ctx)
+
+        ret['cur_page'] = idx.cur_page
+        ret['num_pages'] = idx.num_pages
+        ret['is_last'] = (idx.cur_page == idx.num_pages)
+        ret['group_values'] = idx.values
+        ret['articles'] = idx.items
+
+        return ret
+
+    def _generate_filename(self, ctx: context.OutputContext) -> str:
+        idx = cast(context.IndexOutput, ctx)
+
+        value = '_'.join(idx.values)
+        value = re.sub(r'[@/\\: \t]', lambda m: f'@{ord(m[0]):02x}', value)
+
+        groupby = self.get_metadata(ctx.site, 'groupby', None)
+        if groupby:
+            if idx.cur_page == 1:
+                filename_templ = self.get_metadata(ctx.site, 'indexpage_group_filename_templ')
+            else:
+                filename_templ = self.get_metadata(ctx.site, 'indexpage_group_filename_templ2')
+        else:
+            if idx.cur_page == 1:
+                filename_templ = self.get_metadata(ctx.site, 'indexpage_filename_templ')
+            else:
+                filename_templ = self.get_metadata(ctx.site, 'indexpage_filename_templ2')
+
+        filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
+
+        args = self.get_jinja_vars(ctx, self)
+        args['value'] = value
+        ret = context.eval_jinja(ctx, self, "filename", filename_templ, args)
+        return ret
+
+
+
+
+    def build_filename(self, ctx: context.OutputContext) -> str:
+        cached = ctx.get_filename_cache(self)
+        if cached:
+            return cached
+
+        # index ignores filename property
+        ret = self._generate_filename(ctx)
+        ctx.set_filename_cache(self, ret)
+        return ret
 
 
 class FeedPage(Content):

@@ -14,6 +14,7 @@ from typing import (
     Set,
     List,
     Callable,
+    cast
 )
 
 from abc import abstractmethod
@@ -278,9 +279,9 @@ class OutputContext:
         self._filename_cache = {}
 
     def get_outfilename(self) -> Path:
-        # todo: get metadata
-        dir, file = self.content.src.contentpath
-        return prepare_output_path(self.site.outputdir, dir, file)
+        filename = self.content.build_filename(self)
+        dir = self.content.src.contentpath[0]
+        return prepare_output_path(self.site.outputdir, dir, filename)
 
     def add_depend(self, content: Content) -> None:
         self.depends.add(content.src.contentpath)
@@ -298,7 +299,7 @@ class OutputContext:
         self._filename_cache[content.src.contentpath] = filename
 
     @abstractmethod
-    def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
+    def build(self) -> Sequence[Path]:
         pass
 
 
@@ -315,28 +316,27 @@ class BinaryOutput(OutputContext):
         else:
             outpath.write_text(body)
 
-    def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
+    def build(self) -> Sequence[Path]:
         outfilename = self.get_outfilename()
         self.write_body(outfilename)
-        return [outfilename], [self.content.src.contentpath]
+        return [outfilename]
 
 
 class JinjaOutput(OutputContext):
     content: Article
 
-    def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
-
+    def build(self) -> Sequence[Path]:
         templatename = self.content.get_metadata(self.site, "article_template")
         output = eval_jinja_template(self, self.content, templatename)
 
         outfilename = self.get_outfilename()
         outfilename.write_text(output)
-        return [outfilename], [self.content.src.contentpath]
+        return [outfilename]
 
 
 class IndexOutput(OutputContext):
     content: IndexPage
-    names: Tuple[str, ...]
+    values: Tuple[str, ...]
     items: Sequence[Content]
     cur_page: int
     num_pages: int
@@ -345,20 +345,34 @@ class IndexOutput(OutputContext):
         self,
         site: Site,
         contentpath: ContentPath,
-        names: Tuple[str, ...],
+        values: Tuple[str, ...],
         items: Sequence[Content],
         cur_page: int,
         num_pages: int,
     ) -> None:
         super().__init__(site, contentpath)
 
-        self.names = names
+        self.values = tuple(values)
         self.items = items
         self.cur_page = cur_page
         self.num_pages = num_pages
 
-    def build(self) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
-        return [], []
+    def _get_templatename(self)->str:
+        if self.cur_page == 1:
+            return cast(str, self.content.get_metadata(self.site, "indexpage_template"))
+        template2 = str, self.content.get_metadata(self.site, "indexpage_template2", None)
+        if template2:
+            return cast(str, template2)
+        else:
+            return cast(str, self.content.get_metadata(self.site, "indexpage_template"))
+
+    def build(self) -> Sequence[Path]:
+        templatename = self.content.get_metadata(self.site, "article_template")
+        output = eval_jinja_template(self, self.content, templatename)
+
+        outfilename = self.get_outfilename()
+        outfilename.write_text(output)
+        return [outfilename]
 
 
 CONTEXTS: Dict[str, Type[OutputContext]] = {

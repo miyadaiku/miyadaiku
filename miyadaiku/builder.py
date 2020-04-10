@@ -13,7 +13,7 @@ from typing import (
 from miyadaiku import ContentPath, PathTuple
 from pathlib import Path
 
-from .context import CONTEXTS, BinaryOutput
+from .context import CONTEXTS, OutputContext, BinaryOutput, IndexOutput
 
 if TYPE_CHECKING:
     from .contents import Content
@@ -30,11 +30,10 @@ class Builder:
     def __init__(self, content: Content) -> None:
         self.contentpath = content.src.contentpath
 
-    def build(self, site: Site) -> Tuple[Sequence[Path], Sequence[ContentPath]]:
+    def build_context(self, site: Site) -> OutputContext:
         content = site.files.get_content(self.contentpath)
         contexttype = CONTEXTS.get(content.src.metadata["type"], BinaryOutput)
-        context = contexttype(site, self.contentpath)
-        return context.build()
+        return contexttype(site, self.contentpath)
 
 
 def normalize_path(dirname: str) -> str:
@@ -60,7 +59,7 @@ def dirname_to_tuple(dirname: Union[str, PathTuple]) -> PathTuple:
 
 
 class IndexBuilder(Builder):
-    names: Tuple[str, ...]
+    values: Tuple[str, ...]
     items: Sequence[ContentPath]
     cur_page: int
     num_pages: int
@@ -88,7 +87,7 @@ class IndexBuilder(Builder):
 
         ret: List[Builder] = []
 
-        for names, group in groups:
+        for values, group in groups:
             num = len(group)
             num_pages = ((num - 1) // n_per_page) + 1
             rest = num - (num_pages - 1) * n_per_page
@@ -108,22 +107,26 @@ class IndexBuilder(Builder):
                 t = num if is_last else f + n_per_page
                 articles = group[f:t]
 
-                ret.append(cls(content, names, articles, page + 1, num_pages))
+                ret.append(cls(content, values, articles, page + 1, num_pages))
 
         return ret
+
+    def build_context(self, site: Site) -> OutputContext:
+        items = [site.files.get_content(path) for path in self.items]
+        return IndexOutput(site, self.contentpath, self.values, items, self.cur_page, self.num_pages)
 
     def __init__(
         self,
         content: Content,
-        names: Tuple[str, ...],
+        values: Tuple[str, ...],
         items: Sequence[Content],
         cur_page: int,
         num_pages: int,
     ) -> None:
         super().__init__(content)
 
-        self.names = names
         self.items = [c.src.contentpath for c in items]
+        self.values = values
         self.cur_page = cur_page
         self.num_pages = num_pages
 
@@ -135,7 +138,7 @@ BUILDERS: Dict[str, Type[Builder]] = {
 }
 
 
-def createBuilder(site: Site, content: Content) -> List[Builder]:
+def create_builders(site: Site, content: Content) -> List[Builder]:
     buildercls = BUILDERS.get(content.src.metadata["type"], None)
     if buildercls:
         return buildercls.create_builders(site, content)

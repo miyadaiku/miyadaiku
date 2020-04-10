@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, List
 from miyadaiku import builder
 from conftest import SiteRoot
 
@@ -7,22 +7,23 @@ def test_builder(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "subdir/file1.txt", "subdir/file1")
     site = siteroot.load({"themes": ["package1"]}, {})
 
-    (b,) = builder.createBuilder(
+    (b,) = builder.create_builders(
         site, site.files.get_content((("subdir",), "file1.txt"))
     )
 
-    (path,), (contentpath,) = b.build(site)
+    context = b.build_context(site)
+    (path,) = context.build()
     assert path == site.outputdir / "subdir" / "file1.txt"
     assert path.read_text() == "subdir/file1"
-    assert contentpath == (("subdir",), "file1.txt")
 
-    (b,) = builder.createBuilder(
+    (b,) = builder.create_builders(
         site, site.files.get_content(((), "package1_file1.txt"))
     )
-    (path,), (contentpath,) = b.build(site)
+
+    context = b.build_context(site)
+    (path,) = context.build()
     assert path == site.outputdir / "package1_file1.txt"
     assert path.read_text() == "package1_file1.txt"
-    assert contentpath == ((), "package1_file1.txt")
 
 
 def test_indexbuilder(siteroot: SiteRoot) -> None:
@@ -40,8 +41,71 @@ directory: rstdir
 
     site = siteroot.load({}, {})
 
-    pages = builder.createBuilder(
+    builders = builder.create_builders(
         site, site.files.get_content((("rstdir",), "index.yml"))
     )
-    assert len(cast(builder.IndexBuilder, pages[0]).items) == 10
-    assert len(cast(builder.IndexBuilder, pages[1]).items) == 11
+
+    indexbuilders = cast(List[builder.IndexBuilder], builders)
+
+    assert indexbuilders[0].cur_page == 1
+    assert indexbuilders[0].num_pages == 2
+    assert len(indexbuilders[0].items) == 10
+
+    assert indexbuilders[1].cur_page == 2
+    assert indexbuilders[1].num_pages == 2
+    assert len(indexbuilders[1].items) == 11
+
+
+def test_indexbuilder_group(siteroot: SiteRoot) -> None:
+    for i in range(21):
+        tag = f'tag{i % 2 + 1}'
+        siteroot.write_text(siteroot.contents / f"htmldir/{i}.html", f"""
+tags: {tag}
+
+html{i} - tag: {tag}
+""")
+
+
+    siteroot.write_text(
+        siteroot.contents / "htmldir/index.yml",
+        """
+type: index
+groupby: tags
+
+""",
+    )
+
+    site = siteroot.load({}, {})
+
+    builders = builder.create_builders(
+        site, site.files.get_content((("htmldir",), "index.yml"))
+    )
+
+    indexbuilders = cast(List[builder.IndexBuilder], builders)
+
+
+    assert len(indexbuilders) == 4
+
+    assert indexbuilders[0].cur_page == 1
+    assert indexbuilders[0].num_pages == 2
+    assert indexbuilders[0].values == ('tag1',)
+    assert len(indexbuilders[0].items) == 5
+
+    assert indexbuilders[1].cur_page == 2
+    assert indexbuilders[1].num_pages == 2
+    assert indexbuilders[1].values == ('tag1',)
+    assert len(indexbuilders[1].items) == 6
+
+    assert indexbuilders[2].cur_page == 1
+    assert indexbuilders[2].num_pages == 2
+    assert indexbuilders[2].values == ('tag2',)
+    assert len(indexbuilders[2].items) == 5
+
+    assert indexbuilders[3].cur_page == 2
+    assert indexbuilders[3].num_pages == 2
+    assert indexbuilders[3].values == ('tag2',)
+    assert len(indexbuilders[3].items) == 5
+
+    context = indexbuilders[0].build_context(site)
+    assert context.contentpath == (("htmldir",), "index.yml")
+

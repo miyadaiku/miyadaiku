@@ -12,7 +12,7 @@ def test_htmlcontext(siteroot: SiteRoot) -> None:
     site = siteroot.load({}, {})
 
     ctx = context.JinjaOutput(site, ((), "doc.html"))
-    (filename,), (path,) = ctx.build()
+    (filename,) = ctx.build()
     html = Path(filename).read_text()
     assert html == "<div>hello<a>2</a></div>"
 
@@ -22,7 +22,7 @@ def test_binarycontext(siteroot: SiteRoot) -> None:
     site = siteroot.load({}, {})
 
     ctx = context.BinaryOutput(site, (("subdir",), "file1.txt"))
-    (filename,), (path,) = ctx.build()
+    (filename,) = ctx.build()
 
     assert Path(filename) == site.outputdir / "subdir/file1.txt"
     assert Path(filename).read_text() == "subdir/file1"
