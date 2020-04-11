@@ -24,6 +24,7 @@ from functools import update_wrapper
 import urllib.parse
 from urllib.parse import urlparse
 import posixpath
+import datetime
 
 from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
 import markupsafe
@@ -463,62 +464,65 @@ class IndexOutput(OutputContext):
 
 
 # from https://github.com/getpelican/feedgenerator
-def get_tag_uri(url, date):
+def get_tag_uri(url: str, date: datetime.datetime) -> str:
     """
     Creates a TagURI.
     See http://web.archive.org/web/20110514113830/http://diveintomark.org/archives/2004/05/28/howto-atom-id
     """
     bits = urlparse(url)
-    d = ''
+    d = ""
     if date is not None:
-        d = ',%s' % datetime_safe.new_datetime(date).strftime('%Y-%m-%d %H:%M:%S.%f')
-    fragment = ''
-    if bits.fragment != '':
-        fragment = '/%s' % (bits.fragment)
-    return 'tag:%s%s:%s%s' % (bits.hostname, d, bits.path, fragment)
+        d = ",%s" % datetime_safe.new_datetime(date).strftime("%Y-%m-%d %H:%M:%S.%f")
+    fragment = ""
+    if bits.fragment != "":
+        fragment = "/%s" % (bits.fragment)
+    return "tag:%s%s:%s%s" % (bits.hostname, d, bits.path, fragment)
 
 
 class FeedOutput(OutputContext):
     content: FeedPage
 
     def build(self) -> Sequence[Path]:
-        num_articles = int(self.content.get_metadata(self.site, 'feed_num_articles'))
+        num_articles = int(self.content.get_metadata(self.site, "feed_num_articles"))
 
-        filters = self.content.get_metadata(self.site, 'filters', {}).copy()
-        filters['type'] = {'article'}
-        filters['draft'] = {False}
+        filters = self.content.get_metadata(self.site, "filters", {}).copy()
+        filters["type"] = {"article"}
+        filters["draft"] = {False}
 
-        contents = [c for c in self.site.files.get_contents(self.site, filters=filters)][:num_articles]
+        contents = [
+            c for c in self.site.files.get_contents(self.site, filters=filters)
+        ][:num_articles]
 
-        feedtype = self.content.get_metadata(self.site, 'feedtype')
-        if feedtype == 'atom':
+        feedtype = self.content.get_metadata(self.site, "feedtype")
+        if feedtype == "atom":
             cls = Atom1Feed
-        elif feedtype == 'rss':
+        elif feedtype == "rss":
             cls = Rss201rev2Feed
         else:
             raise ValueError(f"Invarid feed type: {feedtype}")
 
         feed = cls(
-            title=self.content.get_metadata(self.site, 'site_title'),
-            link=self.content.get_metadata(self.site, 'site_url'),
+            title=self.content.get_metadata(self.site, "site_title"),
+            link=self.content.get_metadata(self.site, "site_url"),
             feed_url=self.content.build_url(self, {}),
-            description='')
+            description="",
+        )
 
         for c in contents:
             link = c.build_url(self, {})
             description = c.build_abstract(self)
-            date = c.get_metadata(self.site, 'date')
+            date = c.get_metadata(self.site, "date")
 
             if date:
                 feed.add_item(
-                    title=c.get_metadata(self.site, 'title', ''),
+                    title=c.get_metadata(self.site, "title", ""),
                     link=link,
                     unique_id=get_tag_uri(link, date),
                     description=str(description),
-                    pubdate=date
+                    pubdate=date,
                 )
 
-        body = feed.writeString('utf-8')
+        body = feed.writeString("utf-8")
 
         outfilename = self.get_outfilename({})
         outfilename.write_text(body)

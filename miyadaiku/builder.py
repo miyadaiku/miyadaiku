@@ -138,9 +138,6 @@ class IndexBuilder(Builder):
         self.num_pages = num_pages
 
 
-
-
-
 BUILDERS: Dict[str, Type[Builder]] = {
     "binary": Builder,
     "article": Builder,

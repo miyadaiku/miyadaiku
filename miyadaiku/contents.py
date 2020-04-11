@@ -542,14 +542,15 @@ class IndexPage(Content):
 class FeedPage(Content):
     use_abs_path = True
 
-    def metadata_ext(self, site:site.Site, default: Any):
-        feedtype = self.get_metadata(site, 'feedtype')
-        if feedtype == 'atom':
-            return '.xml'
-        elif feedtype == 'rss':
-            return '.rdf'
+    def metadata_ext(self, site: site.Site, default: Any) -> str:
+        feedtype = self.get_metadata(site, "feedtype")
+        if feedtype == "atom":
+            return ".xml"
+        elif feedtype == "rss":
+            return ".rdf"
         else:
             raise ValueError(f"Invarid feed type: {feedtype}")
+
 
 CONTENT_CLASSES = {
     "binary": BinContent,
