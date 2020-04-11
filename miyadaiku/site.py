@@ -157,10 +157,16 @@ class Site:
 
         self._generate_metadata_files()
 
+        self.builders = []
+        for contentpath, content in self.files.items():
+            self.builders.extend(create_builders(self, content))
+
     def build(self) -> None:
         if not self.outputdir.is_dir():
             self.outputdir.mkdir(parents=True, exist_ok=True)
 
-        self.builders = []
-        for contentpath, content in self.files.items():
-            self.builders.extend(create_builders(self, content))
+        for builder in self.builders:
+            context = builder.build_context(self)
+            context.build()
+
+        
