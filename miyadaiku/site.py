@@ -168,5 +168,3 @@ class Site:
         for builder in self.builders:
             context = builder.build_context(self)
             context.build()
-
-        
