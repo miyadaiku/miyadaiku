@@ -76,8 +76,10 @@ class Content:
         date = self._get_config_metadata(site, "date")
         if not date:
             return
-        tz = self.get_metadata(site, "tzinfo")
-        return date.astimezone(tz)
+        if not date.tzinfo:
+            tz = self.get_metadata(site, "tzinfo")
+            date = date.astimezone(tz)
+        return date
 
     def metadata_title(self, site: site.Site, default: Any) -> str:
         title = self._get_config_metadata(site, "title", "")
@@ -540,6 +542,14 @@ class IndexPage(Content):
 class FeedPage(Content):
     use_abs_path = True
 
+    def metadata_ext(self, site:site.Site, default: Any):
+        feedtype = self.get_metadata(site, 'feedtype')
+        if feedtype == 'atom':
+            return '.xml'
+        elif feedtype == 'rss':
+            return '.rdf'
+        else:
+            raise ValueError(f"Invarid feed type: {feedtype}")
 
 CONTENT_CLASSES = {
     "binary": BinContent,

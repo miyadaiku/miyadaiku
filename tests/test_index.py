@@ -31,5 +31,6 @@ groupby: tags
     for b in indexbuilders:
         ctx = b.build_context(site)
         (f,) = ctx.build()
-        print(open(f).read())
-        break
+
+    assert len(indexbuilders) == 4
+    assert sum(len(b.items) for b in indexbuilders) == 21

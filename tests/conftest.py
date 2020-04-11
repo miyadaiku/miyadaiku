@@ -41,7 +41,7 @@ class SiteRoot:
     files: pathlib.Path
     templates: pathlib.Path
     modules: pathlib.Path
-
+    outputs: pathlib.Path
     def __init__(self, path: str) -> None:
         self.path = pathlib.Path(str(path)) / "site"
         self.clear()
@@ -50,7 +50,8 @@ class SiteRoot:
         self.files = self.path / "files"
         self.templates = self.path / "templates"
         self.modules = self.path / "modules"
-
+        self.outputs =  self.path / "outputs"
+        
     def clear(self) -> None:
         build_sitedir(self.path.parent)
 
