@@ -106,17 +106,16 @@ class ContentProxy:
 
     def path(
         self,
-        target: Union[ContentProxy, Content, str],
         *,
         fragment: Optional[str] = None,
         abs_path: Optional[bool] = None,
-        value: Optional[Any] = None,
+        group_value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
-        return self.context.content.apath_to(
+        return self.context.content.path_to(
             self.context,
             self.content,
-            {'group_value':value, 'cur_page':npage},
+            {'group_value':group_value, 'cur_page':npage},
             fragment=fragment,
             abs_path=abs_path,
         )
@@ -127,7 +126,7 @@ class ContentProxy:
         *,
         fragment: Optional[str] = None,
         abs_path: Optional[bool] = None,
-        value: Optional[Any] = None,
+        group_value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
 
@@ -135,7 +134,7 @@ class ContentProxy:
         return self.context.content.path_to(
             self.context,
             target_content,
-            {'group_value':value, 'cur_page':npage},
+            {'group_value':group_value, 'cur_page':npage},
             fragment=fragment,
             abs_path=abs_path,
         )
@@ -147,13 +146,13 @@ class ContentProxy:
         fragment: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
-        value: Optional[Any] = None,
+        group_value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
         return self.context.content.link_to(
             self.context,
             self.content,
-            {'value':value, 'npage':npage},
+            {'group_value':group_value, 'npage':npage},
             text=text,
             fragment=fragment,
             abs_path=abs_path,
@@ -168,14 +167,14 @@ class ContentProxy:
         fragment: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
-        value: Optional[Any] = None,
+        group_value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
         target_content = self._to_content(target)
         return self.context.content.link_to(
             self.context,
             target_content,
-            {'value':value, 'npage':npage},
+            {'group_value':group_value, 'npage':npage},
             text=text,
             fragment=fragment,
             abs_path=abs_path,

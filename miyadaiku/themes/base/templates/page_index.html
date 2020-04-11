@@ -17,10 +17,10 @@
   <hr>
   <div>
     {% if cur_page != 1 %}
-      <a href="{{page.path_to(page, value=group_value, npage=cur_page-1)}}">Prev page</a>
+      <a href="{{page.path_to(page, group_value=group_value, npage=cur_page-1)}}">Prev page</a>
     {% endif %}
     {% if not is_last %}
-      <a href="{{page.path_to(page, value=group_value, npage=cur_page+1)}}">Next page</a>
+      <a href="{{page.path_to(page, group_value=group_value, npage=cur_page+1)}}">Next page</a>
     {% endif %}
   </div>
 
