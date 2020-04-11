@@ -1,6 +1,7 @@
 from pathlib import Path
 from miyadaiku import context
-from conftest import SiteRoot
+from conftest import SiteRoot, create_contexts
+from bs4 import BeautifulSoup
 
 
 def test_htmlcontext(siteroot: SiteRoot) -> None:
@@ -38,3 +39,95 @@ def test_load(siteroot: SiteRoot) -> None:
 
     file2 = proxy.load("../D/file2.html")
     assert file2.contentpath == (("A", "B", "D"), "file2.html")
+
+
+def test_path_to(siteroot: SiteRoot) -> None:
+    ctx1, ctx2, ctx3 = create_contexts(
+        siteroot,
+        srcs=[
+            ("a/b/c/doc1.html", ""),
+            ("a/b/c/doc2.html", ""),
+            ("a/b/d/doc3.html", ""),
+        ],
+    )
+
+    proxy = context.ContentProxy(ctx1, ctx1.content)
+    path = proxy.path_to("/a/b/c/doc2.html")
+    assert path == "doc2.html"
+
+    path = proxy.path_to("/a/b/d/doc3.html")
+    assert path == "../d/doc3.html"
+
+    path = proxy.path_to("../d/doc3.html", fragment="fragment1")
+    assert path == "../d/doc3.html#fragment1"
+
+    path = proxy.path_to("../d/doc3.html", abs_path=True)
+    assert path == "http://localhost:8888/a/b/d/doc3.html"
+
+    ctx1.content.use_abs_path = True
+    path = proxy.path_to("../d/doc3.html")
+    assert path == "http://localhost:8888/a/b/d/doc3.html"
+
+def test_link(siteroot: SiteRoot) -> None:
+    (ctx1, ctx2) = create_contexts(
+        siteroot,
+        srcs=[
+            ("doc1.html", "",),
+            (
+                "doc2.html",
+                """
+<h1>he<span>a</span>der1</h1>
+<div>body1</div>
+
+<h2>header2</h2>
+<div>body2</div>
+""",
+            ),
+        ],
+    )
+
+    proxy1 = context.ContentProxy(ctx1, ctx1.content)
+    proxy2 = context.ContentProxy(ctx1, ctx2.content)
+
+    link = proxy1.link_to("doc2.html")
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a["href"] == "doc2.html"
+    assert str(soup.a.text) == "doc2"
+
+    link = proxy2.link()
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a["href"] == "doc2.html"
+    assert soup.a.text == "doc2"
+
+    link = proxy2.link(text="<>text<>")
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a.text == "<>text<>"
+
+    link = proxy2.link(fragment="h_header1")
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a["href"] == "doc2.html#h_header1"
+    assert soup.a.text == "header1"
+
+    link = proxy2.link(fragment="h_header1", text="text")
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a.text == "text"
+
+    link = proxy2.link(fragment="h_header1")
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a["href"] == "doc2.html#h_header1"
+    assert soup.a.text == "header1"
+
+    link = proxy2.link(abs_path=True)
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a["href"] == "http://localhost:8888/doc2.html"
+
+    link = proxy2.link(fragment="h_header2")
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a.text == "header2"
+
+    link = proxy2.link(attrs={"class": "classname", "style": "border:solid"})
+    soup = BeautifulSoup(link, "html.parser")
+    assert soup.a.text == "doc2"
+    soup.a["class"] == "classname"
+    soup.a["style"] == "border:solid"
+

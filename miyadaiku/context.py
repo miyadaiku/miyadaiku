@@ -21,6 +21,10 @@ from abc import abstractmethod
 import os, time, random, shutil
 from pathlib import Path
 from functools import update_wrapper
+import urllib.parse
+import posixpath
+
+
 import markupsafe
 
 from miyadaiku import ContentPath, PathTuple, parse_path
@@ -112,8 +116,7 @@ class ContentProxy:
         group_value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
-        return self.context.content.path_to(
-            self.context,
+        return self.context.path_to(
             self.content,
             {'group_value':group_value, 'cur_page':npage},
             fragment=fragment,
@@ -131,8 +134,7 @@ class ContentProxy:
     ) -> str:
 
         target_content = self._to_content(target)
-        return self.context.content.path_to(
-            self.context,
+        return self.context.path_to(
             target_content,
             {'group_value':group_value, 'cur_page':npage},
             fragment=fragment,
@@ -149,8 +151,7 @@ class ContentProxy:
         group_value: Optional[Any] = None,
         npage: Optional[int] = None,
     ) -> str:
-        return self.context.content.link_to(
-            self.context,
+        return self.context.link_to(
             self.content,
             {'group_value':group_value, 'npage':npage},
             text=text,
@@ -171,8 +172,7 @@ class ContentProxy:
         npage: Optional[int] = None,
     ) -> str:
         target_content = self._to_content(target)
-        return self.context.content.link_to(
-            self.context,
+        return self.context.link_to(
             target_content,
             {'group_value':group_value, 'npage':npage},
             text=text,
@@ -298,6 +298,78 @@ class OutputContext:
     def build(self) -> Sequence[Path]:
         pass
 
+    def _build_pagearg(self)->Dict[Any, Any]:
+        return {}
+
+    def path_to(
+        self,
+        target: Content,
+        pageargs: Dict[Any, Any],
+        *,
+        fragment: Optional[str] = None,
+        abs_path: Optional[bool] = None,
+    ) -> str:
+        fragment = f"#{markupsafe.escape(fragment)}" if fragment else ""
+
+        target_url = target.build_url(self, pageargs)
+        if abs_path or self.content.use_abs_path:
+            return target_url + fragment
+
+        target_parsed = urllib.parse.urlsplit(target_url)
+        page_url_parsed = urllib.parse.urlsplit(self.content.build_url(self, self._build_pagearg()))
+
+        # return abs url if protocol or server differs
+        if (target_parsed.scheme != page_url_parsed.scheme) or (
+            target_parsed.netloc != page_url_parsed.netloc
+        ):
+            return target_url + fragment
+
+        page_dir = posixpath.dirname(page_url_parsed.path)
+        if page_dir == target_parsed.path:
+            ret_path = page_dir
+        else:
+            ret_path = posixpath.relpath(target_parsed.path, page_dir)
+
+        if target_parsed.path.endswith("/") and (not ret_path.endswith("/")):
+            ret_path = ret_path + "/"
+        return ret_path + fragment
+
+    def link_to(
+        self,
+        target: Content,
+        pageargs: Dict[Any, Any],
+        *,
+        text: Optional[str] = None,
+        fragment: Optional[str] = None,
+        abs_path: bool = False,
+        attrs: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        if text is None:
+            if fragment:
+                text = target.get_headertext(self, fragment)
+                if text is None:
+                    raise ValueError(f"Cannot find fragment: {fragment}")
+
+            if not text:
+                text = markupsafe.escape(target.get_metadata(self.site, "title"))
+
+        else:
+            text = markupsafe.escape(text or "")
+
+        s_attrs = []
+        if attrs:
+            for k, v in attrs.items():
+                s_attrs.append(f"{markupsafe.escape(k)}='{markupsafe.escape(v)}'")
+        path = markupsafe.escape(
+            self.path_to(
+                target,
+                pageargs,
+                fragment=fragment,
+                abs_path=abs_path,
+            )
+        )
+        return markupsafe.Markup(f"<a href='{path}' { ' '.join(s_attrs) }>{text}</a>")
+
 
 class BinaryOutput(OutputContext):
     def write_body(self, outpath: Path) -> None:
@@ -352,6 +424,11 @@ class IndexOutput(OutputContext):
         self.items = items
         self.cur_page = cur_page
         self.num_pages = num_pages
+
+    def _build_pagearg(self)->Dict[Any, Any]:
+        return {
+            'group_value':self.value, 'cur_page':self.cur_page
+        }
 
     def _get_templatename(self)->str:
         if self.cur_page == 1:

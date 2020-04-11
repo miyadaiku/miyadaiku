@@ -46,68 +46,6 @@ def test_get_headers(siteroot: SiteRoot) -> None:
     print(ctx.content.build_html(ctx))
 
 
-def test_link(siteroot: SiteRoot) -> None:
-    (ctx1, ctx2) = create_contexts(
-        siteroot,
-        srcs=[
-            ("doc1.html", "",),
-            (
-                "doc2.html",
-                """
-<h1>he<span>a</span>der1</h1>
-<div>body1</div>
-
-<h2>header2</h2>
-<div>body2</div>
-""",
-            ),
-        ],
-    )
-
-    proxy1 = context.ContentProxy(ctx1, ctx1.content)
-    proxy2 = context.ContentProxy(ctx1, ctx2.content)
-
-    link = proxy1.link_to("doc2.html")
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a["href"] == "doc2.html"
-    assert str(soup.a.text) == "doc2"
-
-    link = proxy2.link()
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a["href"] == "doc2.html"
-    assert soup.a.text == "doc2"
-
-    link = proxy2.link(text="<>text<>")
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a.text == "<>text<>"
-
-    link = proxy2.link(fragment="h_header1")
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a["href"] == "doc2.html#h_header1"
-    assert soup.a.text == "header1"
-
-    link = proxy2.link(fragment="h_header1", text="text")
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a.text == "text"
-
-    link = proxy2.link(fragment="h_header1")
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a["href"] == "doc2.html#h_header1"
-    assert soup.a.text == "header1"
-
-    link = proxy2.link(abs_path=True)
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a["href"] == "http://localhost:8888/doc2.html"
-
-    link = proxy2.link(fragment="h_header2")
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a.text == "header2"
-
-    link = proxy2.link(attrs={"class": "classname", "style": "border:solid"})
-    soup = BeautifulSoup(link, "html.parser")
-    assert soup.a.text == "doc2"
-    soup.a["class"] == "classname"
-    soup.a["style"] == "border:solid"
 
 
 def test_header_target(siteroot: SiteRoot) -> None:

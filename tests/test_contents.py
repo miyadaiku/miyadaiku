@@ -247,29 +247,3 @@ hi""",
     assert proxy.url == "http://localhost:8888/a/b/abc.html"
 
 
-def test_path_to(siteroot: SiteRoot) -> None:
-    ctx1, ctx2, ctx3 = create_contexts(
-        siteroot,
-        srcs=[
-            ("a/b/c/doc1.html", ""),
-            ("a/b/c/doc2.html", ""),
-            ("a/b/d/doc3.html", ""),
-        ],
-    )
-
-    proxy = context.ContentProxy(ctx1, ctx1.content)
-    path = proxy.path_to("/a/b/c/doc2.html")
-    assert path == "doc2.html"
-
-    path = proxy.path_to("/a/b/d/doc3.html")
-    assert path == "../d/doc3.html"
-
-    path = proxy.path_to("../d/doc3.html", fragment="fragment1")
-    assert path == "../d/doc3.html#fragment1"
-
-    path = proxy.path_to("../d/doc3.html", abs_path=True)
-    assert path == "http://localhost:8888/a/b/d/doc3.html"
-
-    ctx1.content.use_abs_path = True
-    path = proxy.path_to("../d/doc3.html")
-    assert path == "http://localhost:8888/a/b/d/doc3.html"
