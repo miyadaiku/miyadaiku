@@ -110,7 +110,7 @@ class IndexBuilder(Builder):
                 if values:
                     value = values[0]
                 else:
-                    value = ''
+                    value = ""
 
                 ret.append(cls(content, value, articles, page + 1, num_pages))
 
@@ -118,7 +118,9 @@ class IndexBuilder(Builder):
 
     def build_context(self, site: Site) -> OutputContext:
         items = [site.files.get_content(path) for path in self.items]
-        return IndexOutput(site, self.contentpath, self.value, items, self.cur_page, self.num_pages)
+        return IndexOutput(
+            site, self.contentpath, self.value, items, self.cur_page, self.num_pages
+        )
 
     def __init__(
         self,

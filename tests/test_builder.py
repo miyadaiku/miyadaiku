@@ -58,13 +58,15 @@ directory: rstdir
 
 def test_indexbuilder_group(siteroot: SiteRoot) -> None:
     for i in range(21):
-        tag = f'tag{i % 2 + 1}'
-        siteroot.write_text(siteroot.contents / f"htmldir/{i}.html", f"""
+        tag = f"tag{i % 2 + 1}"
+        siteroot.write_text(
+            siteroot.contents / f"htmldir/{i}.html",
+            f"""
 tags: {tag}
 
 html{i} - tag: {tag}
-""")
-
+""",
+        )
 
     siteroot.write_text(
         siteroot.contents / "htmldir/index.yml",
@@ -83,29 +85,27 @@ groupby: tags
 
     indexbuilders = cast(List[builder.IndexBuilder], builders)
 
-
     assert len(indexbuilders) == 4
 
     assert indexbuilders[0].cur_page == 1
     assert indexbuilders[0].num_pages == 2
-    assert indexbuilders[0].value == 'tag1'
+    assert indexbuilders[0].value == "tag1"
     assert len(indexbuilders[0].items) == 5
 
     assert indexbuilders[1].cur_page == 2
     assert indexbuilders[1].num_pages == 2
-    assert indexbuilders[1].value == 'tag1'
+    assert indexbuilders[1].value == "tag1"
     assert len(indexbuilders[1].items) == 6
 
     assert indexbuilders[2].cur_page == 1
     assert indexbuilders[2].num_pages == 2
-    assert indexbuilders[2].value == 'tag2'
+    assert indexbuilders[2].value == "tag2"
     assert len(indexbuilders[2].items) == 5
 
     assert indexbuilders[3].cur_page == 2
     assert indexbuilders[3].num_pages == 2
-    assert indexbuilders[3].value == 'tag2'
+    assert indexbuilders[3].value == "tag2"
     assert len(indexbuilders[3].items) == 5
 
     context = indexbuilders[0].build_context(site)
     assert context.contentpath == (("htmldir",), "index.yml")
-

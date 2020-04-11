@@ -4,15 +4,11 @@ from bs4 import BeautifulSoup
 
 
 def test_build(siteroot: SiteRoot) -> None:
-    (ctx,) = create_contexts(
-        siteroot,
-        srcs=[
-            ("doc.html", "{{page.title}}",)
-        ],
-    )
+    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", "{{page.title}}",)],)
 
     (path,) = ctx.build()
     assert path == ctx.site.outputdir / "doc.html"
+
 
 def test_get_headers(siteroot: SiteRoot) -> None:
     (ctx,) = create_contexts(
@@ -44,8 +40,6 @@ def test_get_headers(siteroot: SiteRoot) -> None:
         context.HTMLIDInfo(id="h_header36", tag="h2", text="header36"),
     ]
     print(ctx.content.build_html(ctx))
-
-
 
 
 def test_header_target(siteroot: SiteRoot) -> None:

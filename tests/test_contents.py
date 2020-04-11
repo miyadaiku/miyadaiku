@@ -245,5 +245,3 @@ hi""",
     )
     proxy = context.ContentProxy(ctx, ctx.content)
     assert proxy.url == "http://localhost:8888/a/b/abc.html"
-
-

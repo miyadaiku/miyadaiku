@@ -68,6 +68,7 @@ def test_path_to(siteroot: SiteRoot) -> None:
     path = proxy.path_to("../d/doc3.html")
     assert path == "http://localhost:8888/a/b/d/doc3.html"
 
+
 def test_link(siteroot: SiteRoot) -> None:
     (ctx1, ctx2) = create_contexts(
         siteroot,
@@ -130,4 +131,3 @@ def test_link(siteroot: SiteRoot) -> None:
     assert soup.a.text == "doc2"
     soup.a["class"] == "classname"
     soup.a["style"] == "border:solid"
-

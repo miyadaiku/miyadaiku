@@ -50,7 +50,6 @@ class Content:
     def get_parent(self) -> PathTuple:
         return self.src.contentpath[0]
 
-
     _omit = object()
 
     def _get_config_metadata(
@@ -90,7 +89,6 @@ class Content:
         timezone = self.get_metadata(site, "timezone")
         return pytz.timezone(timezone)
 
-
     def metadata_parents_dirs(
         self, site: site.Site, default: Any
     ) -> List[Tuple[str, ...]]:
@@ -98,7 +96,6 @@ class Content:
         for dirname in self.src.contentpath[0]:
             ret.append(ret[-1] + (dirname,))
         return ret
-
 
     def metadata_stem(self, site: site.Site, default: Any) -> str:
         stem = self._get_config_metadata(site, "stem", None)
@@ -122,8 +119,9 @@ class Content:
         d, name = posixpath.split(name)
         return posixpath.splitext(name)[1]
 
-
-    def _generate_filename(self, ctx: context.OutputContext, pageargs:Dict[Any, Any]) -> str:
+    def _generate_filename(
+        self, ctx: context.OutputContext, pageargs: Dict[Any, Any]
+    ) -> str:
         filename_templ = self.get_metadata(ctx.site, "filename_templ")
         filename_templ = (
             "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
@@ -133,10 +131,12 @@ class Content:
         ret = context.eval_jinja(ctx, self, "filename", filename_templ, args)
         return ret
 
-    def _pagearg_to_tuple(self, pageargs:Dict[Any, Any])->Tuple[Any, ...]:
+    def _pagearg_to_tuple(self, pageargs: Dict[Any, Any]) -> Tuple[Any, ...]:
         return ()
 
-    def build_filename(self, ctx: context.OutputContext, pageargs:Dict[Any, Any]) -> str:
+    def build_filename(
+        self, ctx: context.OutputContext, pageargs: Dict[Any, Any]
+    ) -> str:
         tp_pagearg = self._pagearg_to_tuple(pageargs)
 
         cached = ctx.get_filename_cache(self, tp_pagearg)
@@ -151,15 +151,13 @@ class Content:
         ctx.set_filename_cache(self, tp_pagearg, ret)
         return ret
 
-    def build_output_path(self, ctx: context.OutputContext, pageargs:Dict[Any, Any]) -> str:
+    def build_output_path(
+        self, ctx: context.OutputContext, pageargs: Dict[Any, Any]
+    ) -> str:
         filename = self.build_filename(ctx, pageargs)
         return posixpath.join(*self.src.contentpath[0], filename)
 
-    def build_url(
-        self,
-        ctx: context.OutputContext,
-        pageargs:Dict[Any, Any]
-    ) -> str:
+    def build_url(self, ctx: context.OutputContext, pageargs: Dict[Any, Any]) -> str:
         site_url = self.get_metadata(ctx.site, "site_url")
         path = self.get_metadata(ctx.site, "canonical_url")
         if path:
@@ -172,7 +170,6 @@ class Content:
         else:
             path = self.build_output_path(ctx, pageargs)
         return cast(str, urllib.parse.urljoin(site_url, path))
-
 
     def build_html(self, context: context.OutputContext) -> Union[None, str]:
         return None
@@ -187,9 +184,7 @@ class Content:
     ) -> Optional[str]:
         return None
 
-    def get_jinja_vars(
-        self, ctx: context.OutputContext
-    ) -> Dict[str, Any]:
+    def get_jinja_vars(self, ctx: context.OutputContext) -> Dict[str, Any]:
 
         ret = {}
         for name in self.get_metadata(ctx.site, "imports"):
@@ -207,6 +202,7 @@ class Content:
         ret["config"] = context.ConfigProxy(ctx)
 
         return ret
+
 
 #    def path_to(
 #        self,
@@ -501,28 +497,38 @@ class Snippet(HTMLContent):
 
 
 class IndexPage(Content):
-    def _pagearg_to_tuple(self, pageargs:Dict[Any, Any])->Tuple[Any, ...]:
-        return (pageargs.get('cur_page'), pageargs.get('group_value'))
+    def _pagearg_to_tuple(self, pageargs: Dict[Any, Any]) -> Tuple[Any, ...]:
+        return (pageargs.get("cur_page"), pageargs.get("group_value"))
 
-    def _generate_filename(self, ctx: context.OutputContext, pageargs:Dict[Any, Any]) -> str:
-        value = str(pageargs.get('group_value', ''))
-        value = re.sub(r'[@/\\: \t]', lambda m: f'@{ord(m[0]):02x}', value)
+    def _generate_filename(
+        self, ctx: context.OutputContext, pageargs: Dict[Any, Any]
+    ) -> str:
+        value = str(pageargs.get("group_value", ""))
+        value = re.sub(r"[@/\\: \t]", lambda m: f"@{ord(m[0]):02x}", value)
 
-        curpage = pageargs.get('cur_page', 1)
+        curpage = pageargs.get("cur_page", 1)
 
-        groupby = self.get_metadata(ctx.site, 'groupby', None)
+        groupby = self.get_metadata(ctx.site, "groupby", None)
         if groupby:
-            if curpage  == 1:
-                filename_templ = self.get_metadata(ctx.site, 'indexpage_group_filename_templ')
+            if curpage == 1:
+                filename_templ = self.get_metadata(
+                    ctx.site, "indexpage_group_filename_templ"
+                )
             else:
-                filename_templ = self.get_metadata(ctx.site, 'indexpage_group_filename_templ2')
+                filename_templ = self.get_metadata(
+                    ctx.site, "indexpage_group_filename_templ2"
+                )
         else:
-            if curpage  == 1:
-                filename_templ = self.get_metadata(ctx.site, 'indexpage_filename_templ')
+            if curpage == 1:
+                filename_templ = self.get_metadata(ctx.site, "indexpage_filename_templ")
             else:
-                filename_templ = self.get_metadata(ctx.site, 'indexpage_filename_templ2')
+                filename_templ = self.get_metadata(
+                    ctx.site, "indexpage_filename_templ2"
+                )
 
-        filename_templ = "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
+        filename_templ = (
+            "{% autoescape false %}" + filename_templ + "{% endautoescape %}"
+        )
 
         args = self.get_jinja_vars(ctx)
         args.update(pageargs)

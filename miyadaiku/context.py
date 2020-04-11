@@ -14,7 +14,7 @@ from typing import (
     Set,
     List,
     Callable,
-    cast
+    cast,
 )
 
 from abc import abstractmethod
@@ -118,7 +118,7 @@ class ContentProxy:
     ) -> str:
         return self.context.path_to(
             self.content,
-            {'group_value':group_value, 'cur_page':npage},
+            {"group_value": group_value, "cur_page": npage},
             fragment=fragment,
             abs_path=abs_path,
         )
@@ -136,7 +136,7 @@ class ContentProxy:
         target_content = self._to_content(target)
         return self.context.path_to(
             target_content,
-            {'group_value':group_value, 'cur_page':npage},
+            {"group_value": group_value, "cur_page": npage},
             fragment=fragment,
             abs_path=abs_path,
         )
@@ -153,7 +153,7 @@ class ContentProxy:
     ) -> str:
         return self.context.link_to(
             self.content,
-            {'group_value':group_value, 'npage':npage},
+            {"group_value": group_value, "npage": npage},
             text=text,
             fragment=fragment,
             abs_path=abs_path,
@@ -174,7 +174,7 @@ class ContentProxy:
         target_content = self._to_content(target)
         return self.context.link_to(
             target_content,
-            {'group_value':group_value, 'npage':npage},
+            {"group_value": group_value, "npage": npage},
             text=text,
             fragment=fragment,
             abs_path=abs_path,
@@ -236,7 +236,9 @@ def eval_jinja(
     return template.render(**kwargs)
 
 
-def eval_jinja_template(ctx: OutputContext, content: Content, templatename: str, kwargs: Dict[str, Any],) -> str:
+def eval_jinja_template(
+    ctx: OutputContext, content: Content, templatename: str, kwargs: Dict[str, Any],
+) -> str:
     template = ctx.site.jinjaenv.get_template(templatename)
     template.filename = templatename
 
@@ -274,7 +276,7 @@ class OutputContext:
         self._html_cache = {}
         self._filename_cache = {}
 
-    def get_outfilename(self, pagearg:Dict[Any, Any]) -> Path:
+    def get_outfilename(self, pagearg: Dict[Any, Any]) -> Path:
         filename = self.content.build_filename(self, pagearg)
         dir = self.content.src.contentpath[0]
         return prepare_output_path(self.site.outputdir, dir, filename)
@@ -282,23 +284,31 @@ class OutputContext:
     def add_depend(self, content: Content) -> None:
         self.depends.add(content.src.contentpath)
 
-    def get_html_cache(self, content: Content, tp_pagearg:Tuple[Any, ...]) -> Union[HTMLInfo, None]:
+    def get_html_cache(
+        self, content: Content, tp_pagearg: Tuple[Any, ...]
+    ) -> Union[HTMLInfo, None]:
         return self._html_cache.get((content.src.contentpath, tp_pagearg), None)
 
-    def set_html_cache(self, content: Content, tp_pagearg:Tuple[Any, ...], info: HTMLInfo) -> None:
+    def set_html_cache(
+        self, content: Content, tp_pagearg: Tuple[Any, ...], info: HTMLInfo
+    ) -> None:
         self._html_cache[(content.src.contentpath, tp_pagearg)] = info
 
-    def get_filename_cache(self, content: Content, tp_pagearg:Tuple[Any, ...]) -> Union[str, None]:
+    def get_filename_cache(
+        self, content: Content, tp_pagearg: Tuple[Any, ...]
+    ) -> Union[str, None]:
         return self._filename_cache.get((content.src.contentpath, tp_pagearg), None)
 
-    def set_filename_cache(self, content: Content, tp_pagearg:Tuple[Any, ...], filename: str) -> None:
+    def set_filename_cache(
+        self, content: Content, tp_pagearg: Tuple[Any, ...], filename: str
+    ) -> None:
         self._filename_cache[(content.src.contentpath, tp_pagearg)] = filename
 
     @abstractmethod
     def build(self) -> Sequence[Path]:
         pass
 
-    def _build_pagearg(self)->Dict[Any, Any]:
+    def _build_pagearg(self) -> Dict[Any, Any]:
         return {}
 
     def path_to(
@@ -316,7 +326,9 @@ class OutputContext:
             return target_url + fragment
 
         target_parsed = urllib.parse.urlsplit(target_url)
-        page_url_parsed = urllib.parse.urlsplit(self.content.build_url(self, self._build_pagearg()))
+        page_url_parsed = urllib.parse.urlsplit(
+            self.content.build_url(self, self._build_pagearg())
+        )
 
         # return abs url if protocol or server differs
         if (target_parsed.scheme != page_url_parsed.scheme) or (
@@ -361,12 +373,7 @@ class OutputContext:
             for k, v in attrs.items():
                 s_attrs.append(f"{markupsafe.escape(k)}='{markupsafe.escape(v)}'")
         path = markupsafe.escape(
-            self.path_to(
-                target,
-                pageargs,
-                fragment=fragment,
-                abs_path=abs_path,
-            )
+            self.path_to(target, pageargs, fragment=fragment, abs_path=abs_path,)
         )
         return markupsafe.Markup(f"<a href='{path}' { ' '.join(s_attrs) }>{text}</a>")
 
@@ -425,12 +432,10 @@ class IndexOutput(OutputContext):
         self.cur_page = cur_page
         self.num_pages = num_pages
 
-    def _build_pagearg(self)->Dict[Any, Any]:
-        return {
-            'group_value':self.value, 'cur_page':self.cur_page
-        }
+    def _build_pagearg(self) -> Dict[Any, Any]:
+        return {"group_value": self.value, "cur_page": self.cur_page}
 
-    def _get_templatename(self)->str:
+    def _get_templatename(self) -> str:
         if self.cur_page == 1:
             return cast(str, self.content.get_metadata(self.site, "indexpage_template"))
         template2 = self.content.get_metadata(self.site, "indexpage_template2", None)
@@ -442,12 +447,12 @@ class IndexOutput(OutputContext):
     def build(self) -> Sequence[Path]:
         templatename = self._get_templatename()
         pagearg = {
-            'group_value': self.value,
-            'cur_page': self.cur_page,
-            'num_pages': self.num_pages,
-            'is_last': self.num_pages == self.cur_page,
-            'articles': [ContentProxy(self, item) for item in self.items],
-            'groupby':self.content.get_metadata(self.site, "groupby", None),
+            "group_value": self.value,
+            "cur_page": self.cur_page,
+            "num_pages": self.num_pages,
+            "is_last": self.num_pages == self.cur_page,
+            "articles": [ContentProxy(self, item) for item in self.items],
+            "groupby": self.content.get_metadata(self.site, "groupby", None),
         }
         output = eval_jinja_template(self, self.content, templatename, pagearg)
 
