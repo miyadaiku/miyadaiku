@@ -1,5 +1,5 @@
 # type: ignore
 
-
+from . import ipynbhead
 def load_package(site):
-    site.add_template_module("ipynb", "miyadaiku.themes.ipynb!macros.html")
+    site.add_jinja_global("ipynb", ipynbhead)

@@ -139,7 +139,7 @@ class Site:
         template = self.jinjaenv.get_template(templatename)
         self.jinjaenv.globals[name] = template.module
 
-    def add_jinja_global(self, name: str, f: Callable[..., Any]) -> None:
+    def add_jinja_global(self, name: str, f: Any) -> None:
         self.jinjaenv.globals[name] = f
 
     def load(self, root: Path, props: Dict[str, Any]) -> None:
