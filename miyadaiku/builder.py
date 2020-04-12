@@ -11,7 +11,6 @@ from typing import (
     Union,
 )
 from miyadaiku import ContentPath, PathTuple
-from pathlib import Path
 
 from .context import CONTEXTS, OutputContext, BinaryOutput, IndexOutput
 

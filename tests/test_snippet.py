@@ -1,6 +1,4 @@
-from pathlib import Path
-from miyadaiku import html
-from conftest import create_contexts, SiteRoot
+from conftest import SiteRoot
 
 
 def test_load(siteroot: SiteRoot) -> None:

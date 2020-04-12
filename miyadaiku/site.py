@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any, Set, Callable, Iterator, Tuple
+from typing import Any, Dict, Iterator, List, Set, Tuple
 import sys
 import os
 from pathlib import Path
@@ -99,7 +99,7 @@ class Site:
             self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR]
         )
 
-    def _import_themes(self) -> None:
+    def _init_themes(self) -> None:
         for theme in self.themes:
             mod = importlib.import_module(theme)
             f = getattr(mod, "load_package", None)
@@ -145,14 +145,17 @@ class Site:
     def load(self, root: Path, props: Dict[str, Any]) -> None:
         self.root = root
         self.outputdir = self.root / miyadaiku.OUTPUTS_DIR
+
         self._load_config(props)
+        self.files = loader.ContentFiles()
+
         self._load_themes()
         self._load_jinjaenv()
-        self._import_themes()
+
+        self._init_themes()
         self._load_jinja_globals()
         self._load_modules()
 
-        self.files = loader.ContentFiles()
         loader.loadfiles(self.files, self.config, self.root, self.ignores, self.themes)
 
         self._generate_metadata_files()

@@ -1,7 +1,7 @@
 from pathlib import Path
 from miyadaiku import ipynb
 from conftest import SiteRoot
-from bs4 import BeautifulSoup, Doctype
+from bs4 import BeautifulSoup
 
 DIR = Path(__file__).parent
 

@@ -1,6 +1,3 @@
-from pathlib import Path
-from miyadaiku import rst
-from miyadaiku import ContentSrc
 
 from conftest import create_contexts, SiteRoot
 

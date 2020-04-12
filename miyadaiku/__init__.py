@@ -69,6 +69,7 @@ class ContentSrc(NamedTuple):
 def to_contentpath(path: str) -> ContentPath:
     spath = str(path)
     spath = spath.replace("\\", "/").strip("/")
+    spath  = posixpath.normpath(spath)
     ret = spath.split("/")
 
     for c in ret:

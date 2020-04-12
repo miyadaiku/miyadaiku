@@ -10,7 +10,6 @@ import urllib.parse
 import pytz
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
-import markupsafe
 
 from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
 from . import site
