@@ -8,6 +8,7 @@ from miyadaiku import site
 
 EMPTY_IPYNB = "empty.ipynb"
 
+
 def _build_head() -> str:
     src = pkg_resources.resource_string("miyadaiku.themes.ipynb", EMPTY_IPYNB)
     json = nbformat.reads(src, nbformat.current_nbformat)
@@ -31,12 +32,10 @@ def _build_head() -> str:
     return str(soup)
 
 
-def load_package(site:site.Site)->None:
+def load_package(site: site.Site) -> None:
     css = _build_head()
 
-    site.files.add_bytes("binary", "/static/ipynb/ipynb.css", css.encode('utf-8'))
- 
+    site.files.add_bytes("binary", "/static/ipynb/ipynb.css", css.encode("utf-8"))
+
     site.add_jinja_global("IPYNB_CSS", markupsafe.Markup(css))
-    site.add_template_module(
-        "ipynb", "miyadaiku.themes.ipynb!macros.html"
-    )
+    site.add_template_module("ipynb", "miyadaiku.themes.ipynb!macros.html")

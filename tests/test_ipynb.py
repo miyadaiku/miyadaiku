@@ -28,9 +28,12 @@ def test_theme(siteroot: SiteRoot) -> None:
 
 
 def test_theme_cssfile(siteroot: SiteRoot) -> None:
-    siteroot.write_text(siteroot.contents / 'test.html', """
+    siteroot.write_text(
+        siteroot.contents / "test.html",
+        """
 {{ipynb.load_css(page)}}
-""")
+""",
+    )
     site = siteroot.load({"themes": ["miyadaiku.themes.ipynb"]}, {})
     site.build()
 
