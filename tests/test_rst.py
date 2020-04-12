@@ -23,9 +23,10 @@ def test_load(siteroot: SiteRoot) -> None:
         ],
     )
 
+    assert ctx.content.body
     assert (
-        str(ctx.content.body).strip()
-        == """<p>{}</p>
+        ctx.content.body.strip()
+        == b"""<p>{}</p>
 
 <div class="code-block">
 <div class="code-block-caption">caption</div>
@@ -50,9 +51,10 @@ def test_load2(siteroot: SiteRoot) -> None:
         ],
     )
 
+    assert ctx.content.body
     assert (
-        str(ctx.content.body).strip()
-        == "<!-- &#123;&#123; page.site_title &#125;&#125; - - -->"
+        ctx.content.body.strip()
+        == b"<!-- &#123;&#123; page.site_title &#125;&#125; - - -->"
     )
 
 
@@ -96,7 +98,7 @@ def test_jinjadirective(siteroot: SiteRoot) -> None:
     )
 
     assert ctx.content.body == (
-        """{{<a><b>}}
+        b"""{{<a><b>}}
 <a><b><p>{{abc}}</p>
 """
     )
@@ -114,7 +116,7 @@ def test_xref(siteroot: SiteRoot) -> None:
             )
         ],
     )
-    assert ctx.content.body == """<div class="header_target" id="anchor-name"></div>"""
+    assert ctx.content.body == b"""<div class="header_target" id="anchor-name"></div>"""
 
 
 def test_title(siteroot: SiteRoot) -> None:
@@ -177,12 +179,13 @@ def test_pygments(siteroot: SiteRoot) -> None:
         ],
     )
 
+    assert ctx.content.body
     assert (
-        str(ctx.content.body).strip()
-        == """<div class="code-block">
+        ctx.content.body.strip()
+        == b"""<div class="code-block">
 <div class="code-block-caption">caption</div>
 <table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="highlight"><pre><span></span>:jinja:`&#123;&#123;&#125;&#125;`
 </pre></div>
 </td></tr></table>
-</div>"""  # noqa
+</div>"""
     )

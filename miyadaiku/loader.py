@@ -126,7 +126,7 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
         )
 
 
-def yamlloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
+def yamlloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
     text = src.read_bytes()
     metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
     if "type" not in metadata:
@@ -135,7 +135,7 @@ def yamlloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
     return metadata, None
 
 
-def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
+def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
     return {"type": "binary"}, None
 
 
@@ -167,7 +167,7 @@ class ContentFiles:
     def __init__(self) -> None:
         self._contentfiles = {}
 
-    def add(self, contentsrc: ContentSrc, body: Optional[str]) -> None:
+    def add(self, contentsrc: ContentSrc, body: Optional[bytes]) -> None:
         if contentsrc.contentpath not in self._contentfiles:
             content = contents.build_content(contentsrc, body)
             self._contentfiles[contentsrc.contentpath] = content
@@ -278,6 +278,24 @@ class ContentFiles:
         return sorted(d.items())
 
 
+def loadfile(src: ContentSrc, bin: bool) -> Optional[bytes]:
+    if not bin:
+        ext = os.path.splitext(src.srcpath)[1]
+        loader = FILELOADERS.get(ext, binloader)
+    else:
+        loader = binloader
+
+    metadata, body = loader(src)
+    src.metadata.update(metadata)
+
+    if isinstance(body, bytes):
+        return body
+    if isinstance(body, str):
+        return body.encode("utf-8")
+    else:
+        return None
+
+
 def loadfiles(
     files: ContentFiles,
     cfg: config.Config,
@@ -285,21 +303,6 @@ def loadfiles(
     ignores: Set[str],
     themes: List[str],
 ) -> None:
-    def loadfile(src: ContentSrc, bin: bool) -> Optional[str]:
-        if not bin:
-            ext = os.path.splitext(src.srcpath)[1]
-            loader = FILELOADERS.get(ext, binloader)
-        else:
-            loader = binloader
-
-        metadata, body = loader(src)
-        src.metadata.update(metadata)
-
-        if body is not None:
-            return str(body)
-        else:
-            return None
-
     def load(walk: Iterator[ContentSrc], bin: bool = False) -> None:
         for f in walk:
             body = loadfile(f, bin)

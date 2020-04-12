@@ -7,8 +7,9 @@ import markupsafe
 
 EMPTY_IPYNB = "empty.ipynb"
 
-def _build_head()->str:
-    src = pkg_resources.resource_string('miyadaiku.themes.ipynb', EMPTY_IPYNB)
+
+def _build_head() -> str:
+    src = pkg_resources.resource_string("miyadaiku.themes.ipynb", EMPTY_IPYNB)
     json = nbformat.reads(src, nbformat.current_nbformat)
 
     html, _ = HTMLExporter({}).from_notebook_node(json)
@@ -24,13 +25,16 @@ def _build_head()->str:
         if isinstance(x, Doctype):
             x.extract()
         if x.name == "meta":
-            if 'charset' in x.attrs:
+            if "charset" in x.attrs:
                 x.extract()
 
     return str(soup)
 
+
 IPYNB_HEADER = None
-def set_header()->str:
+
+
+def set_header() -> str:
     global IPYNB_HEADER
     if not IPYNB_HEADER:
         IPYNB_HEADER = markupsafe.Markup(_build_head())

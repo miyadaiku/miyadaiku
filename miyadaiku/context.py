@@ -391,7 +391,7 @@ class BinaryOutput(OutputContext):
             else:
                 shutil.copyfile(self.content.src.srcpath, outpath)
         else:
-            outpath.write_text(body)
+            outpath.write_bytes(body)
 
     def build(self) -> Sequence[Path]:
         outfilename = self.get_outfilename({})

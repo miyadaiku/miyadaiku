@@ -11,8 +11,9 @@ def test_load() -> None:
     assert metadata["type"] == "article"
     print(text)
 
-def test_theme(siteroot: SiteRoot)->None:
-    site = siteroot.load({'themes': ['miyadaiku.themes.ipynb']}, {})
+
+def test_theme(siteroot: SiteRoot) -> None:
+    site = siteroot.load({"themes": ["miyadaiku.themes.ipynb"]}, {})
     template = site.jinjaenv.from_string("{{ipynb.set_header()}}")
     ret = template.render()
 
@@ -22,5 +23,5 @@ def test_theme(siteroot: SiteRoot)->None:
     assert soup.body is None
     assert soup.title is None
     assert soup.meta is None
-    assert len(soup.find_all('style')) > 1
-    assert len(soup.find_all('script')) > 1
+    assert len(soup.find_all("style")) > 1
+    assert len(soup.find_all("script")) > 1

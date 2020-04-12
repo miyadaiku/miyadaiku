@@ -22,9 +22,9 @@ class Content:
     use_abs_path = False
 
     src: ContentSrc
-    body: Optional[str]
+    _body: Optional[bytes]
 
-    def __init__(self, src: ContentSrc, body: Optional[str]) -> None:
+    def __init__(self, src: ContentSrc, body: Optional[bytes]) -> None:
         self.src = src
         self.body = body
 
@@ -45,7 +45,7 @@ class Content:
         if self.body is None:
             return self.src.read_bytes()
         else:
-            return self.body.encode("utf-8")
+            return self.body
 
     def get_parent(self) -> PathTuple:
         return self.src.contentpath[0]
@@ -206,7 +206,6 @@ class Content:
         return ret
 
 
-
 class BinContent(Content):
     pass
 
@@ -240,9 +239,9 @@ date: {datestr}
         self.src.metadata["date"] = datestr
 
     def _generate_html(self, ctx: context.OutputContext) -> str:
-        src = self.body or ""
+        src = self.body or b""
         args = self.get_jinja_vars(ctx)
-        html = context.eval_jinja(ctx, self, "html", src, args)
+        html = context.eval_jinja(ctx, self, "html", src.decode("utf-8"), args)
 
         return html
 
@@ -312,7 +311,7 @@ date: {datestr}
         if self.has_jinja:
             html = self._generate_html(ctx)
         else:
-            html = self.body or ""
+            html = (self.body or b"").decode("utf-8")
 
         htmlinfo = self._set_header_id(ctx, html)
         ctx.set_html_cache(self, (), htmlinfo)
@@ -488,6 +487,6 @@ CONTENT_CLASSES = {
 }
 
 
-def build_content(contentsrc: ContentSrc, body: Optional[str]) -> Content:
+def build_content(contentsrc: ContentSrc, body: Optional[bytes]) -> Content:
     cls = CONTENT_CLASSES[contentsrc.metadata["type"]]
     return cls(contentsrc, body)
