@@ -17,5 +17,5 @@ title
 
     s = (siteroot.outputs / "index.html").read_text()
 
-    assert '<link href="static/pygments/pygments_native.css" rel="stylesheet"/>' in s
-    assert (siteroot.outputs / "static/pygments/pygments_native.css").exists()
+    assert '<link href="static/pygments/native.css" rel="stylesheet"/>' in s
+    assert (siteroot.outputs / "static/pygments/native.css").exists()
