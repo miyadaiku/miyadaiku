@@ -4,6 +4,8 @@ import nbformat
 from bs4 import BeautifulSoup, Doctype
 import markupsafe
 
+from miyadaiku import site
+
 EMPTY_IPYNB = "empty.ipynb"
 
 def _build_head() -> str:
@@ -29,10 +31,10 @@ def _build_head() -> str:
     return str(soup)
 
 
-def load_package(site):
+def load_package(site:site.Site)->None:
     css = _build_head()
 
-    site.files.add_bytes("binary", "/static/ipynb/ipynb.css", css)
+    site.files.add_bytes("binary", "/static/ipynb/ipynb.css", css.encode('utf-8'))
  
     site.add_jinja_global("IPYNB_CSS", markupsafe.Markup(css))
     site.add_template_module(

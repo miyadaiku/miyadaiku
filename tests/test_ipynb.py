@@ -25,3 +25,15 @@ def test_theme(siteroot: SiteRoot) -> None:
     assert soup.meta is None
     assert len(soup.find_all("style")) > 1
     assert len(soup.find_all("script")) > 1
+
+
+def test_theme_cssfile(siteroot: SiteRoot) -> None:
+    siteroot.write_text(siteroot.contents / 'test.html', """
+{{ipynb.load_css(page)}}
+""")
+    site = siteroot.load({"themes": ["miyadaiku.themes.ipynb"]}, {})
+    site.build()
+
+    s = (siteroot.outputs / "test.html").read_text()
+    assert '<link href="static/ipynb/ipynb.css" rel="stylesheet"/>' in s
+    assert (siteroot.outputs / "static/ipynb/ipynb.css").exists()
