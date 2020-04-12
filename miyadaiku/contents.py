@@ -223,6 +223,9 @@ class HTMLContent(Content):
 
         if self.src.is_package():
             return
+        if not self.src.srcpath:
+            return
+
         dir, fname = os.path.split(self.src.srcpath)
         metafilename = Path(dir) / (fname + METADATA_FILE_SUFFIX)
         if metafilename.exists():

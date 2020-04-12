@@ -41,7 +41,6 @@ def is_ignored(ignores: Set[str], name: str) -> bool:
     return False
 
 
-
 def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
     logger.info(f"Loading {path}")
     path = path.expanduser().resolve()
@@ -174,20 +173,19 @@ class ContentFiles:
             self._contentfiles[contentsrc.contentpath] = content
         # todo: emit log message
 
-
-    def add_bytes(self, type:str, path: str, body:bytes)->Content:
+    def add_bytes(self, type: str, path: str, body: bytes) -> Content:
         cpath = to_contentpath(path)
 
         contentsrc = ContentSrc(
-            package="",
-            srcpath=path,
-            metadata={'type':type},
+            package=None,
+            srcpath=None,
+            metadata={"type": type},
             contentpath=cpath,
             mtime=0,
         )
 
         content = contents.build_content(contentsrc, body)
-        self._contentfiles[contentsrc.contentpath] = content
+        self._contentfiles[content.src.contentpath] = content
         return content
 
     def get_contentfiles_keys(self) -> KeysView[ContentPath]:
@@ -298,6 +296,7 @@ class ContentFiles:
 
 def loadfile(src: ContentSrc, bin: bool) -> Optional[bytes]:
     if not bin:
+        assert src.srcpath
         ext = os.path.splitext(src.srcpath)[1]
         loader = FILELOADERS.get(ext, binloader)
     else:

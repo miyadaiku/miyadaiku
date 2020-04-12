@@ -221,4 +221,5 @@ def load(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
         s = src.read_text()
         return load_string(s)
     else:
+        assert src.srcpath
         return load_file(src.srcpath)

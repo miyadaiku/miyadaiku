@@ -389,6 +389,7 @@ class BinaryOutput(OutputContext):
                 bytes = self.content.src.read_bytes()
                 outpath.write_bytes(bytes)
             else:
+                assert self.content.src.srcpath
                 shutil.copyfile(self.content.src.srcpath, outpath)
         else:
             outpath.write_bytes(body)

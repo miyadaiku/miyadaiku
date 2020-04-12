@@ -5,7 +5,7 @@ import dateutil.parser
 import datetime
 
 import miyadaiku
-from miyadaiku import ContentSrc, PathTuple
+from miyadaiku import to_pathtuple, ContentSrc, PathTuple, ContentPath
 
 
 DEFAULTS = dict(
@@ -81,11 +81,16 @@ class Config:
 
     def add(
         self,
-        dirname: PathTuple,
+        dirname: Union[str, PathTuple],
         cfg: Dict[str, Any],
         contentsrc: Optional[ContentSrc] = None,
         tail: bool = True,
     ) -> None:
+        if isinstance(dirname, str):
+            _dirname = to_pathtuple(dirname)
+        else:
+            _dirname = dirname
+
         cfg = cfg.copy()
         if "type" in cfg:
             del cfg["type"]
@@ -94,29 +99,37 @@ class Config:
             return
 
         if tail:
-            self._configs[dirname].append(cfg)
+            self._configs[_dirname].append(cfg)
         else:
-            self._configs[dirname].insert(0, cfg)
+            self._configs[_dirname].insert(0, cfg)
 
         if contentsrc:
             if not contentsrc.package:
-                mtime = os.stat(contentsrc.srcpath).st_mtime
-                self.updated = max(self.updated, mtime)
+                if contentsrc.srcpath:
+                    mtime = os.stat(contentsrc.srcpath).st_mtime
+                    self.updated = max(self.updated, mtime)
 
     _omit = object()
 
-    def get(self, dirname: PathTuple, name: str, default: Any = _omit) -> Any:
+    def get(
+        self, dirname: Union[str, PathTuple], name: str, default: Any = _omit
+    ) -> Any:
+        if isinstance(dirname, str):
+            _dirname = to_pathtuple(dirname)
+        else:
+            _dirname = dirname
+
         if name in CUMULATIVE_CONFIGS:
-            return self.get_cumulative(dirname, name, default)
+            return self.get_cumulative(_dirname, name, default)
 
         while True:
-            configs = self._configs.get(dirname, None)
+            configs = self._configs.get(_dirname, None)
             if configs:
                 for config in configs:
                     if name in config:
                         return format_value(name, config[name])
 
-            if not dirname:
+            if not _dirname:
                 if name in self.root:
                     return format_value(name, self.root[name])
 
@@ -132,7 +145,7 @@ class Config:
 
                 raise AttributeError(f"Invalid config name: {dirname}:{name}")
 
-            dirname = dirname[:-1]
+            _dirname = _dirname[:-1]
 
     def get_cumulative(
         self, dirname: PathTuple, name: str, default: Any = _omit

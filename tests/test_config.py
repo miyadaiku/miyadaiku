@@ -16,6 +16,13 @@ def test_get() -> None:
     assert cfg.get(("dir1", "dir2",), "root") == "root_value"
 
 
+def test_add_str() -> None:
+    cfg = config.Config({})
+    cfg.add("/", {"root1": "value1"})
+    assert cfg.get("/", "root1") == "value1"
+    assert cfg.get((), "root1") == "value1"
+
+
 def test_theme() -> None:
     cfg = config.Config({"root": "root_value"})
     cfg.add_themecfg({"theme": "theme_value"})
