@@ -5,7 +5,7 @@ import dateutil.parser
 import datetime
 
 import miyadaiku
-from miyadaiku import to_pathtuple, ContentSrc, PathTuple, ContentPath
+from miyadaiku import ContentSrc, PathTuple, to_pathtuple
 
 
 DEFAULTS = dict(
