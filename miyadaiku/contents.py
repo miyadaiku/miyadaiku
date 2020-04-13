@@ -199,8 +199,8 @@ class Content:
         )
         ret["content"] = context.ContentProxy(ctx, self)
 
-        ret["contents"] = context.ContentsProxy(ctx)
-        ret["config"] = context.ConfigProxy(ctx)
+        ret["contents"] = context.ContentsProxy(ctx, self)
+        ret["config"] = context.ConfigProxy(ctx, self)
 
         return ret
 

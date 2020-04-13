@@ -29,7 +29,7 @@ import datetime
 from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
 import markupsafe
 
-from miyadaiku import ContentPath, PathTuple, parse_path
+from miyadaiku import ContentPath, PathTuple, parse_path, parse_dir
 
 if TYPE_CHECKING:
     from .contents import Content, Article, IndexPage, FeedPage
@@ -185,13 +185,65 @@ class ContentProxy:
 
 
 class ConfigProxy:
-    def __init__(self, ctx: "OutputContext"):
+    def __init__(self, ctx: "OutputContext", content:Content)->None:
         self.context = ctx
-
+        self.content = content
 
 class ContentsProxy:
-    def __init__(self, ctx: "OutputContext"):
+    def __init__(self, ctx: "OutputContext", content:Content)->None:
         self.context = ctx
+        self.content = content
+
+    def __getitem__(self, key:str)->Any:
+        return self.get_content(key)
+
+    def get_content(self, path:str)->ContentProxy:
+        contentpath = parse_path(path, self.content.src.contentpath[0])
+
+        content = self.context.site.files.get_content(contentpath)
+        return ContentProxy(self.context, content)
+
+    def get_contents(self, subdirs: Optional[Sequence[str]]=None, recurse: bool = True, filters: Optional[Dict[str, Any]] = None)->Sequence[ContentProxy]:
+        subdirs_path = None
+        if subdirs:
+            subdirs_path = [parse_dir(path, self.content.src.contentpath[0]) for path in subdirs]
+        
+        ret = self.context.site.files.get_contents(self.context.site, filters=filters, subdirs=subdirs_path, recurse=recurse)
+        return [ContentProxy(self.context, content) for content in ret]
+
+
+    def group_items(self, group:str, subdirs: Optional[Sequence[str]]=None, recurse: bool = True, filters: Optional[Dict[str, Any]] = None)->List[Tuple[Tuple[str, ...], List[ContentProxy]]]:
+        subdirs_path = None
+        if subdirs:
+            subdirs_path  = [parse_dir(path, self.content.src.contentpath[0]) for path in subdirs]
+
+        groups = self.context.site.files.group_items(self.context.site, group, filters=filters, subdirs=subdirs_path , recurse=recurse)
+
+        ret:List[Tuple[Tuple[str, ...], List[ContentProxy]]] = []
+
+        for groupvalues, contents in groups:
+            ret.append((groupvalues, [ContentProxy(self.context, content) for content in contents]))
+        return ret
+
+
+class ConfigArgProxy:
+    def __init__(self, context:OutputContext, content:Content)->None:
+        self.context, self.content = (context, content)
+
+    def __getitem__(self, key:str)->Any:
+        return self.context.site.config.get(self.content.src.contentpath[0], key)
+
+    def __getattr__(self, name:str)->Any:
+        return self.context.site.config.get(self.content.src.contentpath[0], name)
+
+    _omit = object()
+    def get(self, dirname: str, name: str, default: Any=_omit)->Any:
+        if default is self._omit:
+            return self.context.site.config.get(dirname, name)
+        else:
+            return self.context.site.config.get(dirname, name, default)
+
+         
 
 
 MKDIR_MAX_RETRY = 5
