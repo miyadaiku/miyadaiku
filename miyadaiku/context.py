@@ -180,7 +180,7 @@ class ContentProxy:
         return self.context.link_to(
             target_content,
             {"group_value": group_value, "npage": npage},
-            text=text,
+                text=text,
             fragment=fragment,
             abs_path=abs_path,
             attrs=attrs,
@@ -199,7 +199,7 @@ class ConfigProxy:
         return self.get(key)
 
     _omit = object()
-    def get(self, name:str, dir:Optional[str]=None, default:Any=_omit):
+    def get(self, name:str, dir:Optional[str]=None, default:Any=_omit)->Any:
         dirtuple = parse_dir(dir, self.content.src.contentpath[0])
         try:
             return self.context.site.config.get(dirtuple, name)
@@ -243,6 +243,23 @@ class ContentsProxy:
         for groupvalues, contents in groups:
             ret.append((groupvalues, [ContentProxy(self.context, content) for content in contents]))
         return ret
+
+    @property
+    def categories(self):
+        contents = self.get_contents(filters={'type': {'article'}})
+        categories = (getattr(c, 'category', None) for c in contents)
+        return sorted(set(c for c in categories if c))
+
+    @property
+    def tags(self):
+        tags = set()
+        for c in self.get_contents(filters={'type': {'article'}}):
+            t = getattr(c, 'tags', None)
+            if t:
+                tags.update(t)
+        return sorted(tags)
+
+
 
 
 class ConfigArgProxy:
