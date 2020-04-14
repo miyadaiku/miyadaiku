@@ -115,6 +115,7 @@ def parse_path(path: str, cwd: PathTuple) -> ContentPath:
 
     return to_contentpath(path)
 
+
 def parse_dir(path: str, cwd: PathTuple) -> PathTuple:
     path = to_posixpath(path)
 
@@ -123,4 +124,3 @@ def parse_dir(path: str, cwd: PathTuple) -> PathTuple:
         path = posixpath.join(curdir, path)
 
     return to_pathtuple(path)
-

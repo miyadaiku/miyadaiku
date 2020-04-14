@@ -4,6 +4,7 @@ from conftest import SiteRoot, create_contexts
 from bs4 import BeautifulSoup
 import pytest
 
+
 def test_htmlcontext(siteroot: SiteRoot) -> None:
 
     siteroot.write_text(siteroot.contents / "doc.html", "hello<a>{{1+1}}</a>")
@@ -132,13 +133,17 @@ def test_link(siteroot: SiteRoot) -> None:
     soup.a["class"] == "classname"
     soup.a["style"] == "border:solid"
 
+
 def test_contentsproxy(siteroot: SiteRoot) -> None:
     (ctx1, ctx2) = create_contexts(
         siteroot,
         srcs=[
-            ("a/b/c/doc1.html", """
+            (
+                "a/b/c/doc1.html",
+                """
 tags: tag1
-""",),
+""",
+            ),
             (
                 "a/b/doc2.html",
                 """
@@ -149,19 +154,25 @@ tags: tag2
     )
 
     proxy = context.ContentsProxy(ctx1, ctx1.content)
-    assert ctx2.content is proxy.get_content('/a/b/doc2.html').content
-    assert ctx2.content is proxy.get_content('../doc2.html').content
-    assert ctx2.content is proxy['../doc2.html'].content
+    assert ctx2.content is proxy.get_content("/a/b/doc2.html").content
+    assert ctx2.content is proxy.get_content("../doc2.html").content
+    assert ctx2.content is proxy["../doc2.html"].content
 
-    assert [ctx1.content] == [c.content for c in proxy.get_contents(filters={'tags':'tag1'})]
-    assert [ctx1.content] == [c.content for c in proxy.get_contents(subdirs=['/a/b/c'])]
-    assert {ctx1.content, ctx2.content} == {c.content for c in proxy.get_contents(subdirs=['/a/b'])}
-    assert {ctx2.content} == {c.content for c in proxy.get_contents(subdirs=['/a/b'], recurse=False)}
+    assert [ctx1.content] == [
+        c.content for c in proxy.get_contents(filters={"tags": "tag1"})
+    ]
+    assert [ctx1.content] == [c.content for c in proxy.get_contents(subdirs=["/a/b/c"])]
+    assert {ctx1.content, ctx2.content} == {
+        c.content for c in proxy.get_contents(subdirs=["/a/b"])
+    }
+    assert {ctx2.content} == {
+        c.content for c in proxy.get_contents(subdirs=["/a/b"], recurse=False)
+    }
 
-    (tags1, files1), (tags2, files2)  = sorted(proxy.group_items(group='tags'))
-    assert tags1 == ('tag1',)
+    (tags1, files1), (tags2, files2) = sorted(proxy.group_items(group="tags"))
+    assert tags1 == ("tag1",)
     assert [ctx1.content] == [c.content for c in files1]
-    assert tags2 == ('tag2',)
+    assert tags2 == ("tag2",)
     assert [ctx2.content] == [c.content for c in files2]
 
 
@@ -169,27 +180,39 @@ def test_configproxy(siteroot: SiteRoot) -> None:
     (ctx1, ctx2) = create_contexts(
         siteroot,
         srcs=[
-            ("a/b/c/doc1.html", """
-""",),
-            ("a/b/c/doc2.yaml", """
+            (
+                "a/b/c/doc1.html",
+                """
+""",
+            ),
+            (
+                "a/b/c/doc2.yaml",
+                """
 type: config
 prop1: value1
-""",),
-            ("a/b/doc3.html", """
-""",),
-            ("a/b/doc4.yaml", """
+""",
+            ),
+            (
+                "a/b/doc3.html",
+                """
+""",
+            ),
+            (
+                "a/b/doc4.yaml",
+                """
 type: config
 prop1: value2
 prop2: value3
-""",),
+""",
+            ),
         ],
     )
 
     proxy = context.ConfigProxy(ctx1, ctx1.content)
-    assert 'value1' == proxy['prop1']
-    assert 'value3' == proxy['prop2']
-    assert 'value1' == proxy.get('prop1')
-    assert 'value2' == proxy.get('prop1', dir='..')
+    assert "value1" == proxy["prop1"]
+    assert "value3" == proxy["prop2"]
+    assert "value1" == proxy.get("prop1")
+    assert "value2" == proxy.get("prop1", dir="..")
 
     with pytest.raises(exceptions.ConfigNotFoundError):
-        assert proxy['prop3']
+        assert proxy["prop3"]

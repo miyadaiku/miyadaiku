@@ -61,10 +61,10 @@ def safe_prop(f: Callable[..., Any]) -> property:
 
 
 class ContentProxy:
-    context:OutputContext
+    context: OutputContext
     content: Content
 
-    def __init__(self, ctx: OutputContext, content: Content)->None:
+    def __init__(self, ctx: OutputContext, content: Content) -> None:
         self.context = ctx
         self.content = content
 
@@ -180,7 +180,7 @@ class ContentProxy:
         return self.context.link_to(
             target_content,
             {"group_value": group_value, "npage": npage},
-                text=text,
+            text=text,
             fragment=fragment,
             abs_path=abs_path,
             attrs=attrs,
@@ -188,18 +188,19 @@ class ContentProxy:
 
 
 class ConfigProxy:
-    def __init__(self, ctx: "OutputContext", content:Content)->None:
+    def __init__(self, ctx: "OutputContext", content: Content) -> None:
         self.context = ctx
         self.content = content
 
-    def __getitem__(self, key:str)->Any:
+    def __getitem__(self, key: str) -> Any:
         return self.get(key)
 
-    def __getattr__(self, key:str)->Any:
+    def __getattr__(self, key: str) -> Any:
         return self.get(key)
 
     _omit = object()
-    def get(self, name:str, dir:Optional[str]=None, default:Any=_omit)->Any:
+
+    def get(self, name: str, dir: Optional[str] = None, default: Any = _omit) -> Any:
         if dir is not None:
             dirtuple = parse_dir(dir, self.content.src.contentpath[0])
         else:
@@ -211,78 +212,103 @@ class ConfigProxy:
                 raise
             return default
 
+
 class ContentsProxy:
-    def __init__(self, ctx: "OutputContext", content:Content)->None:
+    def __init__(self, ctx: "OutputContext", content: Content) -> None:
         self.context = ctx
         self.content = content
 
-    def __getitem__(self, key:str)->Any:
+    def __getitem__(self, key: str) -> Any:
         return self.get_content(key)
 
-    def get_content(self, path:str)->ContentProxy:
+    def get_content(self, path: str) -> ContentProxy:
         contentpath = parse_path(path, self.content.src.contentpath[0])
 
         content = self.context.site.files.get_content(contentpath)
         return ContentProxy(self.context, content)
 
-    def get_contents(self, subdirs: Optional[Sequence[str]]=None, recurse: bool = True, filters: Optional[Dict[str, Any]] = None)->Sequence[ContentProxy]:
+    def get_contents(
+        self,
+        subdirs: Optional[Sequence[str]] = None,
+        recurse: bool = True,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> Sequence[ContentProxy]:
         subdirs_path = None
         if subdirs:
-            subdirs_path = [parse_dir(path, self.content.src.contentpath[0]) for path in subdirs]
-        
-        ret = self.context.site.files.get_contents(self.context.site, filters=filters, subdirs=subdirs_path, recurse=recurse)
+            subdirs_path = [
+                parse_dir(path, self.content.src.contentpath[0]) for path in subdirs
+            ]
+
+        ret = self.context.site.files.get_contents(
+            self.context.site, filters=filters, subdirs=subdirs_path, recurse=recurse
+        )
         return [ContentProxy(self.context, content) for content in ret]
 
-
-    def group_items(self, group:str, subdirs: Optional[Sequence[str]]=None, recurse: bool = True, filters: Optional[Dict[str, Any]] = None)->List[Tuple[Tuple[str, ...], List[ContentProxy]]]:
+    def group_items(
+        self,
+        group: str,
+        subdirs: Optional[Sequence[str]] = None,
+        recurse: bool = True,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> List[Tuple[Tuple[str, ...], List[ContentProxy]]]:
         subdirs_path = None
         if subdirs:
-            subdirs_path  = [parse_dir(path, self.content.src.contentpath[0]) for path in subdirs]
+            subdirs_path = [
+                parse_dir(path, self.content.src.contentpath[0]) for path in subdirs
+            ]
 
-        groups = self.context.site.files.group_items(self.context.site, group, filters=filters, subdirs=subdirs_path , recurse=recurse)
+        groups = self.context.site.files.group_items(
+            self.context.site,
+            group,
+            filters=filters,
+            subdirs=subdirs_path,
+            recurse=recurse,
+        )
 
-        ret:List[Tuple[Tuple[str, ...], List[ContentProxy]]] = []
+        ret: List[Tuple[Tuple[str, ...], List[ContentProxy]]] = []
 
         for groupvalues, contents in groups:
-            ret.append((groupvalues, [ContentProxy(self.context, content) for content in contents]))
+            ret.append(
+                (
+                    groupvalues,
+                    [ContentProxy(self.context, content) for content in contents],
+                )
+            )
         return ret
 
     @property
-    def categories(self)->Sequence[str]:
-        contents = self.get_contents(filters={'type': {'article'}})
-        categories = (getattr(c, 'category', None) for c in contents)
+    def categories(self) -> Sequence[str]:
+        contents = self.get_contents(filters={"type": {"article"}})
+        categories = (getattr(c, "category", None) for c in contents)
         return sorted(set(c for c in categories if c))
 
     @property
-    def tags(self)->Sequence[str]:
+    def tags(self) -> Sequence[str]:
         tags = set()
-        for c in self.get_contents(filters={'type': {'article'}}):
-            t = getattr(c, 'tags', None)
+        for c in self.get_contents(filters={"type": {"article"}}):
+            t = getattr(c, "tags", None)
             if t:
                 tags.update(t)
         return sorted(tags)
 
 
-
-
 class ConfigArgProxy:
-    def __init__(self, context:OutputContext, content:Content)->None:
+    def __init__(self, context: OutputContext, content: Content) -> None:
         self.context, self.content = (context, content)
 
-    def __getitem__(self, key:str)->Any:
+    def __getitem__(self, key: str) -> Any:
         return self.context.site.config.get(self.content.src.contentpath[0], key)
 
-    def __getattr__(self, name:str)->Any:
+    def __getattr__(self, name: str) -> Any:
         return self.context.site.config.get(self.content.src.contentpath[0], name)
 
     _omit = object()
-    def get(self, dirname: str, name: str, default: Any=_omit)->Any:
+
+    def get(self, dirname: str, name: str, default: Any = _omit) -> Any:
         if default is self._omit:
             return self.context.site.config.get(dirname, name)
         else:
             return self.context.site.config.get(dirname, name, default)
-
-         
 
 
 MKDIR_MAX_RETRY = 5

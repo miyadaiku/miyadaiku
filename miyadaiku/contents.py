@@ -71,6 +71,13 @@ class Content:
 
         return self._get_config_metadata(site, name, default)
 
+
+    def metadata_dirname(self, site: site.Site, default: Any) -> PathTuple:
+        return self.src.contentpath[0]
+
+    def metadata_name(self, site: site.Site, default: Any) -> str:
+        return self.src.contentpath[1]
+
     def metadata_date(self, site: site.Site, default: Any) -> Any:
         date = self._get_config_metadata(site, "date")
         if not date:

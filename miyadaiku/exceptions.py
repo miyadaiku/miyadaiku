@@ -1,6 +1,7 @@
 from typing import Optional
 import miyadaiku.contents
 
+
 class ContentNotFound(Exception):
     content: Optional[miyadaiku.contents.Content] = None
 
