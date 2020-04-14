@@ -27,6 +27,7 @@ from miyadaiku import ContentPath, ContentSrc, PathTuple, to_contentpath
 from . import config, rst, md, contents, html
 from . import site
 from .contents import Content
+from . import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -150,15 +151,6 @@ FILELOADERS = {
 }
 
 
-class ContentNotFound(Exception):
-    content: Optional[Content] = None
-
-    def set_content(self, content: Content) -> None:
-        if not self.content:
-            self.content = content
-            self.args = (
-                f"{self.content.src.contentpath}: `{self.args[0]}` is not found",
-            )
 
 
 class ContentFiles:
@@ -201,7 +193,7 @@ class ContentFiles:
         try:
             return self._contentfiles[path]
         except KeyError:
-            raise ContentNotFound(path) from None
+            raise exceptions.ContentNotFound(path) from None
 
     def get_contents(
         self,

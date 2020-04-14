@@ -29,7 +29,7 @@ import datetime
 from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
 import markupsafe
 
-from miyadaiku import ContentPath, PathTuple, parse_path, parse_dir
+from miyadaiku import ContentPath, PathTuple, parse_path, parse_dir, exceptions
 
 if TYPE_CHECKING:
     from .contents import Content, Article, IndexPage, FeedPage
@@ -61,7 +61,10 @@ def safe_prop(f: Callable[..., Any]) -> property:
 
 
 class ContentProxy:
-    def __init__(self, ctx: OutputContext, content: Content):
+    context:OutputContext
+    content: Content
+
+    def __init__(self, ctx: OutputContext, content: Content)->None:
         self.context = ctx
         self.content = content
 
@@ -188,6 +191,22 @@ class ConfigProxy:
     def __init__(self, ctx: "OutputContext", content:Content)->None:
         self.context = ctx
         self.content = content
+
+    def __getitem__(self, key:str)->Any:
+        return self.get(key)
+
+    def __getattr__(self, key:str)->Any:
+        return self.get(key)
+
+    _omit = object()
+    def get(self, name:str, dir:Optional[str]=None, default:Any=_omit):
+        dirtuple = parse_dir(dir, self.content.src.contentpath[0])
+        try:
+            return self.context.site.config.get(dirtuple, name)
+        except exceptions.ConfigNotFoundError:
+            if default is self._omit:
+                raise
+            return default
 
 class ContentsProxy:
     def __init__(self, ctx: "OutputContext", content:Content)->None:

@@ -7,7 +7,7 @@ import yaml
 import shutil
 
 import miyadaiku.site
-from miyadaiku import context, to_contentpath
+from miyadaiku import context, to_contentpath, exceptions
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -98,7 +98,9 @@ def create_contexts(
     site = siteroot.load({}, {})
     ret = []
     for path, src in srcs:
-        ctx = context.JinjaOutput(site, to_contentpath(path))
-        ret.append(ctx)
+        contentpath = to_contentpath(path)
+        if site.files.has_content(contentpath):
+            ctx = context.JinjaOutput(site, contentpath)
+            ret.append(ctx)
 
     return ret

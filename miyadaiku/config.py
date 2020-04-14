@@ -5,7 +5,7 @@ import dateutil.parser
 import datetime
 
 import miyadaiku
-from miyadaiku import ContentSrc, PathTuple, to_pathtuple
+from miyadaiku import ContentSrc, PathTuple, to_pathtuple, exceptions
 
 
 DEFAULTS = dict(
@@ -143,7 +143,7 @@ class Config:
                 if default is not self._omit:
                     return default
 
-                raise AttributeError(f"Invalid config name: {dirname}:{name}")
+                raise exceptions.ConfigNotFoundError(f"Invalid config name: {dirname}:{name}")
 
             _dirname = _dirname[:-1]
 
