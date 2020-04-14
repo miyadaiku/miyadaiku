@@ -71,7 +71,6 @@ class Content:
 
         return self._get_config_metadata(site, name, default)
 
-
     def metadata_dirname(self, site: site.Site, default: Any) -> PathTuple:
         return self.src.contentpath[0]
 
