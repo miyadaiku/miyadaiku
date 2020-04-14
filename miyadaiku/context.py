@@ -200,7 +200,10 @@ class ConfigProxy:
 
     _omit = object()
     def get(self, name:str, dir:Optional[str]=None, default:Any=_omit)->Any:
-        dirtuple = parse_dir(dir, self.content.src.contentpath[0])
+        if dir is not None:
+            dirtuple = parse_dir(dir, self.content.src.contentpath[0])
+        else:
+            dirtuple = self.content.src.contentpath[0]
         try:
             return self.context.site.config.get(dirtuple, name)
         except exceptions.ConfigNotFoundError:
@@ -245,13 +248,13 @@ class ContentsProxy:
         return ret
 
     @property
-    def categories(self):
+    def categories(self)->Sequence[str]:
         contents = self.get_contents(filters={'type': {'article'}})
         categories = (getattr(c, 'category', None) for c in contents)
         return sorted(set(c for c in categories if c))
 
     @property
-    def tags(self):
+    def tags(self)->Sequence[str]:
         tags = set()
         for c in self.get_contents(filters={'type': {'article'}}):
             t = getattr(c, 'tags', None)
