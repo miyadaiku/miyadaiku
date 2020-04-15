@@ -186,6 +186,17 @@ class Content:
     ) -> Union[None, str]:
         return None
 
+    def get_headers(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
+        return []
+
+    def get_header_anchors(
+        self, ctx: context.OutputContext
+    ) -> List[context.HTMLIDInfo]:
+        return []
+
+    def get_fragments(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
+        return []
+
     def get_headertext(
         self, ctx: context.OutputContext, fragment: str
     ) -> Optional[str]:

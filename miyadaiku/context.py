@@ -97,6 +97,21 @@ class ContentProxy:
     def output_path(self) -> str:
         return self.content.build_output_path(self.context, {})
 
+    @safe_prop
+    def headers(self) -> List[HTMLIDInfo]:
+        return self.content.get_headers(self.context)
+
+    @safe_prop
+    def header_anchors(self) -> List[HTMLIDInfo]:
+        return self.content.get_header_anchors(self.context)
+
+    @safe_prop
+    def fragments(self, ctx: OutputContext) -> List[HTMLIDInfo]:
+        return self.content.get_fragments(self.context)
+
+    def get_headertext(self, fragment: str) -> Optional[str]:
+        return self.content.get_headertext(self.context, fragment)
+
     def _load(self, target: str) -> Content:
         assert isinstance(target, str)
         path = parse_path(target, self.content.src.contentpath[0])
@@ -374,9 +389,11 @@ class HTMLIDInfo(NamedTuple):
 
 class HTMLInfo(NamedTuple):
     html: str
-    headers: List[HTMLIDInfo]
-    header_anchors: List[HTMLIDInfo]
-    fragments: List[HTMLIDInfo]
+    headers: List[HTMLIDInfo]  # ids of header elements
+    header_anchors: List[HTMLIDInfo]  # ids of anchor wrapping header elements
+    fragments: List[
+        HTMLIDInfo
+    ]  # ids of header elements specified by header_target class
 
 
 class OutputContext:

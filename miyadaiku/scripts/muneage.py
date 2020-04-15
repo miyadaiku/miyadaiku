@@ -3,11 +3,10 @@ from pathlib import Path
 import miyadaiku.site
 
 
-def build(path: Path) -> None:
+def main(path: Path) -> None:
     site = miyadaiku.site.Site()
     site.load(path, {})
     site.build()
 
-
 if __name__ == "__main__":
-    build(Path(sys.argv[1]))
+    main(Path(sys.argv[1]))
