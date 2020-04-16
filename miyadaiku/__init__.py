@@ -2,6 +2,7 @@ from typing import Dict, Tuple, NamedTuple, Any, Optional, Union
 import posixpath
 import pkg_resources
 import tzlocal
+from .__version__ import __version__
 
 YAML_ENCODING = "utf-8"
 

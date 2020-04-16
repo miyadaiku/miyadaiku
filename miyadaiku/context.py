@@ -109,6 +109,11 @@ class ContentProxy:
     def fragments(self, ctx: OutputContext) -> List[HTMLIDInfo]:
         return self.content.get_fragments(self.context)
 
+    def is_same(self, other)->bool:
+        if self.contentpath == other.contentpath:
+            return True
+        return False
+
     def get_headertext(self, fragment: str) -> Optional[str]:
         return self.content.get_headertext(self.context, fragment)
 
@@ -120,11 +125,13 @@ class ContentProxy:
     def load(self, target: str) -> ContentProxy:
         return ContentProxy(self.context, self._load(target))
 
-    def _to_content(self, content: Union[ContentProxy, Content, str]) -> Content:
+    def _to_content(self, content: Union[ContentProxy, Content, str, ContentPath]) -> Content:
         if isinstance(content, str):
             return self._load(content)
         elif isinstance(content, ContentProxy):
             return content.content
+        elif isinstance(content, tuple):
+            return self.context.site.files.get_content(content)
         else:
             return content
 
@@ -145,7 +152,7 @@ class ContentProxy:
 
     def path_to(
         self,
-        target: Union[ContentProxy, Content, str],
+        target: Union[ContentProxy, Content, str, ContentPath],
         *,
         fragment: Optional[str] = None,
         abs_path: Optional[bool] = None,
@@ -182,7 +189,7 @@ class ContentProxy:
 
     def link_to(
         self,
-        target: Union[ContentProxy, Content, str],
+        target: Union[ContentProxy, Content, str, ContentPath],
         *,
         text: Optional[str] = None,
         fragment: Optional[str] = None,
@@ -208,18 +215,19 @@ class ConfigProxy:
         self.content = content
 
     def __getitem__(self, key: str) -> Any:
-        return self.get(key)
+        return self.get(self.content.src.contentpath[0], key)
 
     def __getattr__(self, key: str) -> Any:
-        return self.get(key)
+        return self.get(self.content.src.contentpath[0], key)
 
     _omit = object()
 
-    def get(self, name: str, dir: Optional[str] = None, default: Any = _omit) -> Any:
+    def get(self, dir: Union[str, PathTuple], name:str, default: Any = _omit) -> Any:
         if dir is not None:
             dirtuple = parse_dir(dir, self.content.src.contentpath[0])
         else:
             dirtuple = self.content.src.contentpath[0]
+
         try:
             return self.context.site.config.get(dirtuple, name)
         except exceptions.ConfigNotFoundError:
