@@ -5,6 +5,9 @@ import sys
 from pathlib import Path
 import threading
 import time
+import multiprocessing
+import http.server
+import os
 
 import miyadaiku.site
 from . import observer
@@ -13,15 +16,10 @@ from miyadaiku import OUTPUTS_DIR
 
 locale.setlocale(locale.LC_ALL, '')
 
-def run_server(args):
-    t = multiprocessing.Process(
-        target=run_server,
-        args=(str(outputs), http.server.SimpleHTTPRequestHandler,),
-        kwargs=dict(port=args.port, bind=args.bind),
-        daemon=True)
+def exec_server(dir, bind, port):
+    os.chdir(dir)
+    http.server.test(http.server.SimpleHTTPRequestHandler, bind=bind, port=port)
 
-    t.start()
-    return t
 
 def build(path, props):
     site = miyadaiku.site.Site()
@@ -82,7 +80,11 @@ def _main()->None:
         outputs.mkdir()
 
     if args.server:
-        server = run_server(args)
+        server  = multiprocessing.Process(
+            target=exec_server,
+            kwargs=dict(dir=str(outputs), port=args.port, bind=args.bind),
+            daemon=True)
+
         server.start()
 
 
