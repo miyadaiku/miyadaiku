@@ -90,6 +90,7 @@ def _main()->None:
 
     try:
         if not args.watch:
+            print(f'Building {d.resolve()} ...')
             code = build(d, props)
         else:
             print(f'Watching {d.resolve()} ...')
@@ -105,6 +106,7 @@ def _main()->None:
                 time.sleep(0.1)
                 ev.clear()
 
+                print(f'Building {d.resolve()} ...')
                 build(d, props)
 
         if args.server:
