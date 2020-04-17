@@ -12,6 +12,7 @@ MODULES_DIR = "modules"
 CONTENTS_DIR = "contents"
 FILES_DIR = "files"
 TEMPLATES_DIR = "templates"
+MACROS_DIR = "macros"
 OUTPUTS_DIR = "outputs"
 
 DEFAULT_TIMEZONE = tzlocal.get_localzone().zone

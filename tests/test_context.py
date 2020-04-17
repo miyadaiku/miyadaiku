@@ -211,8 +211,9 @@ prop2: value3
     proxy = context.ConfigProxy(ctx1, ctx1.content)
     assert "value1" == proxy["prop1"]
     assert "value3" == proxy["prop2"]
-    assert "value1" == proxy.get("prop1")
-    assert "value2" == proxy.get("prop1", dir="..")
+    assert "value1" == proxy.get(None, "prop1")
+    assert "value1" == proxy.get(".", "prop1")
+    assert "value2" == proxy.get("..", "prop1")
 
     with pytest.raises(exceptions.ConfigNotFoundError):
         assert proxy["prop3"]

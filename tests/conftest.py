@@ -64,6 +64,7 @@ class SiteRoot:
 
         site = miyadaiku.site.Site()
         site.load(self.path, props)
+        site.build_jinjaenv()
         return site
 
     def ensure_parent(self, path: pathlib.Path) -> None:

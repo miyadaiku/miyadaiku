@@ -10,6 +10,9 @@ import importlib.abc
 import yaml
 import pkg_resources
 import dateutil
+
+from jinja2 import    Environment;
+
 import miyadaiku
 from .config import Config
 from . import loader
@@ -42,6 +45,10 @@ class Site:
     ignores: Set[str]
     themes: List[str]
     builder: List[Builder]
+
+    jinja_global_vars: Dict[str, Any]
+    jinja_templates: Dict[str, Any]
+    jinjaenv: Environment
 
     def _load_config(self, props: Dict[str, Any]) -> None:
         cfgfile = self.root / miyadaiku.CONFIG_FILE
@@ -94,23 +101,12 @@ class Site:
             self.themes.append(theme)
             self.config.add_themecfg(cfg)
 
-    def _load_jinjaenv(self) -> None:
-        self.jinjaenv = create_env(
-            self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR]
-        )
-
     def _init_themes(self) -> None:
         for theme in self.themes:
             mod = importlib.import_module(theme)
             f = getattr(mod, "load_package", None)
             if f:
                 f(self)
-
-    def _load_jinja_globals(self) -> None:
-        import miyadaiku.extend
-
-        for name, value in miyadaiku.extend._jinja_globals.items():
-            self.add_jinja_global(name, value)
 
     def _load_modules(self) -> None:
         modules = (self.root / miyadaiku.MODULES_DIR).resolve()
@@ -136,24 +132,24 @@ class Site:
             content.generate_metadata_file(self)
 
     def add_template_module(self, name: str, templatename: str) -> None:
-        template = self.jinjaenv.get_template(templatename)
-        self.jinjaenv.globals[name] = template.module
+        self.jinja_templates[name] = templatename
 
-    def add_jinja_global(self, name: str, f: Any) -> None:
-        self.jinjaenv.globals[name] = f
+    def add_jinja_global(self, name: str, value: Any) -> None:
+        self.jinja_global_vars[name] = value
 
     def load(self, root: Path, props: Dict[str, Any]) -> None:
         self.root = root
         self.outputdir = self.root / miyadaiku.OUTPUTS_DIR
 
+        self.jinja_global_vars = {}
+        self.jinja_templates={}
+
         self._load_config(props)
         self.files = loader.ContentFiles()
 
         self._load_themes()
-        self._load_jinjaenv()
 
         self._init_themes()
-        self._load_jinja_globals()
         self._load_modules()
 
         loader.loadfiles(self.files, self.config, self.root, self.ignores, self.themes)
@@ -164,7 +160,20 @@ class Site:
         for contentpath, content in self.files.items():
             self.builders.extend(create_builders(self, content))
 
+    def build_jinjaenv(self)->None:
+        self.jinjaenv = create_env(self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR])
+
+        for name, value in self.jinja_global_vars.items():
+            self.jinjaenv.globals[name] = value
+
+        for name, templatename in self.jinja_templates.items():
+            template = self.jinjaenv.get_template(templatename)
+            self.jinjaenv.globals[name] = template.module
+
+
     def build(self) -> None:
+        self.build_jinjaenv()
+
         if not self.outputdir.is_dir():
             self.outputdir.mkdir(parents=True, exist_ok=True)
 

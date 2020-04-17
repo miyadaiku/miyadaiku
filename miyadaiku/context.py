@@ -109,7 +109,7 @@ class ContentProxy:
     def fragments(self, ctx: OutputContext) -> List[HTMLIDInfo]:
         return self.content.get_fragments(self.context)
 
-    def is_same(self, other)->bool:
+    def is_same(self, other:OutputContext)->bool:
         if self.contentpath == other.contentpath:
             return True
         return False
@@ -222,11 +222,15 @@ class ConfigProxy:
 
     _omit = object()
 
-    def get(self, dir: Union[str, PathTuple], name:str, default: Any = _omit) -> Any:
-        if dir is not None:
+    def get(self, dir: Union[None, str, PathTuple], name:str, default: Any = _omit) -> Any:
+        if isinstance(dir, tuple):
+            dirtuple = dir
+        elif isinstance(dir, str):
             dirtuple = parse_dir(dir, self.content.src.contentpath[0])
-        else:
+        elif dir is None:
             dirtuple = self.content.src.contentpath[0]
+        else:
+            raise ValueError(f"Invalid dir: {dir}")
 
         try:
             return self.context.site.config.get(dirtuple, name)
