@@ -5,4 +5,4 @@ ignore =
 #    E261, # at least two spaces before inline comment
     E731, # do not assign a lambda expression, use a def
     W503, # line break before binary operator
-    
+    E401, # multiple imports on one line 

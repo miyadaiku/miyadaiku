@@ -1,13 +1,9 @@
 from typing import Iterator, List, Any
 import os
-import sys
 import shutil
 import glob
-from wheel import bdist_wheel
 import distutils.dist
 from distutils.core import Command
-
-from pathlib import Path
 
 
 SETUP_FILE_EXTS = [

@@ -20,6 +20,7 @@ from pathlib import Path
 import logging
 import posixpath
 import collections.abc
+import time
 import yaml
 
 import miyadaiku
@@ -66,11 +67,12 @@ def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
                 dirname, f"{fname}{miyadaiku.METADATA_FILE_SUFFIX}"
             )
 
+            metadata: Dict[Any, Any] = {}
+
             if os.path.isfile(metadatafile):
                 text = open(metadatafile, encoding=miyadaiku.YAML_ENCODING).read()
                 metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
-            else:
-                metadata = {}
+
             mtime = filename.stat().st_mtime
             yield ContentSrc(
                 package="",
@@ -123,7 +125,7 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
             srcpath=str(srcpath),
             metadata=metadata,
             contentpath=to_contentpath(destname),
-            mtime=0,
+            mtime=None,
         )
 
 
@@ -153,9 +155,11 @@ FILELOADERS = {
 
 class ContentFiles:
     _contentfiles: Dict[ContentPath, Content]
+    mtime: float
 
     def __init__(self) -> None:
         self._contentfiles = {}
+        self.mtime = time.time()
 
     def add(self, contentsrc: ContentSrc, body: Optional[bytes]) -> None:
         if contentsrc.contentpath not in self._contentfiles:

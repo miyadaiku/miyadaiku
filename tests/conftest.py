@@ -7,7 +7,7 @@ import yaml
 import shutil
 
 import miyadaiku.site
-from miyadaiku import context, to_contentpath, exceptions
+from miyadaiku import context, to_contentpath
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -22,10 +22,10 @@ def build_sitedir(path: pathlib.Path) -> pathlib.Path:
     if site.is_dir():
         shutil.rmtree(site)
     site.mkdir()
-    (site / "modules").mkdir()
     (site / "contents").mkdir()
     (site / "files").mkdir()
     (site / "templates").mkdir()
+    (site / "modules").mkdir()
     return site
 
 

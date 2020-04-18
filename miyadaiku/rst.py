@@ -1,9 +1,8 @@
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Tuple
 import re
 import os
 import html
 import collections
-from typing import Dict, Tuple, Any
 import docutils
 import docutils.core
 import docutils.nodes

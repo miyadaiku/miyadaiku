@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, List, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Set, Tuple
 import sys
 import os
 from pathlib import Path
@@ -11,13 +11,16 @@ import yaml
 import pkg_resources
 import dateutil
 
-from jinja2 import    Environment;
+from jinja2 import Environment
 
 import miyadaiku
 from .config import Config
 from . import loader
 from .builder import create_builders, Builder
 from .jinjaenv import create_env
+
+if TYPE_CHECKING:
+    from .context import OutputContext
 
 
 def timestamp_constructor(loader, node):  # type: ignore
@@ -142,7 +145,7 @@ class Site:
         self.outputdir = self.root / miyadaiku.OUTPUTS_DIR
 
         self.jinja_global_vars = {}
-        self.jinja_templates={}
+        self.jinja_templates = {}
 
         self._load_config(props)
         self.files = loader.ContentFiles()
@@ -160,8 +163,10 @@ class Site:
         for contentpath, content in self.files.items():
             self.builders.extend(create_builders(self, content))
 
-    def build_jinjaenv(self)->None:
-        self.jinjaenv = create_env(self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR])
+    def build_jinjaenv(self) -> None:
+        self.jinjaenv = create_env(
+            self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR]
+        )
 
         for name, value in self.jinja_global_vars.items():
             self.jinjaenv.globals[name] = value
@@ -170,13 +175,16 @@ class Site:
             template = self.jinjaenv.get_template(templatename)
             self.jinjaenv.globals[name] = template.module
 
-
-    def build(self) -> None:
+    def build(self) -> List[OutputContext]:
         self.build_jinjaenv()
 
         if not self.outputdir.is_dir():
             self.outputdir.mkdir(parents=True, exist_ok=True)
 
+        contexts = []
         for builder in self.builders:
             context = builder.build_context(self)
             context.build()
+            contexts.append(context)
+
+        return contexts

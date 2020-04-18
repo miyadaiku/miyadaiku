@@ -2,7 +2,8 @@ from typing import Dict, Tuple, NamedTuple, Any, Optional, Union
 import posixpath
 import pkg_resources
 import tzlocal
-from .__version__ import __version__
+
+from . __version__ import __version__ # NOQA
 
 YAML_ENCODING = "utf-8"
 
@@ -12,7 +13,6 @@ MODULES_DIR = "modules"
 CONTENTS_DIR = "contents"
 FILES_DIR = "files"
 TEMPLATES_DIR = "templates"
-MACROS_DIR = "macros"
 OUTPUTS_DIR = "outputs"
 
 DEFAULT_TIMEZONE = tzlocal.get_localzone().zone
@@ -43,7 +43,7 @@ class ContentSrc(NamedTuple):
     srcpath: Optional[str]
     metadata: Dict[str, Any]
     contentpath: ContentPath
-    mtime: float = 0.0
+    mtime: Optional[float] = 0.0
 
     def repr_filename(self) -> str:
         if self.package:

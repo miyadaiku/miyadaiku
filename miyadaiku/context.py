@@ -109,7 +109,7 @@ class ContentProxy:
     def fragments(self, ctx: OutputContext) -> List[HTMLIDInfo]:
         return self.content.get_fragments(self.context)
 
-    def is_same(self, other:OutputContext)->bool:
+    def is_same(self, other: OutputContext) -> bool:
         if self.contentpath == other.contentpath:
             return True
         return False
@@ -125,7 +125,9 @@ class ContentProxy:
     def load(self, target: str) -> ContentProxy:
         return ContentProxy(self.context, self._load(target))
 
-    def _to_content(self, content: Union[ContentProxy, Content, str, ContentPath]) -> Content:
+    def _to_content(
+        self, content: Union[ContentProxy, Content, str, ContentPath]
+    ) -> Content:
         if isinstance(content, str):
             return self._load(content)
         elif isinstance(content, ContentProxy):
@@ -222,7 +224,9 @@ class ConfigProxy:
 
     _omit = object()
 
-    def get(self, dir: Union[None, str, PathTuple], name:str, default: Any = _omit) -> Any:
+    def get(
+        self, dir: Union[None, str, PathTuple], name: str, default: Any = _omit
+    ) -> Any:
         if isinstance(dir, tuple):
             dirtuple = dir
         elif isinstance(dir, str):
@@ -420,7 +424,7 @@ class OutputContext:
         self.site = site
         self.contentpath = contentpath
         self.content = site.files.get_content(self.contentpath)
-        self.depends = set()
+        self.depends = set([contentpath])
         self._html_cache = {}
         self._filename_cache = {}
 

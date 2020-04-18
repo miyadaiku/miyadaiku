@@ -1,18 +1,5 @@
-#type: ignore
-import sys
-import runpy
-import locale
-import argparse
+# type: ignore
 import os
-import pathlib
-import time
-import threading
-import tzlocal
-import happylogging
-import logging
-import http.server
-import multiprocessing
-import traceback
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -51,8 +38,8 @@ class RootHandler(FileSystemEventHandler):
         if event.is_directory:
             if os.path.split(event.src_path)[1] in DIRS:
                 OBSERVER.schedule(
-                    ContentDirHandler(self._ev), event.src_path,
-                    recursive=True)
+                    ContentDirHandler(self._ev), event.src_path, recursive=True
+                )
             return
 
         if os.path.split(event.src_path)[1] == CONFIG_FILE:
