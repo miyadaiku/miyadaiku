@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Set, Tuple, Sequence
 import sys
 import os
 from pathlib import Path
@@ -15,8 +15,8 @@ from jinja2 import Environment
 
 import miyadaiku
 from .config import Config
-from . import loader
-from .builder import create_builders, Builder
+from . import ContentSrc, ContentPath, loader
+from .builder import create_builders, Builder, build
 from .jinjaenv import create_env
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class Site:
     files: loader.ContentFiles
     ignores: Set[str]
     themes: List[str]
-    builder: List[Builder]
+    builders: List[Builder]
 
     jinja_global_vars: Dict[str, Any]
     jinja_templates: Dict[str, Any]
@@ -159,10 +159,6 @@ class Site:
 
         self._generate_metadata_files()
 
-        self.builders = []
-        for contentpath, content in self.files.items():
-            self.builders.extend(create_builders(self, content))
-
     def build_jinjaenv(self) -> None:
         self.jinjaenv = create_env(
             self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR]
@@ -175,16 +171,24 @@ class Site:
             template = self.jinjaenv.get_template(templatename)
             self.jinjaenv.globals[name] = template.module
 
-    def build(self) -> List[OutputContext]:
-        self.build_jinjaenv()
-
-        if not self.outputdir.is_dir():
-            self.outputdir.mkdir(parents=True, exist_ok=True)
-
-        contexts = []
-        for builder in self.builders:
-            context = builder.build_context(self)
-            context.build()
-            contexts.append(context)
-
-        return contexts
+    def build(self) -> Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
+        return build(self)
+#        
+#
+#        self.build_jinjaenv()
+#
+#        self.builders = []
+#        for contentpath, content in self.files.items():
+#            self.builders.extend(create_builders(self, content))
+#
+#        if not self.outputdir.is_dir():
+#            self.outputdir.mkdir(parents=True, exist_ok=True)
+#
+#        contexts = []
+#        for builder in self.builders:
+#            context = builder.build_context(self)
+#            context.build()
+#            contexts.append(context)
+#
+#        return contexts
+#

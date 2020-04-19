@@ -129,6 +129,7 @@ def _main() -> None:
 
 
 def main() -> None:
+    multiprocessing.set_start_method('spawn')
     ret = _main()
     sys.exit(ret)
 

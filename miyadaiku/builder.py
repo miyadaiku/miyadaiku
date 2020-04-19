@@ -3,13 +3,20 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
+    Any,
     List,
     Type,
     Sequence,
     Dict,
     Union,
+    Tuple,
+    Set
 )
-from miyadaiku import ContentPath, PathTuple
+import multiprocessing
+import pickle
+import asyncio
+
+from miyadaiku import ContentPath, PathTuple, ContentSrc
 
 from .context import CONTEXTS, OutputContext, BinaryOutput, IndexOutput
 
@@ -150,3 +157,108 @@ def create_builders(site: Site, content: Content) -> List[Builder]:
         return buildercls.create_builders(site, content)
     else:
         return []
+
+
+def split_batch(builders:Sequence[Any])->Sequence[Any]:
+    num = len(builders)
+    batch_count = min(num, multiprocessing.cpu_count())
+
+    batchsize, remainder = divmod(num, batch_count)
+    batches = []
+
+    for i in range(0, remainder):
+        batches.append(builders[i*(batchsize+1):(i+1)*(batchsize+1)])
+
+    start = (batchsize+1)*remainder
+    for i in range(0, batch_count-remainder):
+        batches.append(builders[start+ i*batchsize:start+(i+1)*batchsize])
+
+    return batches
+
+
+def build_batch(queue:Any, site:Site, builders:List[Builder])->List[OutputContext]:
+    contexts:List[OutputContext] = []
+
+    try:
+
+        for builder in builders:
+            context = builder.build_context(site)
+            queue.put(f"Building {context.content.src.repr_filename()}")
+            context.build()
+            contexts.append(context)
+
+    finally:
+        queue.put(None)
+        queue.close()
+
+    return contexts
+
+
+def run_build_batch(queue:Any, site_pickle:bytes, builders:List[Builder])->List[OutputContext]:
+    site = pickle.loads(site_pickle)
+    site.build_jinjaenv()
+
+    return build_batch(queue, site, builders)
+
+
+
+
+async def submit(site:Site, batches: Sequence[List[Builder]])->None:
+        for batch in batches:
+            queue: Any = multiprocessing.Queue()
+        ret = build_batch(queue, site, batch)
+
+
+def build(site: Site)->Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
+    contents = [content for contentpath, content in site.files.items()]
+    builders = []
+    for contentpath, content in site.files.items():
+        builders.extend(create_builders(site, content))
+
+    batches = split_batch(builders)
+
+    if not site.outputdir.is_dir():
+        site.outputdir.mkdir(parents=True, exist_ok=True)
+
+
+
+    asyncio.run(submit(site, batches))
+
+    try:
+        ret:List[Tuple[ContentSrc, Set[ContentPath]]] = []
+
+        for batch in batches:
+            queue: Any = multiprocessing.Queue()
+            contexts = build_batch(queue, site, batch)
+
+            for context in contexts:
+                ret.append((context.content.src, set(context.depends)))
+    finally:
+        queue.close()
+        queue.join_thread()
+        queue = None
+
+    
+
+    return ret
+
+#
+#
+#    site.build_jinjaenv()
+#
+#    builders = []
+#    for contentpath, content in site.files.items():
+#        builders.extend(create_builders(site, content))
+#
+#    if not site.outputdir.is_dir():
+#        site.outputdir.mkdir(parents=True, exist_ok=True)
+#
+#    contexts = []
+#    for builder in builders:
+#        context = builder.build_context(site)
+#        context.build()
+#        contexts.append(context)
+#
+#    return contexts
+#    
+

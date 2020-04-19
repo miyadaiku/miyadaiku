@@ -1,4 +1,5 @@
 from typing import cast, List
+from unittest.mock import patch
 from miyadaiku import builder
 from conftest import SiteRoot
 
@@ -109,3 +110,22 @@ groupby: tags
 
     context = indexbuilders[0].build_context(site)
     assert context.contentpath == (("htmldir",), "index.yml")
+
+
+
+def test_split_batch()->None:
+
+    with patch('multiprocessing.cpu_count', return_value=3):
+        ret =  builder.split_batch([1])
+        assert ret == [[1]]
+
+        ret =  builder.split_batch([i for i in range(3)])
+        assert ret == [[0], [1], [2]]
+
+        ret =  builder.split_batch([i for i in range(4)])
+        assert ret == [[0, 1], [2], [3]]
+
+        ret =  builder.split_batch([i for i in range(6)])
+        assert ret == [[0, 1], [2, 3], [4, 5]]
+
+
