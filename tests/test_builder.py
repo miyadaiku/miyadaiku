@@ -126,10 +126,10 @@ def test_split_batch()->None:
         assert ret == [[0], [1], [2]]
 
         ret =  builder.split_batch([i for i in range(4)])
-        assert ret == [[0, 1], [2], [3]]
+        assert ret == [[0, 3], [1], [2]]
 
         ret =  builder.split_batch([i for i in range(6)])
-        assert ret == [[0, 1], [2, 3], [4, 5]]
+        assert ret == [[0, 3], [1, 4], [2, 5]]
 
 
 def test_mpbuild(siteroot: SiteRoot)->None:

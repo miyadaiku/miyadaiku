@@ -174,22 +174,3 @@ class Site:
 
     def build(self) -> Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
         return build(self)
-#        
-#
-#        self.build_jinjaenv()
-#
-#        self.builders = []
-#        for contentpath, content in self.files.items():
-#            self.builders.extend(create_builders(self, content))
-#
-#        if not self.outputdir.is_dir():
-#            self.outputdir.mkdir(parents=True, exist_ok=True)
-#
-#        contexts = []
-#        for builder in self.builders:
-#            context = builder.build_context(self)
-#            context.build()
-#            contexts.append(context)
-#
-#        return contexts
-#
