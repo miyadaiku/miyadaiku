@@ -111,7 +111,7 @@ class Site:
             if f:
                 f(self)
 
-    def _load_modules(self) -> None:
+    def load_modules(self) -> None:
         modules = (self.root / miyadaiku.MODULES_DIR).resolve()
         if modules.is_dir():
             s = str(modules)
@@ -153,23 +153,24 @@ class Site:
         self._load_themes()
 
         self._init_themes()
-        self._load_modules()
 
         loader.loadfiles(self.files, self.config, self.root, self.ignores, self.themes)
 
         self._generate_metadata_files()
 
-    def build_jinjaenv(self) -> None:
-        self.jinjaenv = create_env(
+    def build_jinjaenv(self) -> Environment:
+        jinjaenv = create_env(
             self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR]
         )
 
         for name, value in self.jinja_global_vars.items():
-            self.jinjaenv.globals[name] = value
+            jinjaenv.globals[name] = value
 
         for name, templatename in self.jinja_templates.items():
-            template = self.jinjaenv.get_template(templatename)
-            self.jinjaenv.globals[name] = template.module
+            template = jinjaenv.get_template(templatename)
+            jinjaenv.globals[name] = template.module
+
+        return jinjaenv
 
     def build(self) -> Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
         return build(self)

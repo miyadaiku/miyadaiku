@@ -37,6 +37,8 @@ METADATA_FILE_SUFFIX = ".props.yml"
 PathTuple = Tuple[str, ...]
 ContentPath = Tuple[PathTuple, str]
 
+def repr_contentpath(path:ContentPath)->str:
+    return posixpath.join(*(path[0]), path[1])
 
 class ContentSrc(NamedTuple):
     package: Optional[str]

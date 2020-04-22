@@ -206,7 +206,7 @@ class Content:
 
         ret = {}
         for name in self.get_metadata(ctx.site, "imports"):
-            template = ctx.site.jinjaenv.get_template(name)
+            template = ctx.jinjaenv.get_template(name)
             fname = name.split("!", 1)[-1]
             modulename = PurePosixPath(fname).stem
             ret[modulename] = template.module

@@ -14,7 +14,8 @@ def test_load() -> None:
 
 def test_theme(siteroot: SiteRoot) -> None:
     site = siteroot.load({"themes": ["miyadaiku.themes.ipynb"]}, {})
-    template = site.jinjaenv.from_string("{{ipynb.set_header()}}")
+    jinjaenv = site.build_jinjaenv()
+    template = jinjaenv.from_string("{{ipynb.set_header()}}")
     ret = template.render()
 
     soup = BeautifulSoup(ret, "html.parser")

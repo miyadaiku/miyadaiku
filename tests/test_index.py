@@ -28,8 +28,9 @@ groupby: tags
         site, site.files.get_content((("htmldir",), "index.yml"))
     )
     indexbuilders = cast(List[builder.IndexBuilder], builders)
+    jinjaenv = site.build_jinjaenv()
     for b in indexbuilders:
-        ctx = b.build_context(site)
+        ctx = b.build_context(site, jinjaenv)
         (f,) = ctx.build()
 
     assert len(indexbuilders) == 4

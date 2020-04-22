@@ -64,7 +64,6 @@ class SiteRoot:
 
         site = miyadaiku.site.Site()
         site.load(self.path, props)
-        site.build_jinjaenv()
         return site
 
     def ensure_parent(self, path: pathlib.Path) -> None:
@@ -98,10 +97,11 @@ def create_contexts(
 
     site = siteroot.load({}, {})
     ret = []
+    jinjaenv = site.build_jinjaenv()
     for path, src in srcs:
         contentpath = to_contentpath(path)
         if site.files.has_content(contentpath):
-            ctx = context.JinjaOutput(site, contentpath)
+            ctx = context.JinjaOutput(site, jinjaenv, contentpath)
             ret.append(ctx)
 
     return ret

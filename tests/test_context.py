@@ -12,8 +12,9 @@ def test_htmlcontext(siteroot: SiteRoot) -> None:
         siteroot.templates / "page_article.html", "<div>{{ page.html }}</div>"
     )
     site = siteroot.load({}, {})
+    jinjaenv = site.build_jinjaenv()
 
-    ctx = context.JinjaOutput(site, ((), "doc.html"))
+    ctx = context.JinjaOutput(site, jinjaenv, ((), "doc.html"))
     (filename,) = ctx.build()
     html = Path(filename).read_text()
     assert html == "<div>hello<a>2</a></div>"
@@ -23,7 +24,8 @@ def test_binarycontext(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.files / "subdir" / "file1.txt", "subdir/file1")
     site = siteroot.load({}, {})
 
-    ctx = context.BinaryOutput(site, (("subdir",), "file1.txt"))
+    jinjaenv = site.build_jinjaenv()
+    ctx = context.BinaryOutput(site, jinjaenv, (("subdir",), "file1.txt"))
     (filename,) = ctx.build()
 
     assert Path(filename) == site.outputdir / "subdir/file1.txt"
@@ -35,7 +37,8 @@ def test_load(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "A/B/D/file2.html", "A/B/D/file1.html")
 
     site = siteroot.load({}, {})
-    ctx = context.JinjaOutput(site, (("A", "B", "C"), "file1.html"))
+    jinjaenv = site.build_jinjaenv()
+    ctx = context.JinjaOutput(site, jinjaenv, (("A", "B", "C"), "file1.html"))
     proxy = context.ContentProxy(ctx, ctx.content)
 
     file2 = proxy.load("../D/file2.html")

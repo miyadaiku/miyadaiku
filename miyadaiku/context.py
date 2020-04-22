@@ -26,6 +26,7 @@ from urllib.parse import urlparse
 import posixpath
 import datetime
 
+from jinja2 import Environment
 from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
 import markupsafe
 
@@ -381,7 +382,7 @@ def eval_jinja(
     ctx.add_depend(content)
     args = content.get_jinja_vars(ctx)
     args.update(kwargs)
-    template = ctx.site.jinjaenv.from_string(text)
+    template = ctx.jinjaenv.from_string(text)
     template.filename = f"{content.repr_filename()}#{propname}"
     return template.render(**kwargs)
 
@@ -389,7 +390,7 @@ def eval_jinja(
 def eval_jinja_template(
     ctx: OutputContext, content: Content, templatename: str, kwargs: Dict[str, Any],
 ) -> str:
-    template = ctx.site.jinjaenv.get_template(templatename)
+    template = ctx.jinjaenv.get_template(templatename)
     template.filename = templatename
 
     args = content.get_jinja_vars(ctx)
@@ -420,8 +421,9 @@ class OutputContext:
     _filename_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], str]
     depends: Set[ContentPath]
 
-    def __init__(self, site: Site, contentpath: ContentPath) -> None:
+    def __init__(self, site: Site, jinjaenv:Environment, contentpath: ContentPath) -> None:
         self.site = site
+        self.jinjaenv = jinjaenv
         self.contentpath = contentpath
         self.content = site.files.get_content(self.contentpath)
         self.depends = set([contentpath])
@@ -572,13 +574,14 @@ class IndexOutput(OutputContext):
     def __init__(
         self,
         site: Site,
+        jinjaenv: Environment,
         contentpath: ContentPath,
         value: str,
         items: Sequence[Content],
         cur_page: int,
         num_pages: int,
     ) -> None:
-        super().__init__(site, contentpath)
+        super().__init__(site, jinjaenv, contentpath)
 
         self.value = value
         self.items = items

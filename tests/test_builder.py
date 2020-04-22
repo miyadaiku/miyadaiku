@@ -12,7 +12,8 @@ def test_builder(siteroot: SiteRoot) -> None:
         site, site.files.get_content((("subdir",), "file1.txt"))
     )
 
-    context = b.build_context(site)
+    jinjaenv = site.build_jinjaenv()
+    context = b.build_context(site, jinjaenv)
     (path,) = context.build()
     assert path == site.outputdir / "subdir" / "file1.txt"
     assert path.read_text() == "subdir/file1"
@@ -21,7 +22,8 @@ def test_builder(siteroot: SiteRoot) -> None:
         site, site.files.get_content(((), "package1_file1.txt"))
     )
 
-    context = b.build_context(site)
+    jinjaenv = site.build_jinjaenv()
+    context = b.build_context(site, jinjaenv)
     (path,) = context.build()
     assert path == site.outputdir / "package1_file1.txt"
     assert path.read_text() == "package1_file1.txt"
@@ -108,7 +110,8 @@ groupby: tags
     assert indexbuilders[3].value == "tag2"
     assert len(indexbuilders[3].items) == 5
 
-    context = indexbuilders[0].build_context(site)
+    jinjaenv = site.build_jinjaenv()
+    context = indexbuilders[0].build_context(site, jinjaenv)
     assert context.contentpath == (("htmldir",), "index.yml")
 
 
@@ -129,3 +132,9 @@ def test_split_batch()->None:
         assert ret == [[0, 1], [2, 3], [4, 5]]
 
 
+def test_mpbuild(siteroot: SiteRoot)->None:
+
+    siteroot.write_text(siteroot.contents / "test.txt", "test")
+    site = siteroot.load({}, {})
+
+    site.build()
