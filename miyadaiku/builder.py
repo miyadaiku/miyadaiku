@@ -170,10 +170,12 @@ def create_builders(site: Site, content: Content) -> List[Builder]:
         return []
 
 
+MIN_BATCH_SIZE = 10
+
 def split_batch(builders:Sequence[Any])->Sequence[Any]:
     num = len(builders)
-    batch_count = min(num, multiprocessing.cpu_count())
-
+    max_batches = (num // MIN_BATCH_SIZE) or 1
+    batch_count = min(max_batches, multiprocessing.cpu_count())
     batches = [[] for _ in range(batch_count)]
 
     for i, builder in enumerate(builders):
@@ -201,6 +203,7 @@ def build_batch(site:Site, jinjaev:Environment, builders:List[Builder])->None:
 def mp_build_batch(queue:Any, picklefile:str, builders:List[Builder])->None:
     try:
         site = pickle.load(open(picklefile, "rb"))
+
         jinjaenv = site.build_jinjaenv()
         site.load_modules()
 
@@ -236,7 +239,6 @@ def run_build(picklefile:str, batch:List[Builder])->None:
     return msgs
 
 async def submit(site:Site, batches: Sequence[List[Builder]])->None:
-
     fd, picklefile = tempfile.mkstemp()
     try:
         sitestr = pickle.dumps(site)

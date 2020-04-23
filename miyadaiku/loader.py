@@ -15,8 +15,8 @@ from typing import (
 )
 import os
 import fnmatch
-import pkg_resources
-from pathlib import Path
+import importlib_resources
+from pathlib import Path, PosixPath
 import logging
 import posixpath
 import collections.abc
@@ -25,7 +25,7 @@ import yaml
 
 import miyadaiku
 from miyadaiku import ContentPath, ContentSrc, PathTuple, to_contentpath
-from . import config, rst, md, contents, html
+from . import config, contents, html
 from . import site
 from .contents import Content
 from . import exceptions
@@ -83,17 +83,16 @@ def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
             )
 
 
-def _iter_package_files(package: str, path: str, ignores: Set[str]) -> Iterator[str]:
-    children = pkg_resources.resource_listdir(package, path)
+def _iter_package_files(path: PosixPath, ignores: Set[str]) -> Iterator[str]:
+    children = path.iterdir()
     for child in children:
-        if is_ignored(ignores, child):
+        if is_ignored(ignores, str(child)):
             continue
 
-        p = f"{path}{child}"
-        if pkg_resources.resource_isdir(package, p):
-            yield from _iter_package_files(package, p + "/", ignores)
+        if child.is_dir():
+            yield from _iter_package_files(child, ignores)
         else:
-            yield p
+            yield child
 
 
 def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[ContentSrc]:
@@ -103,26 +102,28 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
         path = path + "/"
     pathlen = len(path)
 
-    if not pkg_resources.resource_isdir(package, path):
+    packagepath = importlib_resources.files(package)
+    root = packagepath / path
+    if not root.is_dir():
         return
 
-    for srcpath in _iter_package_files(package, path, ignores):
-        destname = srcpath[pathlen:]
+    for srcpath in _iter_package_files(root, ignores):
+        p = os.path.relpath(srcpath, root)
+        destname = posixpath.relpath(srcpath, root)
+    
+        dirname, fname = posixpath.split(posixpath.relpath(srcpath, packagepath))
 
-        dirname, fname = posixpath.split(srcpath)
-        metadatapath = posixpath.join(
-            dirname, f"{fname}{miyadaiku.METADATA_FILE_SUFFIX}"
-        )
+        metadatapath = srcpath.parent / f"{srcpath.name}{miyadaiku.METADATA_FILE_SUFFIX}"
 
-        if pkg_resources.resource_exists(package, metadatapath):
-            text = pkg_resources.resource_string(package, metadatapath)
+        if metadatapath.exists():
+            text = metadatapath.read_bytes()
             metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
         else:
             metadata = {}
 
         yield ContentSrc(
             package=package,
-            srcpath=str(srcpath),
+            srcpath=str(posixpath.relpath(srcpath, packagepath)),
             metadata=metadata,
             contentpath=to_contentpath(destname),
             mtime=None,
@@ -142,10 +143,18 @@ def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
     return {"type": "binary"}, None
 
 
+def rstloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
+    from . import rst
+    return rst.load(src)
+
+def mdloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
+    from . import md
+    return md.load(src)
+
 FILELOADERS = {
-    ".rst": rst.load,
-    ".rest": rst.load,
-    ".md": md.load,
+    ".rst": rstloader,
+    ".rest": rstloader,
+    ".md": mdloader,
     ".html": html.load,
     ".htm": html.load,
     ".yml": yamlloader,

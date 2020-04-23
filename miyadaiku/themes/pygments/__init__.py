@@ -1,14 +1,14 @@
 from typing import cast
-import pkg_resources
 import posixpath
+import importlib_resources
 from miyadaiku import site
-
-from pygments.formatters import get_formatter_by_name
 
 DEST_PATH = "/static/pygments/"
 
 
 def get_css(style: str) -> str:
+    from pygments.formatters import get_formatter_by_name
+
     fmter = get_formatter_by_name("html", style=style)
     return cast(str, fmter.get_style_defs(".highlight"))
 
@@ -20,8 +20,7 @@ def load_package(site: site.Site) -> None:
         site.config.add("/", {"pygments_css_path": css_path})
 
         src_path = "externals/" + cssname
-        csscontent = pkg_resources.resource_string(__name__, src_path)
-
+        csscontent = importlib_resources.files(__name__).joinpath(src_path).read_bytes()
         site.files.add_bytes("binary", css_path, csscontent)
     else:
         stylename = site.config.get("/", "pygments_style")

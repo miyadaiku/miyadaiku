@@ -1,6 +1,6 @@
 from typing import Dict, Tuple, NamedTuple, Any, Optional, Union
 import posixpath
-import pkg_resources
+import importlib_resources
 import tzlocal
 
 from .__version__ import __version__  # NOQA
@@ -58,15 +58,14 @@ class ContentSrc(NamedTuple):
 
     def read_text(self, encoding: str = "utf-8") -> str:
         if self.package and self.srcpath:
-            ret = pkg_resources.resource_string(self.package, self.srcpath)
-            return ret.decode(encoding)
+            return importlib_resources.files(self.package).joinpath(self.srcpath).read_text()
         else:
             assert self.srcpath
             return open(self.srcpath).read()
 
     def read_bytes(self) -> bytes:
         if self.package and self.srcpath:
-            return pkg_resources.resource_string(self.package, self.srcpath)
+            return importlib_resources.files(self.package).joinpath(self.srcpath).read_bytes()
         else:
             assert self.srcpath
             return open(self.srcpath, "rb").read()

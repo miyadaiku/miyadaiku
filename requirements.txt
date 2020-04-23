@@ -13,3 +13,4 @@ nbformat
 nbconvert
 watchdog
 ipython
+importlib_resources

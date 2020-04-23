@@ -114,11 +114,15 @@ groupby: tags
     context = indexbuilders[0].build_context(site, jinjaenv)
     assert context.contentpath == (("htmldir",), "index.yml")
 
+@patch('multiprocessing.cpu_count', return_value=3)
+def test_split_batch(cpu_count)->None:
 
+    ret =  builder.split_batch([i for i in range(25)])
+    assert len(ret) == 2
+    assert set(ret[0]+ret[1]) == set(range(25))
 
-def test_split_batch()->None:
+    with patch('miyadaiku.builder.MIN_BATCH_SIZE', 1):
 
-    with patch('multiprocessing.cpu_count', return_value=3):
         ret =  builder.split_batch([1])
         assert ret == [[1]]
 
@@ -131,6 +135,7 @@ def test_split_batch()->None:
         ret =  builder.split_batch([i for i in range(6)])
         assert ret == [[0, 3], [1, 4], [2, 5]]
 
+    
 
 def test_mpbuild(siteroot: SiteRoot)->None:
 

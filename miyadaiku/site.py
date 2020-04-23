@@ -8,7 +8,7 @@ import importlib
 import importlib.util
 import importlib.abc
 import yaml
-import pkg_resources
+import importlib_resources
 import dateutil
 
 from jinja2 import Environment
@@ -69,7 +69,7 @@ class Site:
     def _load_themes(self) -> None:
         def _load_theme_config(package: str) -> Dict[str, Any]:
             try:
-                s = pkg_resources.resource_string(package, miyadaiku.CONFIG_FILE)
+                s = importlib_resources.files(package).joinpath(miyadaiku.CONFIG_FILE).read_bytes()
             except FileNotFoundError:
                 cfg = {}
             else:

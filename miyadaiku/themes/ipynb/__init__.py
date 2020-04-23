@@ -1,6 +1,4 @@
-import pkg_resources
-from nbconvert.exporters import HTMLExporter
-import nbformat
+import importlib_resources
 from bs4 import BeautifulSoup, Doctype
 import markupsafe
 
@@ -10,7 +8,10 @@ EMPTY_IPYNB = "empty.ipynb"
 
 
 def _build_head() -> str:
-    src = pkg_resources.resource_string("miyadaiku.themes.ipynb", EMPTY_IPYNB)
+    from nbconvert.exporters import HTMLExporter
+    import nbformat
+
+    src = (importlib_resources.files("miyadaiku.themes.ipynb")/ EMPTY_IPYNB).read_bytes()
     json = nbformat.reads(src, nbformat.current_nbformat)
 
     html, _ = HTMLExporter({}).from_notebook_node(json)
