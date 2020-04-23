@@ -32,7 +32,10 @@ title
 """,
     )
 
-    site = siteroot.load({"themes": ["miyadaiku.themes.pygments"]}, {'pygments_css': 'pygments_friendly.css'})
+    site = siteroot.load(
+        {"themes": ["miyadaiku.themes.pygments"]},
+        {"pygments_css": "pygments_friendly.css"},
+    )
     site.build()
 
     s = (siteroot.outputs / "index.html").read_text()

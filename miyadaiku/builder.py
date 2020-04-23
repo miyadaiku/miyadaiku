@@ -1,17 +1,7 @@
 from __future__ import annotations
 
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    List,
-    Type,
-    Sequence,
-    Dict,
-    Union,
-    Tuple,
-    Set
-)
+from typing import TYPE_CHECKING, Any, List, Type, Sequence, Dict, Union, Tuple, Set
 import multiprocessing
 import pickle
 import asyncio
@@ -46,9 +36,11 @@ class Builder:
     def __init__(self, content: Content) -> None:
         self.contentpath = content.src.contentpath
 
-    def build_context(self, site: Site, jinjaenv:Environment) -> context.OutputContext:
+    def build_context(self, site: Site, jinjaenv: Environment) -> context.OutputContext:
         content = site.files.get_content(self.contentpath)
-        contexttype = context.CONTEXTS.get(content.src.metadata["type"], context.BinaryOutput)
+        contexttype = context.CONTEXTS.get(
+            content.src.metadata["type"], context.BinaryOutput
+        )
         return contexttype(site, jinjaenv, self.contentpath)
 
 
@@ -132,10 +124,16 @@ class IndexBuilder(Builder):
 
         return ret
 
-    def build_context(self, site: Site, jinjaenv:Environment) -> context.OutputContext:
+    def build_context(self, site: Site, jinjaenv: Environment) -> context.OutputContext:
         items = [site.files.get_content(path) for path in self.items]
         return context.IndexOutput(
-            site, jinjaenv, self.contentpath, self.value, items, self.cur_page, self.num_pages
+            site,
+            jinjaenv,
+            self.contentpath,
+            self.value,
+            items,
+            self.cur_page,
+            self.num_pages,
         )
 
     def __init__(
@@ -172,11 +170,12 @@ def create_builders(site: Site, content: Content) -> List[Builder]:
 
 MIN_BATCH_SIZE = 10
 
-def split_batch(builders:Sequence[Any])->Sequence[Any]:
+
+def split_batch(builders: Sequence[Any]) -> Sequence[Any]:
     num = len(builders)
     max_batches = (num // MIN_BATCH_SIZE) or 1
     batch_count = min(max_batches, multiprocessing.cpu_count())
-    batches = [[] for _ in range(batch_count)]
+    batches: List[List[Builder]] = [[] for _ in range(batch_count)]
 
     for i, builder in enumerate(builders):
         batches[i % batch_count].append(builder)
@@ -184,8 +183,10 @@ def split_batch(builders:Sequence[Any])->Sequence[Any]:
     return batches
 
 
-def build_batch(site:Site, jinjaev:Environment, builders:List[Builder])->None:
-    ret:List[Tuple[ContentSrc, Set[ContentPath]]] = []
+def build_batch(
+    site: Site, jinjaev: Environment, builders: List[Builder]
+) -> List[Tuple[ContentSrc, Set[ContentPath]]]:
+    ret: List[Tuple[ContentSrc, Set[ContentPath]]] = []
 
     for builder in builders:
         try:
@@ -195,19 +196,21 @@ def build_batch(site:Site, jinjaev:Environment, builders:List[Builder])->None:
 
             ret.append((context.content.src, set(context.depends)))
         except:
-            logger.exception("Error while building %s", repr_contentpath(builder.ContentPath))
+            logger.exception(
+                "Error while building %s", repr_contentpath(builder.contentpath)
+            )
 
     return ret
 
 
-def mp_build_batch(queue:Any, picklefile:str, builders:List[Builder])->None:
+def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None:
     try:
         site = pickle.load(open(picklefile, "rb"))
 
         jinjaenv = site.build_jinjaenv()
         site.load_modules()
 
-        ret = build_batch(site, jinjaenv, builders)        
+        ret = build_batch(site, jinjaenv, builders)
         queue.put(("DEPENDS", ret))
     except:
         logger.exception("Error in builder process:")
@@ -217,7 +220,8 @@ def mp_build_batch(queue:Any, picklefile:str, builders:List[Builder])->None:
         queue.close()
         queue.join_thread()
 
-def run_build(picklefile:str, batch:List[Builder])->None:
+
+def run_build(picklefile: str, batch: List[Builder]) -> List[Tuple[str, Any]]:
     queue: Any = multiprocessing.Queue()
     p = multiprocessing.Process(target=mp_build_batch, args=(queue, picklefile, batch))
     p.start()
@@ -227,9 +231,9 @@ def run_build(picklefile:str, batch:List[Builder])->None:
         msg = queue.get()
         if msg is None:
             break
-        if msg[0] == 'LOG':
+        if msg[0] == "LOG":
             print(msg)
-        elif msg[0] == 'DEPENDS':
+        elif msg[0] == "DEPENDS":
             msgs.append(msg)
 
     queue.close()
@@ -238,7 +242,10 @@ def run_build(picklefile:str, batch:List[Builder])->None:
     p.join()
     return msgs
 
-async def submit(site:Site, batches: Sequence[List[Builder]])->None:
+
+async def submit(
+    site: Site, batches: Sequence[List[Builder]]
+) -> List[Tuple[ContentSrc, Set[ContentPath]]]:
     fd, picklefile = tempfile.mkstemp()
     try:
         sitestr = pickle.dumps(site)
@@ -257,7 +264,7 @@ async def submit(site:Site, batches: Sequence[List[Builder]])->None:
         for fut in futs:
             msgs = await fut
             for msg in msgs:
-                if msg[0] == 'DEPENDS':
+                if msg[0] == "DEPENDS":
                     deps.extend(msg[1])
 
         return deps
@@ -268,8 +275,9 @@ async def submit(site:Site, batches: Sequence[List[Builder]])->None:
         os.unlink(picklefile)
 
 
-
-def submit_debug(site:Site, batches: Sequence[List[Builder]]):
+def submit_debug(
+    site: Site, batches: Sequence[List[Builder]]
+) -> List[Tuple[ContentSrc, Set[ContentPath]]]:
     jinjaenv = site.build_jinjaenv()
     site.load_modules()
     ret = []
@@ -279,7 +287,8 @@ def submit_debug(site:Site, batches: Sequence[List[Builder]]):
         ret.extend(deps)
     return ret
 
-def build(site: Site)->Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
+
+def build(site: Site) -> Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
     contents = [content for contentpath, content in site.files.items()]
     builders = []
     for contentpath, content in site.files.items():
@@ -291,5 +300,5 @@ def build(site: Site)->Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
         site.outputdir.mkdir(parents=True, exist_ok=True)
 
     ret = asyncio.run(submit(site, batches))
-#    ret = submit_debug(site, batches)
+    #    ret = submit_debug(site, batches)
     return ret

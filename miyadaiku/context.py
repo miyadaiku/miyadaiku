@@ -421,7 +421,9 @@ class OutputContext:
     _filename_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], str]
     depends: Set[ContentPath]
 
-    def __init__(self, site: Site, jinjaenv:Environment, contentpath: ContentPath) -> None:
+    def __init__(
+        self, site: Site, jinjaenv: Environment, contentpath: ContentPath
+    ) -> None:
         self.site = site
         self.jinjaenv = jinjaenv
         self.contentpath = contentpath

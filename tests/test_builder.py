@@ -1,4 +1,4 @@
-from typing import cast, List
+from typing import cast, List, Any
 from unittest.mock import patch
 from miyadaiku import builder
 from conftest import SiteRoot
@@ -114,30 +114,30 @@ groupby: tags
     context = indexbuilders[0].build_context(site, jinjaenv)
     assert context.contentpath == (("htmldir",), "index.yml")
 
-@patch('multiprocessing.cpu_count', return_value=3)
-def test_split_batch(cpu_count)->None:
 
-    ret =  builder.split_batch([i for i in range(25)])
+@patch("multiprocessing.cpu_count", return_value=3)
+def test_split_batch(cpu_count: Any) -> None:
+
+    ret = builder.split_batch([i for i in range(25)])
     assert len(ret) == 2
-    assert set(ret[0]+ret[1]) == set(range(25))
+    assert set(ret[0] + ret[1]) == set(range(25))
 
-    with patch('miyadaiku.builder.MIN_BATCH_SIZE', 1):
+    with patch("miyadaiku.builder.MIN_BATCH_SIZE", 1):
 
-        ret =  builder.split_batch([1])
+        ret = builder.split_batch([1])
         assert ret == [[1]]
 
-        ret =  builder.split_batch([i for i in range(3)])
+        ret = builder.split_batch([i for i in range(3)])
         assert ret == [[0], [1], [2]]
 
-        ret =  builder.split_batch([i for i in range(4)])
+        ret = builder.split_batch([i for i in range(4)])
         assert ret == [[0, 3], [1], [2]]
 
-        ret =  builder.split_batch([i for i in range(6)])
+        ret = builder.split_batch([i for i in range(6)])
         assert ret == [[0, 3], [1, 4], [2, 5]]
 
-    
 
-def test_mpbuild(siteroot: SiteRoot)->None:
+def test_mpbuild(siteroot: SiteRoot) -> None:
 
     siteroot.write_text(siteroot.contents / "test.txt", "test")
     site = siteroot.load({}, {})

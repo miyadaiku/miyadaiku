@@ -84,14 +84,16 @@ def check_depends(site: site.Site) -> Tuple[bool, Optional[Set[ContentPath]]]:
     return False, updated
 
 
-def save_deps(site: site.Site, deps: Sequence[Tuple[ContentSrc, Set[ContentPath]]]) -> None:
+def save_deps(
+    site: site.Site, deps: Sequence[Tuple[ContentSrc, Set[ContentPath]]]
+) -> None:
     result: Depends = {}
 
     for contentpath, content in site.files.items():
         result[contentpath] = (content.src, set())
 
     for contentsrc, depends in deps:
-        for dep_contentpath in depends :
+        for dep_contentpath in depends:
             if dep_contentpath in result:
                 result[dep_contentpath][1].add(contentsrc.contentpath)
 

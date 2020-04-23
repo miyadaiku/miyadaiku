@@ -83,7 +83,7 @@ def walk_directory(path: Path, ignores: Set[str]) -> Iterator[ContentSrc]:
             )
 
 
-def _iter_package_files(path: PosixPath, ignores: Set[str]) -> Iterator[str]:
+def _iter_package_files(path: Path, ignores: Set[str]) -> Iterator[Path]:
     children = path.iterdir()
     for child in children:
         if is_ignored(ignores, str(child)):
@@ -110,10 +110,12 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
     for srcpath in _iter_package_files(root, ignores):
         p = os.path.relpath(srcpath, root)
         destname = posixpath.relpath(srcpath, root)
-    
+
         dirname, fname = posixpath.split(posixpath.relpath(srcpath, packagepath))
 
-        metadatapath = srcpath.parent / f"{srcpath.name}{miyadaiku.METADATA_FILE_SUFFIX}"
+        metadatapath = (
+            srcpath.parent / f"{srcpath.name}{miyadaiku.METADATA_FILE_SUFFIX}"
+        )
 
         if metadatapath.exists():
             text = metadatapath.read_bytes()
@@ -139,17 +141,21 @@ def yamlloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
     return metadata, None
 
 
-def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
+def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
     return {"type": "binary"}, None
 
 
-def rstloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
+def rstloader(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
     from . import rst
+
     return rst.load(src)
 
-def mdloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
+
+def mdloader(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
     from . import md
+
     return md.load(src)
+
 
 FILELOADERS = {
     ".rst": rstloader,

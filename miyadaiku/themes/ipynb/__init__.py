@@ -11,7 +11,9 @@ def _build_head() -> str:
     from nbconvert.exporters import HTMLExporter
     import nbformat
 
-    src = (importlib_resources.files("miyadaiku.themes.ipynb")/ EMPTY_IPYNB).read_bytes()
+    src = (
+        importlib_resources.files("miyadaiku.themes.ipynb") / EMPTY_IPYNB
+    ).read_bytes()
     json = nbformat.reads(src, nbformat.current_nbformat)
 
     html, _ = HTMLExporter({}).from_notebook_node(json)

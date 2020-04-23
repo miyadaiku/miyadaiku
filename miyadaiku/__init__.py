@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, NamedTuple, Any, Optional, Union
+from typing import Dict, Tuple, NamedTuple, Any, Optional, Union, cast
 import posixpath
 import importlib_resources
 import tzlocal
@@ -37,8 +37,10 @@ METADATA_FILE_SUFFIX = ".props.yml"
 PathTuple = Tuple[str, ...]
 ContentPath = Tuple[PathTuple, str]
 
-def repr_contentpath(path:ContentPath)->str:
+
+def repr_contentpath(path: ContentPath) -> str:
     return posixpath.join(*(path[0]), path[1])
+
 
 class ContentSrc(NamedTuple):
     package: Optional[str]
@@ -58,14 +60,24 @@ class ContentSrc(NamedTuple):
 
     def read_text(self, encoding: str = "utf-8") -> str:
         if self.package and self.srcpath:
-            return importlib_resources.files(self.package).joinpath(self.srcpath).read_text()
+            return cast(
+                str,
+                importlib_resources.files(self.package)
+                .joinpath(self.srcpath)
+                .read_text(),
+            )
         else:
             assert self.srcpath
             return open(self.srcpath).read()
 
     def read_bytes(self) -> bytes:
         if self.package and self.srcpath:
-            return importlib_resources.files(self.package).joinpath(self.srcpath).read_bytes()
+            return cast(
+                bytes,
+                importlib_resources.files(self.package)
+                .joinpath(self.srcpath)
+                .read_bytes(),
+            )
         else:
             assert self.srcpath
             return open(self.srcpath, "rb").read()

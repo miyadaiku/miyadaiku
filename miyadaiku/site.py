@@ -69,7 +69,11 @@ class Site:
     def _load_themes(self) -> None:
         def _load_theme_config(package: str) -> Dict[str, Any]:
             try:
-                s = importlib_resources.files(package).joinpath(miyadaiku.CONFIG_FILE).read_bytes()
+                s = (
+                    importlib_resources.files(package)
+                    .joinpath(miyadaiku.CONFIG_FILE)
+                    .read_bytes()
+                )
             except FileNotFoundError:
                 cfg = {}
             else:
@@ -159,9 +163,7 @@ class Site:
         self._generate_metadata_files()
 
     def build_jinjaenv(self) -> Environment:
-        jinjaenv = create_env(
-            self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR]
-        )
+        jinjaenv = create_env(self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR])
 
         for name, value in self.jinja_global_vars.items():
             jinjaenv.globals[name] = value
