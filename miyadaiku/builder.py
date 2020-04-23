@@ -14,7 +14,7 @@ from jinja2 import Environment
 
 from miyadaiku import ContentPath, PathTuple, ContentSrc, repr_contentpath
 
-from . import context, log
+from . import context, mp_log
 
 if TYPE_CHECKING:
     from .contents import Content
@@ -203,7 +203,7 @@ def build_batch(
 
 
 def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None:
-    log.init_mp_logging(queue)
+    mp_log.init_mp_logging(queue)
     try:
         site = pickle.load(open(picklefile, "rb"))
 

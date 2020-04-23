@@ -32,7 +32,7 @@ class MpLogHandler(logging.Handler):
         try:
             msg = self.format(record)
             self.queue.put(("LOG", (record.levelname, msg)))
-        except RecursionError:  # See issue 36272
+        except RecursionError:
             raise
         except Exception:
             traceback.print_exc()
