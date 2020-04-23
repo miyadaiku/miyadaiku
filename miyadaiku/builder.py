@@ -9,7 +9,6 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import os
 import tempfile
-import traceback
 
 from jinja2 import Environment
 

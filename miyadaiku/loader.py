@@ -16,7 +16,7 @@ from typing import (
 import os
 import fnmatch
 import importlib_resources
-from pathlib import Path, PosixPath
+from pathlib import Path
 import logging
 import posixpath
 import collections.abc

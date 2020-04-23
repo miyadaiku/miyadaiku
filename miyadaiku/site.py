@@ -16,11 +16,11 @@ from jinja2 import Environment
 import miyadaiku
 from .config import Config
 from . import ContentSrc, ContentPath, loader
-from .builder import create_builders, Builder, build
+from .builder import Builder, build
 from .jinjaenv import create_env
 
 if TYPE_CHECKING:
-    from .context import OutputContext
+    pass
 
 
 def timestamp_constructor(loader, node):  # type: ignore

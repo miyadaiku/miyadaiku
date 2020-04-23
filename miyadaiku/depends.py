@@ -1,11 +1,9 @@
-from typing import Tuple, List, Iterator, Set, Dict, Sequence, Optional
+from typing import Dict, Iterator, Optional, Sequence, Set, Tuple
 import os
 import pickle
 from pathlib import Path
-from collections import defaultdict
 from miyadaiku import CONFIG_FILE, MODULES_DIR, TEMPLATES_DIR, ContentPath, ContentSrc
 from miyadaiku import site
-from miyadaiku.context import OutputContext
 
 DEP_FILE = "_depends.pickle"
 DEP_VER = "2.0.0"
