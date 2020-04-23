@@ -194,7 +194,7 @@ def build_batch(
             context.build()
 
             ret.append((context.content.src, set(context.depends)))
-        except:
+        except Exception:
             logger.exception(
                 "Error while building %s", repr_contentpath(builder.contentpath)
             )
@@ -203,6 +203,7 @@ def build_batch(
 
 
 def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None:
+    log.init_mp_logging(queue)
     try:
         site = pickle.load(open(picklefile, "rb"))
 
@@ -211,8 +212,9 @@ def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None
 
         ret = build_batch(site, jinjaenv, builders)
         queue.put(("DEPENDS", ret))
-    except:
+    except: # NOQA
         logger.exception("Error in builder process:")
+        raise
 
     finally:
         queue.put(None)
@@ -288,7 +290,6 @@ def submit_debug(
 
 
 def build(site: Site) -> Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
-    contents = [content for contentpath, content in site.files.items()]
     builders = []
     for contentpath, content in site.files.items():
         builders.extend(create_builders(site, content))

@@ -100,7 +100,6 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
 
     if not path.endswith("/"):
         path = path + "/"
-    pathlen = len(path)
 
     packagepath = importlib_resources.files(package)
     root = packagepath / path
@@ -108,7 +107,6 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
         return
 
     for srcpath in _iter_package_files(root, ignores):
-        p = os.path.relpath(srcpath, root)
         destname = posixpath.relpath(srcpath, root)
 
         dirname, fname = posixpath.split(posixpath.relpath(srcpath, packagepath))
