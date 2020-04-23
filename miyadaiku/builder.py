@@ -247,15 +247,16 @@ async def submit(site:Site, batches: Sequence[List[Builder]])->None:
         loop = asyncio.get_running_loop()
         futs = []
         deps = []
-        with ThreadPoolExecutor(max_workers=len(batches)) as executor:
-            for batch in batches:
-                futs.append(loop.run_in_executor(executor, run_build, picklefile, batch))
 
-            for fut in futs:
-                msgs = await fut
-                for msg in msgs:
-                    if msg[0] == 'DEPENDS':
-                        deps.extend(msg[1])
+        executor = ThreadPoolExecutor(max_workers=len(batches))
+        for batch in batches:
+            futs.append(loop.run_in_executor(executor, run_build, picklefile, batch))
+
+        for fut in futs:
+            msgs = await fut
+            for msg in msgs:
+                if msg[0] == 'DEPENDS':
+                    deps.extend(msg[1])
 
         return deps
 
