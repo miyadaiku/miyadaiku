@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, NamedTuple, Any, Optional, Union, cast
+from typing import Dict, Tuple, NamedTuple, Any, Optional, Union, cast, Set
 import posixpath
 import importlib_resources
 import tzlocal
@@ -36,10 +36,6 @@ METADATA_FILE_SUFFIX = ".props.yml"
 
 PathTuple = Tuple[str, ...]
 ContentPath = Tuple[PathTuple, str]
-
-
-def repr_contentpath(path: ContentPath) -> str:
-    return posixpath.join(*(path[0]), path[1])
 
 
 class ContentSrc(NamedTuple):
@@ -87,6 +83,13 @@ class ContentSrc(NamedTuple):
         else:
             assert self.srcpath
             return open(self.srcpath, "rb").read()
+
+DependsDict = Dict[ContentPath, Tuple[ContentSrc, Set[ContentPath]]]
+
+
+def repr_contentpath(path: ContentPath) -> str:
+    return posixpath.join(*(path[0]), path[1])
+
 
 
 def to_posixpath(path: str) -> str:

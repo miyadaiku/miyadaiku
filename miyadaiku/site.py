@@ -15,7 +15,7 @@ from jinja2 import Environment
 
 import miyadaiku
 from .config import Config
-from . import ContentSrc, ContentPath, loader
+from . import ContentSrc, ContentPath, loader, DependsDict
 from .builder import Builder, build
 from .jinjaenv import create_env
 
@@ -173,5 +173,5 @@ class Site:
 
         return jinjaenv
 
-    def build(self) -> Tuple[int, int, Sequence[Tuple[ContentSrc, Set[ContentPath]]]]:
+    def build(self) -> Tuple[int, int, DependsDict]:
         return build(self)

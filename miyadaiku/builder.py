@@ -13,9 +13,9 @@ import traceback
 
 from jinja2 import Environment
 
-from miyadaiku import ContentPath, PathTuple, ContentSrc, repr_contentpath
+from miyadaiku import ContentPath, PathTuple, ContentSrc, repr_contentpath, DependsDict
 
-from . import context, mp_log
+from . import context, mp_log, depends
 
 if TYPE_CHECKING:
     from .contents import Content
@@ -319,16 +319,24 @@ def submit_debug(
     return ok, err, ret
 
 
-def build(site: Site) -> Tuple[int, int, Sequence[Tuple[ContentSrc, Set[ContentPath]]]]:
+def build(site: Site) -> Tuple[int, int, DependsDict]:
+    rebuild, updates, deps = depends.check_depends(site)
     builders = []
     for contentpath, content in site.files.items():
-        builders.extend(create_builders(site, content))
+        if rebuild or (contentpath in updates):
+            builders.extend(create_builders(site, content))
 
     batches = split_batch(builders)
 
     if not site.outputdir.is_dir():
         site.outputdir.mkdir(parents=True, exist_ok=True)
 
-    ret = asyncio.run(submit(site, batches))
+    ok, err, newdeps = asyncio.run(submit(site, batches))
     #    ret = submit_debug(site, batches)
-    return ret
+    if rebuild:
+        deps = {}
+
+    deps = depends.update_deps(site, deps, newdeps)
+    
+    depends.save_deps(site, deps)
+    return (ok, err, deps)

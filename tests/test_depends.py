@@ -20,9 +20,10 @@ def test_update(siteroot: SiteRoot) -> None:
     ok, err, deps = site.build()
     depends.save_deps(site, deps)
 
+
     # test no-update
     site.load(site.root, {})
-    rebuild, updated = depends.check_depends(site)
+    rebuild, updated, depdict = depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set()
@@ -30,7 +31,7 @@ def test_update(siteroot: SiteRoot) -> None:
     # test update
     (siteroot.contents / "file1.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated = depends.check_depends(site)
+    rebuild, updated, depdict= depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set((((), "file1.rst"),))
@@ -59,7 +60,7 @@ def test_refs(siteroot: SiteRoot) -> None:
     # test update depends
     (siteroot.contents / "file2.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated = depends.check_depends(site)
+    rebuild, updated, depdict= depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set((((), "file1.rst"), ((), "file2.rst"),))
@@ -77,7 +78,7 @@ def test_rebuild(siteroot: SiteRoot) -> None:
     # test new file
     (siteroot.contents / "file3.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated = depends.check_depends(site)
+    rebuild, updated, depdict= depends.check_depends(site)
 
     assert rebuild is True
 
@@ -99,7 +100,7 @@ file1-new-title
 """
     )
     site.load(site.root, {})
-    rebuild, updated = depends.check_depends(site)
+    rebuild, updated, depdict= depends.check_depends(site)
 
     assert rebuild is True
 
