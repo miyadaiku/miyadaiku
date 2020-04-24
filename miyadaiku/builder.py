@@ -185,9 +185,10 @@ def split_batch(builders: Sequence[Any]) -> Sequence[Any]:
 
 def build_batch(
     site: Site, jinjaev: Environment, builders: List[Builder]
-) -> List[Tuple[ContentSrc, Set[ContentPath]]]:
+) -> Tuple[int, int, List[Tuple[ContentSrc, Set[ContentPath]]]]:
     ret: List[Tuple[ContentSrc, Set[ContentPath]]] = []
 
+    ok = err = 0
     for builder in builders:
         try:
             context = builder.build_context(site, jinjaev)
@@ -195,12 +196,14 @@ def build_batch(
             context.build()
 
             ret.append((context.content.src, set(context.depends)))
+            ok += 1
         except Exception:
+            err += 1
             logger.exception(
                 "Error while building %s", repr_contentpath(builder.contentpath)
             )
 
-    return ret
+    return ok, err, ret
 
 
 def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None:
@@ -213,7 +216,7 @@ def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None
             site.load_modules()
 
             ret = build_batch(site, jinjaenv, builders)
-            queue.put(("DEPENDS", ret))
+            queue.put(("RESULT", ret))
         except:  # NOQA
             logger.exception("Error in builder process:")
             raise
@@ -249,7 +252,7 @@ def run_build(
         if msg[0] == "LOGS":
             loop.call_soon_threadsafe(dispatch_log, msg[1])
 
-        elif msg[0] == "DEPENDS":
+        elif msg[0] == "RESULT":
             msgs.append(msg)
 
     queue.close()
@@ -261,7 +264,7 @@ def run_build(
 
 async def submit(
     site: Site, batches: Sequence[List[Builder]]
-) -> List[Tuple[ContentSrc, Set[ContentPath]]]:
+) -> Tuple[int, int, List[Tuple[ContentSrc, Set[ContentPath]]]]:
 
     fd, picklefile = tempfile.mkstemp()
 
@@ -281,13 +284,17 @@ async def submit(
                 loop.run_in_executor(executor, run_build, loop, picklefile, batch)
             )
 
+        ok = err = 0
         for fut in futs:
             msgs = await fut
             for msg in msgs:
-                if msg[0] == "DEPENDS":
-                    deps.extend(msg[1])
+                if msg[0] == "RESULT":
+                    _ok, _err, _deps = msg[1]
+                    ok += _ok
+                    err += _err
+                    deps.extend(_deps)
 
-        return deps
+        return ok, err, deps
 
     finally:
         if fd:
@@ -297,18 +304,22 @@ async def submit(
 
 def submit_debug(
     site: Site, batches: Sequence[List[Builder]]
-) -> List[Tuple[ContentSrc, Set[ContentPath]]]:
+) -> Tuple[int, int, List[Tuple[ContentSrc, Set[ContentPath]]]]:
     jinjaenv = site.build_jinjaenv()
     site.load_modules()
+
+    ok = err = 0
     ret = []
 
     for batch in batches:
-        deps = build_batch(site, jinjaenv, batch)
+        _ok, _err, deps = build_batch(site, jinjaenv, batch)
+        ok += _ok
+        err += _err
         ret.extend(deps)
-    return ret
+    return ok, err, ret
 
 
-def build(site: Site) -> Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
+def build(site: Site) -> Tuple[int, int, Sequence[Tuple[ContentSrc, Set[ContentPath]]]]:
     builders = []
     for contentpath, content in site.files.items():
         builders.extend(create_builders(site, content))

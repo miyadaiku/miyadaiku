@@ -17,8 +17,8 @@ def test_update(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({"themes": ["package1"]}, {})
 
-    contexts = site.build()
-    depends.save_deps(site, contexts)
+    ok, err, deps = site.build()
+    depends.save_deps(site, deps)
 
     # test no-update
     site.load(site.root, {})
@@ -53,8 +53,8 @@ def test_refs(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    contexts = site.build()
-    depends.save_deps(site, contexts)
+    ok, err, deps = site.build()
+    depends.save_deps(site, deps)
 
     # test update depends
     (siteroot.contents / "file2.rst").write_text("")
@@ -71,8 +71,8 @@ def test_rebuild(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    contexts = site.build()
-    depends.save_deps(site, contexts)
+    ok, err, deps = site.build()
+    depends.save_deps(site, deps)
 
     # test new file
     (siteroot.contents / "file3.rst").write_text("")
@@ -88,8 +88,8 @@ def test_metadata(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    contexts = site.build()
-    depends.save_deps(site, contexts)
+    ok, err, deps = site.build()
+    depends.save_deps(site, deps)
 
     # test metadata changed
     (siteroot.contents / "file1.rst").write_text(
@@ -108,8 +108,8 @@ def test_macro(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "file1.rst", "")
     site = siteroot.load({}, {})
 
-    contexts = site.build()
-    depends.save_deps(site, contexts)
+    ok, err, deps = site.build()
+    depends.save_deps(site, deps)
 
     # test macro
     (siteroot.modules / "file1.rst").write_text(

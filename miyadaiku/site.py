@@ -173,5 +173,5 @@ class Site:
 
         return jinjaenv
 
-    def build(self) -> Sequence[Tuple[ContentSrc, Set[ContentPath]]]:
+    def build(self) -> Tuple[int, int, Sequence[Tuple[ContentSrc, Set[ContentPath]]]]:
         return build(self)
