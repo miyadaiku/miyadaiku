@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import os
 import tempfile
+import traceback
 
 from jinja2 import Environment
 
@@ -203,26 +204,36 @@ def build_batch(
 
 
 def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None:
-    mp_log.init_mp_logging(queue)
     try:
-        site = pickle.load(open(picklefile, "rb"))
+        mp_log.init_mp_logging(queue)
+        try:
+            site = pickle.load(open(picklefile, "rb"))
 
-        jinjaenv = site.build_jinjaenv()
-        site.load_modules()
+            jinjaenv = site.build_jinjaenv()
+            site.load_modules()
 
-        ret = build_batch(site, jinjaenv, builders)
-        queue.put(("DEPENDS", ret))
-    except: # NOQA
-        logger.exception("Error in builder process:")
+            ret = build_batch(site, jinjaenv, builders)
+            queue.put(("DEPENDS", ret))
+        except: # NOQA
+            logger.exception("Error in builder process:")
+            raise
+
+        finally:
+            mp_log.flush_mp_logging()
+            queue.put(None)
+            queue.close()
+            queue.join_thread()
+    except:
+        traceback.print_exc()
         raise
 
-    finally:
-        queue.put(None)
-        queue.close()
-        queue.join_thread()
+def dispatch_log(msgs:List[Dict[str, Any]])->None:
+    for msg in msgs:
+        lv = msg["levelno"]
+        logger.log(lv, msg["msg"], extra=dict(msgdict=msg))
 
 
-def run_build(picklefile: str, batch: List[Builder]) -> List[Tuple[str, Any]]:
+def run_build(loop:asyncio.AbstractEventLoop, picklefile: str, batch: List[Builder]) -> List[Tuple[str, Any]]:
     queue: Any = multiprocessing.Queue()
     p = multiprocessing.Process(target=mp_build_batch, args=(queue, picklefile, batch))
     p.start()
@@ -232,8 +243,9 @@ def run_build(picklefile: str, batch: List[Builder]) -> List[Tuple[str, Any]]:
         msg = queue.get()
         if msg is None:
             break
-        if msg[0] == "LOG":
-            print(msg)
+        if msg[0] == "LOGS":
+            loop.call_soon_threadsafe(dispatch_log, msg[1])
+
         elif msg[0] == "DEPENDS":
             msgs.append(msg)
 
@@ -260,7 +272,7 @@ async def submit(
 
         executor = ThreadPoolExecutor(max_workers=len(batches))
         for batch in batches:
-            futs.append(loop.run_in_executor(executor, run_build, picklefile, batch))
+            futs.append(loop.run_in_executor(executor, run_build, loop, picklefile, batch))
 
         for fut in futs:
             msgs = await fut

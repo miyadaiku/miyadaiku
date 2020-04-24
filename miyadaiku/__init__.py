@@ -50,10 +50,16 @@ class ContentSrc(NamedTuple):
     mtime: Optional[float] = 0.0
 
     def repr_filename(self) -> str:
-        if self.package:
-            return f"{self.package}!{self.srcpath}"
+        if self.srcpath:
+            if self.package:
+                return f"{self.package}!{self.srcpath}"
+            else:
+                return f"{self.srcpath}"
         else:
-            return f"{self.srcpath}"
+            if self.package:
+                return f"{self.package}!{repr_contentpath(self.contentpath)}"
+            else:
+                return f"{repr_contentpath(self.contentpath)}"
 
     def is_package(self) -> bool:
         return bool(self.package)

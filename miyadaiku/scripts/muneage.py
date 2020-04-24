@@ -11,8 +11,11 @@ import os
 
 import miyadaiku.site
 from . import observer
+from .. import mp_log
 from miyadaiku import OUTPUTS_DIR
+import logging
 
+logger = logging.getLogger(__name__)
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -68,6 +71,7 @@ parser.add_argument("--port", "-p", default=8800, type=int, help="http port")
 parser.add_argument("--bind", "-b", default="0.0.0.0", help="Bind address")
 
 
+
 def _main() -> None:
     args = parser.parse_args()
 
@@ -84,6 +88,8 @@ def _main() -> None:
     if not d.exists() or not d.is_dir():
         print(f"'{d}' is not a valid directory", file=sys.stderr)
         sys.exit(1)
+
+    mp_log.init_logging()
 
     outputs = d / OUTPUTS_DIR
     if not outputs.is_dir():

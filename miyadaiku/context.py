@@ -239,7 +239,7 @@ class ConfigProxy:
 
         try:
             return self.context.site.config.get(dirtuple, name)
-        except exceptions.ConfigNotFoundError:
+        except exceptions.ConfigNotFound:
             if default is self._omit:
                 raise
             return default

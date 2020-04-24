@@ -218,5 +218,5 @@ prop2: value3
     assert "value1" == proxy.get(".", "prop1")
     assert "value2" == proxy.get("..", "prop1")
 
-    with pytest.raises(exceptions.ConfigNotFoundError):
+    with pytest.raises(exceptions.ConfigNotFound):
         assert proxy["prop3"]
