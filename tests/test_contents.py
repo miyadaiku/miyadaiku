@@ -86,7 +86,6 @@ ext: .222
 
 
 def test_get_abstract(siteroot: SiteRoot) -> None:
-    s = "abcdefg" * 1
     body = f"<div>123<div>456<div>789<div>abc</div>def</div>ghi</div>jkl</div>"
 
     (ctx,) = create_contexts(siteroot, srcs=[("doc.html", body)])

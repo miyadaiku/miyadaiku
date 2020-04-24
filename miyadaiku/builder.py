@@ -223,7 +223,7 @@ def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None
             queue.put(None)
             queue.close()
             queue.join_thread()
-    except:
+    except:  # noqa
         traceback.print_exc()
         raise
 
@@ -262,7 +262,9 @@ def run_build(
 async def submit(
     site: Site, batches: Sequence[List[Builder]]
 ) -> List[Tuple[ContentSrc, Set[ContentPath]]]:
+
     fd, picklefile = tempfile.mkstemp()
+
     try:
         sitestr = pickle.dumps(site)
         os.write(fd, sitestr)

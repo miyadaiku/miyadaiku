@@ -42,7 +42,7 @@ def test_value() -> None:
     )
 
     assert cfg.get((), "site_url") == "http://localhost/"
-    assert cfg.get((), "draft") == False
+    assert not cfg.get((), "draft")
     assert cfg.get((), "tags") == ["tag1", "tag2"]
     assert cfg.get((), "date") == datetime.datetime(2020, 1, 1, 0, 0, 0)
     assert cfg.get((), "order") == 100

@@ -32,7 +32,14 @@ import jinja2.exceptions
 from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
 import markupsafe
 
-from miyadaiku import ContentPath, PathTuple, parse_path, parse_dir, exceptions, repr_contentpath
+from miyadaiku import (
+    ContentPath,
+    PathTuple,
+    parse_path,
+    parse_dir,
+    exceptions,
+    repr_contentpath,
+)
 
 if TYPE_CHECKING:
     from .contents import Content, Article, IndexPage, FeedPage
@@ -411,6 +418,7 @@ def eval_jinja(
         exc.add_error_from_src(e, template.filename, text)
         raise exc
 
+
 def eval_jinja_template(
     ctx: OutputContext, content: Content, templatename: str, kwargs: Dict[str, Any],
 ) -> str:
@@ -422,7 +430,7 @@ def eval_jinja_template(
         exc = exceptions.JinjaEvalError(e)
         exc.add_syntaxerrorr_from_template(e, ctx.jinjaenv, templatename)
         raise exc
-    
+
     template.filename = templatename
 
     args = content.get_jinja_vars(ctx)

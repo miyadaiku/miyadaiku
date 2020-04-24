@@ -6,9 +6,7 @@ from conftest import SiteRoot
 def test_walk_directory(siteroot: SiteRoot) -> None:
 
     file1 = siteroot.write_text(siteroot.contents / "dir1/file1", "")
-    file11 = siteroot.write_text(
-        siteroot.contents / "dir1/file1.props.yml", "name: value"
-    )
+    siteroot.write_text(siteroot.contents / "dir1/file1.props.yml", "name: value")
     file2 = siteroot.write_text(siteroot.contents / "dir1/dir2/file2", "")
     siteroot.write_text(siteroot.contents / "dir1/file3.bak", "")
 
