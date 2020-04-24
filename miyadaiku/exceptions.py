@@ -81,6 +81,18 @@ class JinjaEvalError(Exception):
 
         self.errors = []
 
+    def __str__(self) -> str:
+        errors = []
+        for filename, lineno, src in self.errors:
+            s = f"  {filename}:{lineno}\n{src}\n"
+            errors.append(s)
+
+        errsrc = "\n".join(errors)
+        return f"{self.args[0]}\n{errsrc}"
+
+    def __repr__(self) -> str:
+        return f"JinjaEvalError({repr(self.args[0])})"
+
     def add_error_from_src(self, e: Exception, filename: str, src: str) -> None:
         lineno, src = _get_src(e, filename, src)
         self.errors.insert(0, (filename, lineno, src))
