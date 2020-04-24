@@ -7,10 +7,11 @@ import logging, logging.config
 import traceback
 
 _queue: Any = None
-_pendings:List[Dict[str, Any]] = []
+_pendings: List[Dict[str, Any]] = []
+
 
 class MpLogFormatter(logging.Formatter):
-    def format_dict(self, record: Any)->Dict[str, Any]:
+    def format_dict(self, record: Any) -> Dict[str, Any]:
         record.message = record.getMessage()
 
         d = {}
@@ -46,7 +47,7 @@ class MpLogHandler(logging.Handler):
         return "<%s(%s)>" % (self.__class__.__name__, level)
 
 
-def init_mp_logging(queue:Any) -> None:
+def init_mp_logging(queue: Any) -> None:
     global _queue
     _queue = queue
 
@@ -58,38 +59,35 @@ def init_mp_logging(queue:Any) -> None:
         "disable_existing_loggers": False,
         "loggers": {"": {"level": "DEBUG", "handlers": ["streamhandler"]},},
         "handlers": {
-            "streamhandler": {
-                "()": lambda: MpLogHandler(level=logging.DEBUG)
-            }
+            "streamhandler": {"()": lambda: MpLogHandler(level=logging.DEBUG)}
         },
     }
 
     logging.config.dictConfig(LOGGING)
 
 
-def flush_mp_logging()->None:
+def flush_mp_logging() -> None:
     global _pendings
     if _pendings:
-        _queue.put(('LOGS', _pendings))
+        _queue.put(("LOGS", _pendings))
         _pendings = []
 
 
-
 class ParentFormatter(logging.Formatter):
-    def format(self, record:Any)->str:
-        msgdict = getattr(record, 'msgdict', None)
+    def format(self, record: Any) -> str:
+        msgdict = getattr(record, "msgdict", None)
         if not msgdict:
             return super().format(record)
 
-        s:str = msgdict['msg']
+        s: str = msgdict["msg"]
 
-        exc = msgdict.get('exc')
+        exc = msgdict.get("exc")
         if exc:
             if s[-1:] != "\n":
                 s = s + "\n"
             s = s + exc
 
-        stack = msgdict.get('stack')
+        stack = msgdict.get("stack")
         if stack:
             if s[-1:] != "\n":
                 s = s + "\n"
@@ -103,25 +101,16 @@ def init_logging() -> None:
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
-        "loggers": {
-            "": {
-                "level": "DEBUG",
-                "handlers": ["default"]
-            },
-        },
+        "loggers": {"": {"level": "DEBUG", "handlers": ["default"]},},
         "handlers": {
             "default": {
-                'level': 'INFO',
-                'formatter': 'berief',
-                'class': 'logging.StreamHandler',
-                'stream': 'ext://sys.stderr',
+                "level": "INFO",
+                "formatter": "berief",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stderr",
             }
         },
-        "formatters": {
-            "berief": {
-                "()": ParentFormatter
-             }
-        }
+        "formatters": {"berief": {"()": ParentFormatter}},
     }
 
     logging.config.dictConfig(LOGGING)

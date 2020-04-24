@@ -27,8 +27,8 @@ class Content:
         self.src = src
         self.body = body
 
-    def __str__(self) -> str:
-        return f"<{self.__class__.__module__}.{self.__class__.__name__} {self.src.srcpath}>"
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} at {hex(id(self))} {self.src.srcpath}>"
 
     @property
     def has_jinja(self) -> bool:

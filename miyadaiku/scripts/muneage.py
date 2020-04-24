@@ -71,7 +71,6 @@ parser.add_argument("--port", "-p", default=8800, type=int, help="http port")
 parser.add_argument("--bind", "-b", default="0.0.0.0", help="Bind address")
 
 
-
 def _main() -> None:
     args = parser.parse_args()
 

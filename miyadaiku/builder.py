@@ -214,7 +214,7 @@ def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None
 
             ret = build_batch(site, jinjaenv, builders)
             queue.put(("DEPENDS", ret))
-        except: # NOQA
+        except:  # NOQA
             logger.exception("Error in builder process:")
             raise
 
@@ -227,13 +227,16 @@ def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None
         traceback.print_exc()
         raise
 
-def dispatch_log(msgs:List[Dict[str, Any]])->None:
+
+def dispatch_log(msgs: List[Dict[str, Any]]) -> None:
     for msg in msgs:
         lv = msg["levelno"]
         logger.log(lv, msg["msg"], extra=dict(msgdict=msg))
 
 
-def run_build(loop:asyncio.AbstractEventLoop, picklefile: str, batch: List[Builder]) -> List[Tuple[str, Any]]:
+def run_build(
+    loop: asyncio.AbstractEventLoop, picklefile: str, batch: List[Builder]
+) -> List[Tuple[str, Any]]:
     queue: Any = multiprocessing.Queue()
     p = multiprocessing.Process(target=mp_build_batch, args=(queue, picklefile, batch))
     p.start()
@@ -272,7 +275,9 @@ async def submit(
 
         executor = ThreadPoolExecutor(max_workers=len(batches))
         for batch in batches:
-            futs.append(loop.run_in_executor(executor, run_build, loop, picklefile, batch))
+            futs.append(
+                loop.run_in_executor(executor, run_build, loop, picklefile, batch)
+            )
 
         for fut in futs:
             msgs = await fut

@@ -27,10 +27,12 @@ import posixpath
 import datetime
 
 from jinja2 import Environment
+import jinja2.exceptions
+
 from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
 import markupsafe
 
-from miyadaiku import ContentPath, PathTuple, parse_path, parse_dir, exceptions
+from miyadaiku import ContentPath, PathTuple, parse_path, parse_dir, exceptions, repr_contentpath
 
 if TYPE_CHECKING:
     from .contents import Content, Article, IndexPage, FeedPage
@@ -379,23 +381,64 @@ def eval_jinja(
     text: str,
     kwargs: Dict[str, Any],
 ) -> str:
+
     ctx.add_depend(content)
+
     args = content.get_jinja_vars(ctx)
     args.update(kwargs)
-    template = ctx.jinjaenv.from_string(text)
-    template.filename = f"{content.repr_filename()}#{propname}"
-    return template.render(**kwargs)
 
+    filename = f"{repr_contentpath(content.src.contentpath)}#{propname}"
+
+    try:
+        template = ctx.jinjaenv.from_string(text)
+
+    except jinja2.exceptions.TemplateSyntaxError as e:
+        exc = exceptions.JinjaEvalError(e)
+        exc.add_syntaxerrorr_from_src(e, filename, text)
+        raise exc
+
+    template.filename = filename
+
+    try:
+        return template.render(**kwargs)
+
+    except exceptions.JinjaEvalError as e:
+        e.add_error_from_src(e, template.filename, text)
+        raise e
+
+    except Exception as e:
+        exc = exceptions.JinjaEvalError(e)
+        exc.add_error_from_src(e, template.filename, text)
+        raise exc
 
 def eval_jinja_template(
     ctx: OutputContext, content: Content, templatename: str, kwargs: Dict[str, Any],
 ) -> str:
-    template = ctx.jinjaenv.get_template(templatename)
+
+    try:
+        template = ctx.jinjaenv.get_template(templatename)
+
+    except jinja2.exceptions.TemplateSyntaxError as e:
+        exc = exceptions.JinjaEvalError(e)
+        exc.add_syntaxerrorr_from_template(e, ctx.jinjaenv, templatename)
+        raise exc
+    
     template.filename = templatename
 
     args = content.get_jinja_vars(ctx)
     args.update(kwargs)
-    return template.render(**args)
+
+    try:
+        return template.render(**args)
+
+    except exceptions.JinjaEvalError as e:
+        e.add_error_from_template(e, ctx.jinjaenv, templatename)
+        raise e
+
+    except Exception as e:
+        exc = exceptions.JinjaEvalError(e)
+        exc.add_error_from_template(e, ctx.jinjaenv, templatename)
+        raise exc
 
 
 class HTMLIDInfo(NamedTuple):

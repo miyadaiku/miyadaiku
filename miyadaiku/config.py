@@ -143,9 +143,7 @@ class Config:
                 if default is not self._omit:
                     return default
 
-                raise exceptions.ConfigNotFound(
-                    f"{dirname}:{name}"
-                )
+                raise exceptions.ConfigNotFound(f"{dirname}:{name}")
 
             _dirname = _dirname[:-1]
 
