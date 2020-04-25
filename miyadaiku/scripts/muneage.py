@@ -1,5 +1,6 @@
 # type: ignore
 import locale
+import signal
 import argparse
 import sys
 from pathlib import Path
@@ -25,8 +26,8 @@ def exec_server(dir, bind, port):
     http.server.test(http.server.SimpleHTTPRequestHandler, bind=bind, port=port)
 
 
-def build(path, props):
-    site = miyadaiku.site.Site()
+def build(path, props, args):
+    site = miyadaiku.site.Site(rebuild=args.rebuild, traceback=args.traceback, debug=args.debug)
     site.load(path, props)
     ok, err, deps = site.build()
     
@@ -88,7 +89,7 @@ def _main() -> None:
         print(f"'{d}' is not a valid directory", file=sys.stderr)
         sys.exit(1)
 
-    mp_log.init_logging()
+    mp_log.init_logging(args.traceback)
 
     outputs = d / OUTPUTS_DIR
     if not outputs.is_dir():
@@ -106,7 +107,7 @@ def _main() -> None:
     try:
         if not args.watch:
             print(f"Building {d.resolve()} ...")
-            build(d, props)
+            build(d, props, args)
         else:
             print(f"Watching {d.resolve()} ...")
 
@@ -122,7 +123,8 @@ def _main() -> None:
                 ev.clear()
 
                 print(f"Building {d.resolve()} ...")
-                build(d, props)
+                build(d, props, args)
+                print("Build finished...\n")
 
         if args.server:
             server.join()
@@ -135,9 +137,13 @@ def _main() -> None:
 
 def main() -> None:
     multiprocessing.set_start_method("spawn")
-    ret = _main()
-    sys.exit(ret)
 
+    try:
+        ret = _main()
+    except KeyboardInterrupt:
+        sys.exit(0x80+signal.SIGINT)
+
+    sys.exit(ret)
 
 if __name__ == "__main__":
     main()

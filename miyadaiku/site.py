@@ -52,6 +52,11 @@ class Site:
     jinja_global_vars: Dict[str, Any]
     jinja_templates: Dict[str, Any]
 
+    def __init__(self, rebuild=False, traceback=False, debug=False):
+        self.rebuild = rebuild
+        self.traceback = traceback
+        self.debug = debug
+
     def _load_config(self, props: Dict[str, Any]) -> None:
         cfgfile = self.root / miyadaiku.CONFIG_FILE
         src = ""

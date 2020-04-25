@@ -320,7 +320,11 @@ def submit_debug(
 
 
 def build(site: Site) -> Tuple[int, int, DependsDict]:
-    rebuild, updates, deps = depends.check_depends(site)
+    if site.rebuild:
+        rebuild = True
+    else:
+        rebuild, updates, deps = depends.check_depends(site)
+
     builders = []
     for contentpath, content in site.files.items():
         if rebuild or (contentpath in updates):
@@ -331,8 +335,11 @@ def build(site: Site) -> Tuple[int, int, DependsDict]:
     if not site.outputdir.is_dir():
         site.outputdir.mkdir(parents=True, exist_ok=True)
 
-    ok, err, newdeps = asyncio.run(submit(site, batches))
-    #    ret = submit_debug(site, batches)
+    if not site.debug:
+        ok, err, newdeps = asyncio.run(submit(site, batches))
+    else:
+        ok, err, newdeps = submit_debug(site, batches)
+
     if rebuild:
         deps = {}
 

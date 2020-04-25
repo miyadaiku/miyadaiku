@@ -74,6 +74,13 @@ def flush_mp_logging() -> None:
 
 
 class ParentFormatter(logging.Formatter):
+    traceback: bool
+
+    def __init__(self, fmt=None, datefmt=None, style='%', validate=True, traceback=False):
+        super().__init__(fmt=fmt, datefmt=datefmt, style=style, validate=validate)
+        self.traceback = traceback
+
+
     def format(self, record: Any) -> str:
         msgdict = getattr(record, "msgdict", None)
         if not msgdict:
@@ -96,7 +103,7 @@ class ParentFormatter(logging.Formatter):
         return s
 
 
-def init_logging() -> None:
+def init_logging(traceback:bool=False) -> None:
 
     LOGGING = {
         "version": 1,
@@ -110,7 +117,7 @@ def init_logging() -> None:
                 "stream": "ext://sys.stderr",
             }
         },
-        "formatters": {"berief": {"()": ParentFormatter}},
+        "formatters": {"berief": {"()": lambda :ParentFormatter()}},
     }
 
     logging.config.dictConfig(LOGGING)
