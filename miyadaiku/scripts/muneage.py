@@ -28,8 +28,8 @@ def exec_server(dir, bind, port):
 def build(path, props):
     site = miyadaiku.site.Site()
     site.load(path, props)
-    site.build()
-
+    ok, err, deps = site.build()
+    
 
 parser = argparse.ArgumentParser(description="Build miyadaiku project.")
 parser.add_argument("directory", help="directory name")
