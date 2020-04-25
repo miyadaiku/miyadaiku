@@ -84,12 +84,12 @@ class ContentSrc(NamedTuple):
             assert self.srcpath
             return open(self.srcpath, "rb").read()
 
+
 DependsDict = Dict[ContentPath, Tuple[ContentSrc, Set[ContentPath]]]
 
 
 def repr_contentpath(path: ContentPath) -> str:
     return posixpath.join(*(path[0]), path[1])
-
 
 
 def to_posixpath(path: str) -> str:

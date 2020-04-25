@@ -27,10 +27,12 @@ def exec_server(dir, bind, port):
 
 
 def build(path, props, args):
-    site = miyadaiku.site.Site(rebuild=args.rebuild, traceback=args.traceback, debug=args.debug)
+    site = miyadaiku.site.Site(
+        rebuild=args.rebuild, traceback=args.traceback, debug=args.debug
+    )
     site.load(path, props)
     ok, err, deps = site.build()
-    
+
 
 parser = argparse.ArgumentParser(description="Build miyadaiku project.")
 parser.add_argument("directory", help="directory name")
@@ -141,9 +143,10 @@ def main() -> None:
     try:
         ret = _main()
     except KeyboardInterrupt:
-        sys.exit(0x80+signal.SIGINT)
+        sys.exit(0x80 + signal.SIGINT)
 
     sys.exit(ret)
+
 
 if __name__ == "__main__":
     main()

@@ -52,7 +52,7 @@ class Site:
     jinja_global_vars: Dict[str, Any]
     jinja_templates: Dict[str, Any]
 
-    def __init__(self, rebuild=False, traceback=False, debug=False):
+    def __init__(self, rebuild:bool=False, traceback:bool=False, debug:bool=False)->None:
         self.rebuild = rebuild
         self.traceback = traceback
         self.debug = debug
@@ -178,5 +178,5 @@ class Site:
 
         return jinjaenv
 
-    def build(self) -> Tuple[int, int, DependsDict]:
+    def build(self) -> Tuple[int, int, DependsDict, Set[ContentPath]]:
         return build(self)

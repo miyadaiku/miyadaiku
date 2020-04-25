@@ -18,7 +18,7 @@ def test_mpbuild(log: Any, siteroot: SiteRoot) -> None:
 
     siteroot.write_text(siteroot.contents / "test.html", "test")
 
-    site = siteroot.load({}, {})
+    site = siteroot.load({}, {}, debug=False)
     site.build()
     args, kwargs = log.call_args_list[0]
 

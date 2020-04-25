@@ -4,7 +4,14 @@ from typing import TYPE_CHECKING, Dict, Iterator, Optional, Sequence, Set, Tuple
 import os
 import pickle
 from pathlib import Path
-from miyadaiku import CONFIG_FILE, MODULES_DIR, TEMPLATES_DIR, ContentPath, ContentSrc,DependsDict
+from miyadaiku import (
+    CONFIG_FILE,
+    MODULES_DIR,
+    TEMPLATES_DIR,
+    ContentPath,
+    ContentSrc,
+    DependsDict,
+)
 
 if TYPE_CHECKING:
     from miyadaiku import site
@@ -31,8 +38,6 @@ def check_directory(path: Path, mtime: float) -> Iterator[Path]:
                 yield srcfile
 
 
-
-
 def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]:
     deppath = site.root / DEP_FILE
 
@@ -42,7 +47,8 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
     # load depends file
     try:
         with open(deppath, "rb") as f:
-            mtime, ver, depends = pickle.load(f)
+            mtime, ver, depends, errors = pickle.load(f)
+            print(errors)
 
         if ver != DEP_VER:
             # old file format
@@ -80,14 +86,20 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
         if src.metadata != depends[path][0].metadata:
             return True, set(), {}
 
-        if (src.mtime or 0) > mtime:
+        if ((src.mtime or 0) > mtime) or (path in errors):
             updated.update(depends[path][1])
+            updated.add(path)
+
     return False, updated, depends
 
 
-
-def update_deps(site:site.Site, d: DependsDict, deps: Sequence[Tuple[ContentSrc, Set[ContentPath]]])->DependsDict:
-    new:Dict[ContentPath, Set[ContentPath]] = {}
+def update_deps(
+    site: site.Site,
+    d: DependsDict,
+    deps: Sequence[Tuple[ContentSrc, Set[ContentPath]]],
+    errors: Set[ContentPath],
+) -> DependsDict:
+    new: Dict[ContentPath, Set[ContentPath]] = {}
 
     for contentpath, (contentsrc, depends) in d.items():
         new[contentpath] = depends
@@ -99,7 +111,7 @@ def update_deps(site:site.Site, d: DependsDict, deps: Sequence[Tuple[ContentSrc,
             else:
                 new[dep_contentpath] = set([contentsrc.contentpath])
 
-    ret:DependsDict = {}
+    ret: DependsDict = {}
     for contentpath, depends in new.items():
         if site.files.has_content(contentpath):
             src = site.files.get_content(contentpath).src
@@ -107,17 +119,16 @@ def update_deps(site:site.Site, d: DependsDict, deps: Sequence[Tuple[ContentSrc,
 
     return ret
 
-def save_deps(
-    site: site.Site, depsdict: DependsDict
-) -> None:
 
-#    for contentpath, content in site.files.items():
-#        result[contentpath] = (content.src, set())
-#
-#    for contentsrc, depends in deps:
-#        for dep_contentpath in depends:
-#            if dep_contentpath in result:
-#                result[dep_contentpath][1].add(contentsrc.contentpath)
+def save_deps(site: site.Site, depsdict: DependsDict, errors: Set[ContentPath]) -> None:
+
+    #    for contentpath, content in site.files.items():
+    #        result[contentpath] = (content.src, set())
+    #
+    #    for contentsrc, depends in deps:
+    #        for dep_contentpath in depends:
+    #            if dep_contentpath in result:
+    #                result[dep_contentpath][1].add(contentsrc.contentpath)
 
     with open(site.root / DEP_FILE, "wb") as f:
-        pickle.dump((site.files.mtime, DEP_VER, depsdict), f)
+        pickle.dump((site.files.mtime, DEP_VER, depsdict, errors), f)

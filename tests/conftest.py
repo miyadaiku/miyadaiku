@@ -57,12 +57,13 @@ class SiteRoot:
         build_sitedir(self.path.parent)
 
     def load(
-        self, config: Dict[Any, Any], props: Dict[Any, Any]
+        self, config: Dict[Any, Any], props: Dict[Any, Any],
+        debug=True, traceback=True
     ) -> miyadaiku.site.Site:
         cfg = yaml.dump(config)
         (self.path / "config.yml").write_text(cfg)
 
-        site = miyadaiku.site.Site()
+        site = miyadaiku.site.Site(debug=debug, traceback=traceback)
         site.load(self.path, props)
         return site
 
