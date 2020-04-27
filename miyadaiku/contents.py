@@ -344,7 +344,6 @@ date: {datestr}
     ) -> Tuple[
         List[context.HTMLIDInfo], List[context.HTMLIDInfo], List[context.HTMLIDInfo]
     ]:
-        print(ctx.contentpath, self.src.contentpath)
         if self._in_get_headers:
             return [], [], []
 

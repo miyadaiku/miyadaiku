@@ -214,9 +214,8 @@ def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None
         site = pickle.load(open(picklefile, "rb"))
         mp_log.init_mp_logging(site.traceback, queue)
         try:
-
-            jinjaenv = site.build_jinjaenv()
             site.load_modules()
+            jinjaenv = site.build_jinjaenv()
 
             ret = build_batch(site, jinjaenv, builders)
             queue.put(("RESULT", ret))

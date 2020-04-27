@@ -31,7 +31,7 @@ def build(path, props, args):
         rebuild=args.rebuild, traceback=args.traceback, debug=args.debug
     )
     site.load(path, props)
-    ok, err, deps = site.build()
+    site.build()
 
 
 parser = argparse.ArgumentParser(description="Build miyadaiku project.")

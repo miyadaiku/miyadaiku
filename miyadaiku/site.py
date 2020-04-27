@@ -10,12 +10,13 @@ import importlib.abc
 import yaml
 import importlib_resources
 import dateutil
+import runpy
 
 from jinja2 import Environment
 
 import miyadaiku
 from .config import Config
-from . import ContentSrc, ContentPath, loader, DependsDict
+from . import ContentSrc, ContentPath, loader, DependsDict, hook
 from .builder import Builder, build
 from .jinjaenv import create_env
 
@@ -52,7 +53,9 @@ class Site:
     jinja_global_vars: Dict[str, Any]
     jinja_templates: Dict[str, Any]
 
-    def __init__(self, rebuild:bool=False, traceback:bool=False, debug:bool=False)->None:
+    def __init__(
+        self, rebuild: bool = False, traceback: bool = False, debug: bool = False
+    ) -> None:
         self.rebuild = rebuild
         self.traceback = traceback
         self.debug = debug
@@ -120,23 +123,9 @@ class Site:
                 f(self)
 
     def load_modules(self) -> None:
-        modules = (self.root / miyadaiku.MODULES_DIR).resolve()
-        if modules.is_dir():
-            s = str(modules)
-            if s not in sys.path:
-                sys.path.insert(0, s)
-
-            for f in modules.iterdir():
-                if not f.is_file():
-                    continue
-                if f.suffix != ".py":
-                    continue
-                name = f.stem
-                if not name.isidentifier():
-                    continue
-                m = _import_script(name, f)
-
-                self.add_jinja_global(name, m)
+        hook.load_hook(self.root)
+        for theme in self.themes:
+            importlib.import_module(theme)
 
     def _generate_metadata_files(self) -> None:
         for src, content in self.files.items():
@@ -149,7 +138,7 @@ class Site:
         self.jinja_global_vars[name] = value
 
     def load(self, root: Path, props: Dict[str, Any]) -> None:
-        self.root = root
+        self.root = root.resolve()
         self.outputdir = self.root / miyadaiku.OUTPUTS_DIR
 
         self.jinja_global_vars = {}
@@ -165,6 +154,7 @@ class Site:
         loader.loadfiles(self.files, self.config, self.root, self.ignores, self.themes)
 
         self._generate_metadata_files()
+
 
     def build_jinjaenv(self) -> Environment:
         jinjaenv = create_env(self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR])

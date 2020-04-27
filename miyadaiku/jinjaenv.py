@@ -56,8 +56,8 @@ def create_env(
     loaders.append(PackageLoader("miyadaiku.themes.base"))
 
     env = Environment(
-        #        undefined=make_logging_undefined(logger, DebugUndefined),
-        undefined=make_logging_undefined(logger, StrictUndefined),
+        undefined=make_logging_undefined(logger, DebugUndefined),
+        #undefined=make_logging_undefined(logger, StrictUndefined),
         loader=ChoiceLoader(loaders),
         autoescape=select_autoescape(["html", "xml"]),
         extensions=EXTENSIONS,

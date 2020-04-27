@@ -48,7 +48,6 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
     try:
         with open(deppath, "rb") as f:
             mtime, ver, depends, errors = pickle.load(f)
-            print(errors)
 
         if ver != DEP_VER:
             # old file format

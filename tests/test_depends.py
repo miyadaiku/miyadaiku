@@ -53,7 +53,7 @@ def test_refs(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors  = site.build()
+    ok, err, deps, errors = site.build()
     depends.save_deps(site, deps, errors)
 
     # test update depends
@@ -71,7 +71,7 @@ def test_rebuild(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors  = site.build()
+    ok, err, deps, errors = site.build()
     depends.save_deps(site, deps, errors)
 
     # test new file
@@ -88,7 +88,7 @@ def test_metadata(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors  = site.build()
+    ok, err, deps, errors = site.build()
     depends.save_deps(site, deps, errors)
 
     # test metadata changed
@@ -104,34 +104,38 @@ file1-new-title
     assert rebuild is True
 
 
-def test_error(siteroot: SiteRoot)->None:
-    siteroot.write_text(siteroot.contents / "file1.rst", """
+def test_error(siteroot: SiteRoot) -> None:
+    siteroot.write_text(
+        siteroot.contents / "file1.rst",
+        """
 test
 -----------
 
 :jinja:`{{page.load('file2.rst').html}}`
 
-""")
+""",
+    )
     siteroot.write_text(siteroot.contents / "file2.rst", ":jinja:`{{@@}}`")
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors  = site.build()
+    ok, err, deps, errors = site.build()
     assert ok == 0
     assert err == len(errors) == 2
 
     siteroot.write_text(siteroot.contents / "file2.rst", "")
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors  = site.build()
+    ok, err, deps, errors = site.build()
     assert ok == 2
     assert err == len(errors) == 0
+
 
 def test_macro(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "file1.rst", "")
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors  = site.build()
+    ok, err, deps, errors = site.build()
     depends.save_deps(site, deps, errors)
 
     # test macro
@@ -141,5 +145,3 @@ file1-new-title
 ----------------------------
 """
     )
-
-

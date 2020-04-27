@@ -12,8 +12,13 @@ _pendings: List[Dict[str, Any]] = []
 
 class MpLogFormatter(logging.Formatter):
     def __init__(
-        self, fmt:Any=None, datefmt:Any=None, style:Any="%", validate:Any=True, traceback:bool=False
-    )->None:
+        self,
+        fmt: Any = None,
+        datefmt: Any = None,
+        style: Any = "%",
+        validate: Any = True,
+        traceback: bool = False,
+    ) -> None:
         super().__init__(fmt=fmt, datefmt=datefmt, style=style, validate=validate)
         self.traceback = traceback
 
@@ -91,17 +96,22 @@ class ParentFormatter(logging.Formatter):
     traceback: bool
 
     def __init__(
-        self, fmt:Any=None, datefmt:Any=None, style:Any="%", validate:Any=True, traceback:Any=False
-    )->None:
+        self,
+        fmt: Any = None,
+        datefmt: Any = None,
+        style: Any = "%",
+        validate: Any = True,
+        traceback: Any = False,
+    ) -> None:
         super().__init__(fmt=fmt, datefmt=datefmt, style=style, validate=validate)
         self.traceback = traceback
 
-    def formatException(self, ei:Any)->str:
+    def formatException(self, ei: Any) -> str:
         if self.traceback:
             return super().formatException(ei)
         return str(ei[1])
 
-    def formatStack(self, stack_info:Any)->str:
+    def formatStack(self, stack_info: Any) -> str:
         if self.traceback:
             return super().formatStack(stack_info)
         return ""
