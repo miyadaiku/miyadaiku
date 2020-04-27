@@ -7,7 +7,7 @@ import yaml
 import shutil
 
 import miyadaiku.site
-from miyadaiku import context, to_contentpath
+from miyadaiku import context, to_contentpath, hook
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -26,6 +26,7 @@ def build_sitedir(path: pathlib.Path) -> pathlib.Path:
     (site / "files").mkdir()
     (site / "templates").mkdir()
     (site / "modules").mkdir()
+    hook.load_hook(site)
     return site
 
 
@@ -57,10 +58,7 @@ class SiteRoot:
         build_sitedir(self.path.parent)
 
     def load(
-        self,
-        config: Dict[Any, Any],
-        props: Dict[Any, Any],
-        debug: bool = True,
+        self, config: Dict[Any, Any], props: Dict[Any, Any], debug: bool = True,
     ) -> miyadaiku.site.Site:
         cfg = yaml.dump(config)
         (self.path / "config.yml").write_text(cfg)

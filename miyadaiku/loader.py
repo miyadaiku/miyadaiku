@@ -29,6 +29,7 @@ from . import config, contents, html
 from . import site
 from .contents import Content
 from . import exceptions
+from . import hook
 
 logger = logging.getLogger(__name__)
 
@@ -321,6 +322,7 @@ def loadfile(src: ContentSrc, bin: bool) -> Optional[bytes]:
 
 
 def loadfiles(
+    site: site.Site,
     files: ContentFiles,
     cfg: config.Config,
     root: Path,
@@ -328,8 +330,20 @@ def loadfiles(
     themes: List[str],
 ) -> None:
     def load(walk: Iterator[ContentSrc], bin: bool = False) -> None:
+        f: Optional[ContentSrc]
         for f in walk:
+            if not f:
+                continue
+
+            f = hook.run_pre_load(site, f, bin)
+            if not f:
+                continue
+
             body = loadfile(f, bin)
+            f, body = hook.run_post_load(site, f, bin, body)
+
+            if not f:
+                continue
 
             if bin:
                 files.add(f, body)
@@ -344,3 +358,5 @@ def loadfiles(
     for theme in themes:
         load(walk_package(theme, miyadaiku.CONTENTS_DIR, ignores))
         load(walk_package(theme, miyadaiku.FILES_DIR, ignores), bin=True)
+
+    hook.run_load_finished(site)

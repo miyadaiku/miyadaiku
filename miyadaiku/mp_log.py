@@ -68,9 +68,7 @@ def init_mp_logging(queue: Any) -> None:
         "disable_existing_loggers": False,
         "loggers": {"": {"level": "DEBUG", "handlers": ["streamhandler"]},},
         "handlers": {
-            "streamhandler": {
-                "()": lambda: MpLogHandler(level=logging.DEBUG)
-            }
+            "streamhandler": {"()": lambda: MpLogHandler(level=logging.DEBUG)}
         },
     }
 
@@ -85,7 +83,6 @@ def flush_mp_logging() -> None:
 
 
 class ParentFormatter(logging.Formatter):
-
     def format(self, record: Any) -> str:
         msgdict = getattr(record, "msgdict", None)
         if not msgdict:

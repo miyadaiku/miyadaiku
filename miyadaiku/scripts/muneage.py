@@ -27,9 +27,7 @@ def exec_server(dir, bind, port):
 
 
 def build(path, props, args):
-    site = miyadaiku.site.Site(
-        rebuild=args.rebuild, debug=args.debug
-    )
+    site = miyadaiku.site.Site(rebuild=args.rebuild, debug=args.debug)
     site.load(path, props)
     site.build()
 

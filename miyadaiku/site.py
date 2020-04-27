@@ -53,9 +53,7 @@ class Site:
     jinja_global_vars: Dict[str, Any]
     jinja_templates: Dict[str, Any]
 
-    def __init__(
-        self, rebuild: bool = False, debug: bool = False
-    ) -> None:
+    def __init__(self, rebuild: bool = False, debug: bool = False) -> None:
         self.rebuild = rebuild
         self.debug = debug
 
@@ -146,14 +144,17 @@ class Site:
         self._load_config(props)
         self.files = loader.ContentFiles()
 
+        hook.run_initialized(self)
+
         self._load_themes()
 
         self._init_themes()
 
-        loader.loadfiles(self.files, self.config, self.root, self.ignores, self.themes)
+        loader.loadfiles(
+            self, self.files, self.config, self.root, self.ignores, self.themes
+        )
 
         self._generate_metadata_files()
-
 
     def build_jinjaenv(self) -> Environment:
         jinjaenv = create_env(self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR])

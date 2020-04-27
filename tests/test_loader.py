@@ -60,7 +60,8 @@ def test_loadfiles(siteroot: SiteRoot) -> None:
     ignores: Set[str] = set()
     themes = ["package3", "package4"]
 
-    loader.loadfiles(files, cfg, root, ignores, themes)
+    site = siteroot.load({}, {})
+    loader.loadfiles(site, files, cfg, root, ignores, themes)
 
     assert len(files._contentfiles) == 8
     assert files._contentfiles[((), "root1.txt")].get_body() == b"content_root1"

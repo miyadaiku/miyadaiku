@@ -1,7 +1,18 @@
 from __future__ import annotations
 
 
-from typing import TYPE_CHECKING, Any, List, Type, Sequence, Dict, Union, Tuple, Set
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    List,
+    Type,
+    Sequence,
+    Dict,
+    Union,
+    Tuple,
+    Set,
+    Optional,
+)
 import multiprocessing
 import pickle
 import asyncio
@@ -15,7 +26,7 @@ from jinja2 import Environment
 
 from miyadaiku import ContentPath, PathTuple, ContentSrc, repr_contentpath, DependsDict
 
-from . import context, mp_log, depends
+from . import context, mp_log, depends, hook
 
 if TYPE_CHECKING:
     from .contents import Content
@@ -193,9 +204,13 @@ def build_batch(
     ok = err = 0
     for builder in builders:
         try:
-            context = builder.build_context(site, jinjaev)
+            new_context = builder.build_context(site, jinjaev)
+            context = hook.run_pre_build(new_context)
+            if not context:
+                continue
             logger.info("Building %s", context.content.src.repr_filename())
-            context.build()
+            filenames = context.build()
+            hook.run_post_build(context, filenames)
 
             ret.append((context.content.src, set(context.depends)))
             ok += 1
@@ -310,7 +325,6 @@ def submit_debug(
     site: Site, batches: Sequence[List[Builder]]
 ) -> Tuple[int, int, List[Tuple[ContentSrc, Set[ContentPath]]], Set[ContentPath]]:
     jinjaenv = site.build_jinjaenv()
-    site.load_modules()
 
     ok = err = 0
     ret = []
