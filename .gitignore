@@ -13,3 +13,4 @@ build
 .pytest_cache
 Pipfile.lock
 .mypy_cache
+_depends.pickle
