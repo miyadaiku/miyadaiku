@@ -74,7 +74,7 @@ def test_jinja_templ_err(siteroot: SiteRoot) -> None:
         siteroot.templates / "page_article.html",
         """1
 2
-{{ abc }}
+{{ 1/0}}
 3
 4
 5
@@ -91,7 +91,7 @@ def test_jinja_templ_err(siteroot: SiteRoot) -> None:
         context.eval_jinja_template(ctx, ctx.content, "page_article.html", {})
     except exceptions.JinjaEvalError as e:
         assert e.errors[0][1] == 3
-        assert ">>> {{ abc }}" in e.errors[0][2]
+        assert ">>> {{ 1/0}}" in e.errors[0][2]
     else:
         assert False
 
