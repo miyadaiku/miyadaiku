@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import (
+    Dict,
     DefaultDict,
     List,
     Callable,
@@ -13,7 +14,6 @@ from typing import (
 )
 import runpy
 
-import collections
 import enum
 from pathlib import Path
 
@@ -45,6 +45,7 @@ def load_hook(path: Path) -> None:
     hooks_pre_build.clear()
     hooks_post_build.clear()
     hooks_finished.clear()
+    jinja_globals.clear()
 
     hook = (path / "hooks.py").resolve()
     if hook.exists():
@@ -196,3 +197,11 @@ def finished(f: HOOK_FINISHED) -> HOOK_FINISHED:
 def run_finished(site: site.Site) -> None:
     for hook in hooks_finished:
         hook(site)
+
+
+jinja_globals: Dict[str, Any] = {}
+
+
+def jinja_global(f: Callable[..., None]) -> Callable[..., None]:
+    jinja_globals[f.__name__] = f
+    return f

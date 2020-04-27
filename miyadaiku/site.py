@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Set, Tuple, Sequence
+from typing import Any, Dict, Iterator, List, Set, TYPE_CHECKING, Tuple
 import sys
 import os
 from pathlib import Path
@@ -10,13 +10,12 @@ import importlib.abc
 import yaml
 import importlib_resources
 import dateutil
-import runpy
 
 from jinja2 import Environment
 
 import miyadaiku
 from .config import Config
-from . import ContentSrc, ContentPath, loader, DependsDict, hook
+from . import ContentPath, ContentSrc, DependsDict, extend, loader
 from .builder import Builder, build
 from .jinjaenv import create_env
 
@@ -120,7 +119,7 @@ class Site:
                 f(self)
 
     def load_modules(self) -> None:
-        hook.load_hook(self.root)
+        extend.load_hook(self.root)
         for theme in self.themes:
             importlib.import_module(theme)
 
@@ -144,7 +143,7 @@ class Site:
         self._load_config(props)
         self.files = loader.ContentFiles()
 
-        hook.run_initialized(self)
+        extend.run_initialized(self)
 
         self._load_themes()
 
@@ -157,7 +156,12 @@ class Site:
         self._generate_metadata_files()
 
     def build_jinjaenv(self) -> Environment:
+        import miyadaiku.extend
+
         jinjaenv = create_env(self, self.themes, [self.root / miyadaiku.TEMPLATES_DIR])
+
+        for name, value in miyadaiku.extend.jinja_globals.items():
+            jinjaenv.globals[name] = value
 
         for name, value in self.jinja_global_vars.items():
             jinjaenv.globals[name] = value

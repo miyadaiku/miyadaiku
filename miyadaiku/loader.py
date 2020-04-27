@@ -29,7 +29,7 @@ from . import config, contents, html
 from . import site
 from .contents import Content
 from . import exceptions
-from . import hook
+from . import extend
 
 logger = logging.getLogger(__name__)
 
@@ -335,12 +335,12 @@ def loadfiles(
             if not f:
                 continue
 
-            f = hook.run_pre_load(site, f, bin)
+            f = extend.run_pre_load(site, f, bin)
             if not f:
                 continue
 
             body = loadfile(f, bin)
-            f, body = hook.run_post_load(site, f, bin, body)
+            f, body = extend.run_post_load(site, f, bin, body)
 
             if not f:
                 continue
@@ -359,4 +359,4 @@ def loadfiles(
         load(walk_package(theme, miyadaiku.CONTENTS_DIR, ignores))
         load(walk_package(theme, miyadaiku.FILES_DIR, ignores), bin=True)
 
-    hook.run_load_finished(site)
+    extend.run_load_finished(site)

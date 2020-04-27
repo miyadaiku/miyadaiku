@@ -26,7 +26,7 @@ from jinja2 import Environment
 
 from miyadaiku import ContentPath, PathTuple, ContentSrc, repr_contentpath, DependsDict
 
-from . import context, mp_log, depends, hook
+from . import context, mp_log, depends, extend
 
 if TYPE_CHECKING:
     from .contents import Content
@@ -205,12 +205,12 @@ def build_batch(
     for builder in builders:
         try:
             new_context = builder.build_context(site, jinjaev)
-            context = hook.run_pre_build(new_context)
+            context = extend.run_pre_build(new_context)
             if not context:
                 continue
             logger.info("Building %s", context.content.src.repr_filename())
             filenames = context.build()
-            hook.run_post_build(context, filenames)
+            extend.run_post_build(context, filenames)
 
             ret.append((context.content.src, set(context.depends)))
             ok += 1

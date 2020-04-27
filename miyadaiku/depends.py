@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterator, Optional, Sequence, Set, Tuple
+from typing import Dict, Iterator, Sequence, Set, TYPE_CHECKING, Tuple
 import os
 import pickle
 from pathlib import Path

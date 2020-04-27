@@ -7,7 +7,7 @@ import yaml
 import shutil
 
 import miyadaiku.site
-from miyadaiku import context, to_contentpath, hook
+from miyadaiku import context, to_contentpath, extend
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -26,7 +26,7 @@ def build_sitedir(path: pathlib.Path) -> pathlib.Path:
     (site / "files").mkdir()
     (site / "templates").mkdir()
     (site / "modules").mkdir()
-    hook.load_hook(site)
+    extend.load_hook(site)
     return site
 
 
