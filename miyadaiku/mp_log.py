@@ -17,10 +17,8 @@ class MpLogFormatter(logging.Formatter):
         datefmt: Any = None,
         style: Any = "%",
         validate: Any = True,
-        traceback: bool = False,
     ) -> None:
         super().__init__(fmt=fmt, datefmt=datefmt, style=style, validate=validate)
-        self.traceback = traceback
 
     def format_dict(self, record: Any) -> Dict[str, Any]:
         record.message = record.getMessage()
@@ -29,24 +27,18 @@ class MpLogFormatter(logging.Formatter):
         d["levelno"] = record.levelno
         d["msg"] = self.formatMessage(record)
         if record.exc_info:
-            if self.traceback:
-                d["exc"] = self.formatException(record.exc_info)
-            else:
-                d["exc"] = str(record.exc_info[1])
+            d["exc"] = self.formatException(record.exc_info)
 
         if record.stack_info:
-            if self.traceback:
-                d["stack"] = self.formatStack(record.stack_info)
-            else:
-                d["stack"] = ""
+            d["stack"] = self.formatStack(record.stack_info)
 
         return d
 
 
 class MpLogHandler(logging.Handler):
-    def __init__(self, level: int = logging.NOTSET, traceback: bool = False) -> None:
+    def __init__(self, level: int = logging.NOTSET) -> None:
         super().__init__(level=level)
-        self.dictformatter = MpLogFormatter(traceback=traceback)
+        self.dictformatter = MpLogFormatter()
 
     def emit(self, record: Any) -> None:
         try:
@@ -64,7 +56,7 @@ class MpLogHandler(logging.Handler):
         return "<%s(%s)>" % (self.__class__.__name__, level)
 
 
-def init_mp_logging(traceback: bool, queue: Any) -> None:
+def init_mp_logging(queue: Any) -> None:
     global _queue
     _queue = queue
 
@@ -77,7 +69,7 @@ def init_mp_logging(traceback: bool, queue: Any) -> None:
         "loggers": {"": {"level": "DEBUG", "handlers": ["streamhandler"]},},
         "handlers": {
             "streamhandler": {
-                "()": lambda: MpLogHandler(level=logging.DEBUG, traceback=traceback)
+                "()": lambda: MpLogHandler(level=logging.DEBUG)
             }
         },
     }
@@ -93,28 +85,6 @@ def flush_mp_logging() -> None:
 
 
 class ParentFormatter(logging.Formatter):
-    traceback: bool
-
-    def __init__(
-        self,
-        fmt: Any = None,
-        datefmt: Any = None,
-        style: Any = "%",
-        validate: Any = True,
-        traceback: Any = False,
-    ) -> None:
-        super().__init__(fmt=fmt, datefmt=datefmt, style=style, validate=validate)
-        self.traceback = traceback
-
-    def formatException(self, ei: Any) -> str:
-        if self.traceback:
-            return super().formatException(ei)
-        return str(ei[1])
-
-    def formatStack(self, stack_info: Any) -> str:
-        if self.traceback:
-            return super().formatStack(stack_info)
-        return ""
 
     def format(self, record: Any) -> str:
         msgdict = getattr(record, "msgdict", None)
@@ -129,17 +99,16 @@ class ParentFormatter(logging.Formatter):
                 s = s + "\n"
             s = s + exc
 
-        if self.traceback:
-            stack = msgdict.get("stack")
-            if stack:
-                if s[-1:] != "\n":
-                    s = s + "\n"
-                s = s + stack
+        stack = msgdict.get("stack")
+        if stack:
+            if s[-1:] != "\n":
+                s = s + "\n"
+            s = s + stack
 
         return s
 
 
-def init_logging(traceback: bool = False) -> None:
+def init_logging() -> None:
 
     LOGGING = {
         "version": 1,
@@ -153,7 +122,7 @@ def init_logging(traceback: bool = False) -> None:
                 "stream": "ext://sys.stderr",
             }
         },
-        "formatters": {"berief": {"()": lambda: ParentFormatter(traceback=traceback)}},
+        "formatters": {"berief": {"()": lambda: ParentFormatter()}},
     }
 
     logging.config.dictConfig(LOGGING)

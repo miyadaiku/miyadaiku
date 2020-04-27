@@ -61,12 +61,11 @@ class SiteRoot:
         config: Dict[Any, Any],
         props: Dict[Any, Any],
         debug: bool = True,
-        traceback: bool = True,
     ) -> miyadaiku.site.Site:
         cfg = yaml.dump(config)
         (self.path / "config.yml").write_text(cfg)
 
-        site = miyadaiku.site.Site(debug=debug, traceback=traceback)
+        site = miyadaiku.site.Site(debug=debug)
         site.load(self.path, props)
         return site
 

@@ -212,7 +212,7 @@ def build_batch(
 def mp_build_batch(queue: Any, picklefile: str, builders: List[Builder]) -> None:
     try:
         site = pickle.load(open(picklefile, "rb"))
-        mp_log.init_mp_logging(site.traceback, queue)
+        mp_log.init_mp_logging(queue)
         try:
             site.load_modules()
             jinjaenv = site.build_jinjaenv()

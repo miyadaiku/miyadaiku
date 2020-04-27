@@ -54,10 +54,9 @@ class Site:
     jinja_templates: Dict[str, Any]
 
     def __init__(
-        self, rebuild: bool = False, traceback: bool = False, debug: bool = False
+        self, rebuild: bool = False, debug: bool = False
     ) -> None:
         self.rebuild = rebuild
-        self.traceback = traceback
         self.debug = debug
 
     def _load_config(self, props: Dict[str, Any]) -> None:

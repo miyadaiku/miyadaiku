@@ -28,7 +28,7 @@ def exec_server(dir, bind, port):
 
 def build(path, props, args):
     site = miyadaiku.site.Site(
-        rebuild=args.rebuild, traceback=args.traceback, debug=args.debug
+        rebuild=args.rebuild, debug=args.debug
     )
     site.load(path, props)
     site.build()
@@ -49,13 +49,6 @@ parser.add_argument(
     help="Set default property value.",
 )
 
-parser.add_argument(
-    "--traceback",
-    "-t",
-    action="store_true",
-    default=False,
-    help="Show traceback on error",
-)
 
 parser.add_argument(
     "--debug", "-D", action="store_true", default=False, help="Run debug mode"
@@ -91,7 +84,7 @@ def _main() -> None:
         print(f"'{d}' is not a valid directory", file=sys.stderr)
         sys.exit(1)
 
-    mp_log.init_logging(args.traceback)
+    mp_log.init_logging()
 
     outputs = d / OUTPUTS_DIR
     if not outputs.is_dir():
