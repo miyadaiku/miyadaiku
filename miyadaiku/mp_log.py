@@ -11,12 +11,7 @@ _pendings: List[Dict[str, Any]] = []
 
 
 class MpLogFormatter(logging.Formatter):
-    def __init__(
-        self,
-        fmt: Any = None,
-        datefmt: Any = None,
-        style: Any = "%",
-    ) -> None:
+    def __init__(self, fmt: Any = None, datefmt: Any = None, style: Any = "%",) -> None:
         super().__init__(fmt=fmt, datefmt=datefmt, style=style)
 
     def format_dict(self, record: Any) -> Dict[str, Any]:

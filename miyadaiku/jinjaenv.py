@@ -12,6 +12,7 @@ from jinja2 import (
     StrictUndefined,
 )
 
+from jinja2 import StrictUndefined  # NOQA
 from jinja2 import DebugUndefined  # NOQA
 
 

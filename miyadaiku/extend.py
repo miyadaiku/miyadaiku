@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import (
     Dict,
-    DefaultDict,
     List,
     Callable,
     Any,
-    TypeVar,
     TYPE_CHECKING,
     Optional,
     Sequence,

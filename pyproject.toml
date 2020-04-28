@@ -1,3 +1,26 @@
 [build-system]
 requires = ["setuptools >= 40.6.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+
+[tool.black]
+line-length = 88
+target-version = ['py37', 'py38']
+
+
+[flake8]
+max-line-length = 120
+ignore = [
+    'E203', # whitespace before ':'
+    'E261', # at least two spaces before inline comment
+    'E731', # do not assign a lambda expression, use a def
+    'W503', # line break before binary operator
+    'E401', # multiple imports on one line 
+    'E231', # missing whitespace after ','
+]
+
+[tool.pytest]
+#addopts = -s
+#log_cli = 1
+log_cli_level = 'DEBUG'
+

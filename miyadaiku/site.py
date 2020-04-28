@@ -27,7 +27,7 @@ def timestamp_constructor(loader, node):  # type: ignore
     return dateutil.parser.parse(node.value)
 
 
-yaml.add_constructor(u"tag:yaml.org,2002:timestamp", timestamp_constructor)  # type: ignore
+yaml.add_constructor("tag:yaml.org,2002:timestamp", timestamp_constructor)  # type: ignore
 
 
 def _import_script(name: str, path: Path) -> Any:
