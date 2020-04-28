@@ -16,9 +16,8 @@ class MpLogFormatter(logging.Formatter):
         fmt: Any = None,
         datefmt: Any = None,
         style: Any = "%",
-        validate: Any = True,
     ) -> None:
-        super().__init__(fmt=fmt, datefmt=datefmt, style=style, validate=validate)
+        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
 
     def format_dict(self, record: Any) -> Dict[str, Any]:
         record.message = record.getMessage()
