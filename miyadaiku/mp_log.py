@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 from typing import Any, List, Dict
-
+import enum, sys
 import logging, logging.config
 import traceback
 
@@ -82,11 +82,29 @@ def flush_mp_logging() -> None:
         _pendings = []
 
 
+class Color(enum.Enum):
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    MAGENTA = "\033[95m"
+    CYAN = "\033[96m"
+    RESET = "\033[0m"
+
+
+IS_ATTY = sys.stdout.isatty()
+
+
 class ParentFormatter(logging.Formatter):
     def format(self, record: Any) -> str:
+        red = IS_ATTY and (record.levelno >= logging.ERROR)
         msgdict = getattr(record, "msgdict", None)
+
         if not msgdict:
-            return super().format(record)
+            ret = super().format(record)
+            if red:
+                ret = Color.RED.value + ret + Color.RESET.value
+            return ret
 
         s: str = msgdict["msg"]
 
@@ -102,6 +120,8 @@ class ParentFormatter(logging.Formatter):
                 s = s + "\n"
             s = s + stack
 
+        if red:
+            s = Color.RED.value + s + Color.RESET.value
         return s
 
 
