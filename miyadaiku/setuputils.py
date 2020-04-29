@@ -79,6 +79,8 @@ class copy_files(Command):
             return
 
         for srcdir, specs, destdir in self.distribution.copy_files:  # type: ignore
+            if not destdir.is_dir():
+                destdir.mkdir(parents=True, exist_ok=True)
             for spec in specs:
                 srcfiles = glob.glob(os.path.join(srcdir, spec))
                 for fname in srcfiles:
