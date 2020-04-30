@@ -86,3 +86,15 @@ class copy_files(Command):
                 for fname in srcfiles:
                     print(f"copy {fname} -> {destdir}")
                     shutil.copy(fname, destdir)
+
+
+def copyfiles(files):
+    for srcdir, specs, destdir in files:  # type: ignore
+        if not destdir.is_dir():
+            destdir.mkdir(parents=True, exist_ok=True)
+        for spec in specs:
+            srcfiles = glob.glob(os.path.join(srcdir, spec))
+            for fname in srcfiles:
+                print(f"copy {fname} -> {destdir}")
+                shutil.copy(fname, destdir)
+
