@@ -27,7 +27,7 @@ https://miyadaiku.github.io
 Requirements
 ------------------
 
-Miydaiku requires Python 3.6 or later.
+Miydaiku requires Python 3.7 or later.
 
 
 Installation
@@ -38,4 +38,24 @@ Use pip to install miyadaiku.
 .. code:: console
 
    $ pip3 install miyadaiku
+
+Upgrading to Miyadaiku 1.0.0
+----------------------------------------
+
+Miyadaiku 1.0.0 has some incompatible changes.
+
+To upgrade from older version of Miyadaiku, please read following notes.
+
+1. Package name of external themes are changed.
+
+   - miyadaiku.themes.bootstrap4 -> miyadaiku_theme_bootstrap4
+   - miyadaiku.themes.jquery -> miyadaiku_theme_jquery
+   - miyadaiku.themes.tether -> miyadaiku_theme_tether
+   - miyadaiku.themes.fontawesome-> miyadaiku_theme_fontawesome
+   - miyadaiku.themes.popper_js -> miyadaiku_theme_popper_js
+
+2. Argument names of some method of Miydaiku objects are changed.
+
+   - `value` argument of `path()`, `path_to()`, `link()`, `link_to()` methods are renamed to `group_value`.
+   - `group_values` jinja variable is renamed to `group_value`.
 
