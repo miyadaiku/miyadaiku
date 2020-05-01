@@ -4,6 +4,7 @@ from pathlib import Path
 from nbconvert.exporters import HTMLExporter
 import nbformat
 from bs4 import BeautifulSoup
+from miyadaiku import ContentSrc
 
 
 def _export(json: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
@@ -24,9 +25,14 @@ def _export(json: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     return metadata, "<div>" + html + "</div>"
 
 
-def load(path: Path) -> Tuple[Dict[str, Any], str]:
-    json = nbformat.read(str(path), nbformat.current_nbformat)
-    return _export(json)
+def load(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
+    if src.package:
+        s = src.read_text()
+        return load_string(s)
+    else:
+        json = nbformat.read(src.srcpath, nbformat.current_nbformat)
+        return _export(json)
+
 
 
 def load_string(s: str) -> Tuple[Dict[str, Any], str]:

@@ -1,10 +1,10 @@
-from typing import Iterator, List, Any
+from typing import Iterator, List, Any, Tuple
 import os
 import shutil
 import glob
 import distutils.dist
 from distutils.core import Command
-
+import pathlib
 
 SETUP_FILE_EXTS = [
     "*.rst",
@@ -88,8 +88,8 @@ class copy_files(Command):
                     shutil.copy(fname, destdir)
 
 
-def copyfiles(files):
-    for srcdir, specs, destdir in files:  # type: ignore
+def copyfiles(files:List[Tuple[pathlib.Path, List[str], pathlib.Path]])->None:
+    for srcdir, specs, destdir in files:
         if not destdir.is_dir():
             destdir.mkdir(parents=True, exist_ok=True)
         for spec in specs:

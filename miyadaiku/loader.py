@@ -156,6 +156,12 @@ def mdloader(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
     return md.load(src)
 
 
+def ipynbloader(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
+    from . import ipynb
+
+    return ipynb.load(src)
+
+
 FILELOADERS = {
     ".rst": rstloader,
     ".rest": rstloader,
@@ -164,6 +170,7 @@ FILELOADERS = {
     ".htm": html.load,
     ".yml": yamlloader,
     ".yaml": yamlloader,
+    ".ipynb": ipynbloader,
 }
 
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from miyadaiku import ipynb
+from miyadaiku import ipynb, ContentSrc
 from conftest import SiteRoot
 from bs4 import BeautifulSoup
 
@@ -7,7 +7,28 @@ DIR = Path(__file__).parent
 
 
 def test_load() -> None:
-    metadata, text = ipynb.load(DIR / "test.ipynb")
+    contentsrc = ContentSrc(
+        package=None,
+        srcpath=str(DIR / "test.ipynb"),
+        metadata={},
+        contentpath=((), 'test.html'),
+        mtime=0,
+    )
+
+    metadata, text = ipynb.load(contentsrc)
+    assert metadata["type"] == "article"
+    print(text)
+
+def test_package() -> None:
+    contentsrc = ContentSrc(
+        package='pkg_ipynb',
+        srcpath='files/test.ipynb',
+        metadata={},
+        contentpath=((), 'test.html'),
+        mtime=0,
+    )
+
+    metadata, text = ipynb.load(contentsrc)
     assert metadata["type"] == "article"
     print(text)
 
