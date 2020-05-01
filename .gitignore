@@ -16,3 +16,4 @@ Pipfile.lock
 _depends.pickle
 .eggs
 pip-wheel-metadata
+.eggs
