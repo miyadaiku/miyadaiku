@@ -1,6 +1,5 @@
 from typing import Dict, Any, Tuple
 import re
-from pathlib import Path
 from nbconvert.exporters import HTMLExporter
 import nbformat
 from bs4 import BeautifulSoup
@@ -32,7 +31,6 @@ def load(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
     else:
         json = nbformat.read(src.srcpath, nbformat.current_nbformat)
         return _export(json)
-
 
 
 def load_string(s: str) -> Tuple[Dict[str, Any], str]:

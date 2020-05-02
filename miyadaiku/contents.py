@@ -450,14 +450,13 @@ class IndexPage(Content):
     def _generate_filename(
         self, ctx: context.OutputContext, pageargs: Dict[Any, Any]
     ) -> str:
-        value = str(pageargs.get("group_value", ""))
-        value = re.sub(r"[@/\\: \t]", lambda m: f"@{ord(m[0]):02x}", value)
 
-        curpage = pageargs.get("cur_page", 1)
-
+        curpage = pageargs.get("cur_page", None)
         groupby = self.get_metadata(ctx.site, "groupby", None)
-        if groupby:
-            if curpage == 1:
+        group_value = pageargs.get("group_value", None)
+
+        if groupby and group_value:
+            if (not curpage) or (curpage == 1):
                 filename_templ = self.get_metadata(
                     ctx.site, "indexpage_group_filename_templ"
                 )
@@ -466,7 +465,7 @@ class IndexPage(Content):
                     ctx.site, "indexpage_group_filename_templ2"
                 )
         else:
-            if curpage == 1:
+            if (not curpage) or (curpage == 1):
                 filename_templ = self.get_metadata(ctx.site, "indexpage_filename_templ")
             else:
                 filename_templ = self.get_metadata(
@@ -481,6 +480,9 @@ class IndexPage(Content):
         args.update(pageargs)
 
         ret = context.eval_jinja(ctx, self, "filename", filename_templ, args)
+        if "index_None" in ret:
+            breakpoint()
+
         return ret
 
 

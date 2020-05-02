@@ -11,7 +11,6 @@ from typing import (
     Union,
     Tuple,
     Set,
-    Optional,
 )
 import multiprocessing
 import pickle
@@ -324,6 +323,8 @@ async def submit(
 def submit_debug(
     site: Site, batches: Sequence[List[Builder]]
 ) -> Tuple[int, int, List[Tuple[ContentSrc, Set[ContentPath]]], Set[ContentPath]]:
+
+    site.load_modules()
     jinjaenv = site.build_jinjaenv()
 
     ok = err = 0

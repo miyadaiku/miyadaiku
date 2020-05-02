@@ -1,5 +1,8 @@
 from typing import List, Any, Dict, Tuple
+import re
 import os
+import urllib
+
 from jinja2 import (
     TemplateNotFound,
     Environment,
@@ -14,7 +17,6 @@ from jinja2 import (
 
 from jinja2 import StrictUndefined  # NOQA
 from jinja2 import DebugUndefined  # NOQA
-
 
 import logging
 import miyadaiku.site
@@ -46,6 +48,18 @@ class PackagesLoader(PrefixLoader):
 EXTENSIONS = ["jinja2.ext.do"]
 
 
+def safepath(s: str) -> str:
+    s = str(s)
+    re.sub(r"[@/\\: \t]", lambda m: f"@{ord(m[0]):02x}", s)
+    return s
+
+
+def urlquote(s: str) -> str:
+    s = str(s)
+    s = urllib.parse.quote_plus(s)
+    return s
+
+
 def create_env(
     site: "miyadaiku.site.Site", themes: List[str], paths: List[Path]
 ) -> Environment:
@@ -74,5 +88,8 @@ def create_env(
     env.globals["type"] = type
     env.globals["dir"] = dir
     env.globals["isinstance"] = isinstance
+
+    env.filters["urlquote"] = urlquote
+    env.filters["safepath"] = safepath
 
     return env

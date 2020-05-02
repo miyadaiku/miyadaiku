@@ -11,7 +11,7 @@ def test_load() -> None:
         package=None,
         srcpath=str(DIR / "test.ipynb"),
         metadata={},
-        contentpath=((), 'test.html'),
+        contentpath=((), "test.html"),
         mtime=0,
     )
 
@@ -19,12 +19,13 @@ def test_load() -> None:
     assert metadata["type"] == "article"
     print(text)
 
+
 def test_package() -> None:
     contentsrc = ContentSrc(
-        package='pkg_ipynb',
-        srcpath='files/test.ipynb',
+        package="pkg_ipynb",
+        srcpath="files/test.ipynb",
         metadata={},
-        contentpath=((), 'test.html'),
+        contentpath=((), "test.html"),
         mtime=0,
     )
 

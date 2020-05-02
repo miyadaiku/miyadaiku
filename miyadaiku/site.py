@@ -15,7 +15,7 @@ from jinja2 import Environment
 
 import miyadaiku
 from .config import Config
-from . import ContentPath, ContentSrc, DependsDict, extend, loader
+from . import ContentPath, DependsDict, extend, loader
 from .builder import Builder, build
 from .jinjaenv import create_env
 
