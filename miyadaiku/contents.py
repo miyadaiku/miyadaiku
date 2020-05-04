@@ -179,12 +179,12 @@ class Content:
         return cast(str, urllib.parse.urljoin(site_url, path))
 
     def build_html(self, context: context.OutputContext) -> Union[None, str]:
-        return None
+        return ""
 
     def build_abstract(
         self, context: context.OutputContext, abstract_length: Optional[int] = None
     ) -> Union[None, str]:
-        return None
+        return ""
 
     def get_headers(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
         return []
