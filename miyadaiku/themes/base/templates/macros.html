@@ -53,8 +53,8 @@
 <meta property="og:title" content="{{ title }} - {{ page.site_title | striptags }}" />
 {% set descr = (page.og_description or page.abstract) | striptags %}
 {% if descr -%}
-  <meta name="description" content="{{ descr }}"/>
-  <meta property="og:description" content="{{ descr }}" />
+<meta name="description" content="{{ descr }}"/>
+<meta property="og:description" content="{{ descr }}" />
 {%- endif %}
 {% if page.og_image -%}
 <meta property="og:image" content="{{ page.load(page.og_image).url }}" />
