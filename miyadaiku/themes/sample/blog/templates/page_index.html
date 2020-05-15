@@ -13,23 +13,18 @@
   </div>
   {% endblock articles %}
 
+
+
   {% block pagination %}
-  <div class="index-pagination">
-    {% if cur_page != 1 %}
-      <a class="index-navi"
-         href="{{page.path_to(page, group_value=group_value, npage=cur_page-1)}}">&larr;</a>
-    {% else %}
-      <span class="index-navi disabled-link">&larr;</span>
-    {% endif %}
-    
-    {% if not is_last %}
-      <a class="index-navi"
-         href="{{ page.path_to(page, group_value=group_value, npage=cur_page+1) }}">&rarr;</a>
-    {% else %}
-      <span class="index-navi disabled-link">&rarr;</span>
-    {% endif %}
+
+  {% import "blog_macros.html" as blog_macros %}
+
+  {{ blog_macros.index_pagination(page, group_value, num_pages, cur_page, is_last) }}
+
+
   {% endblock pagination %}
-  </div>
+
+
 
 {% endblock container_body %}
 

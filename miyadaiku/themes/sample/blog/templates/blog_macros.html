@@ -1,0 +1,49 @@
+{% macro index_pagination(page, group_value, num_pages, cur_page, is_last) %}
+
+  <div class="index-pagination">
+    {% if cur_page != 1 %}
+      <a class="index-pagination-button"
+         href="{{page.path_to(page, group_value=group_value, npage=1)}}">⇤</a>
+      <a class="index-pagination-button"
+         href="{{page.path_to(page, group_value=group_value, npage=cur_page-1)}}">←</a>
+    {% else %}
+      <span class="index-pagination-button index-pagination-button-disabled">⇤</span>
+      <span class="index-pagination-button index-pagination-button-disabled">←</span>
+    {% endif %}
+
+
+    {% set s = cur_page-2 if cur_page > 2 else 1 %}
+    {% set e = s+4 if s+4 <= num_pages else num_pages %}
+    {% if (s-e) < 4 %}
+      {% set s = e-4 if e > 4 else 1 %}
+    {% endif %}
+
+    {% if s != 1 %}
+       ・・・
+    {% endif %}
+
+    {% for n in range(s, e+1) %}
+      {% if n != cur_page %}
+        <a class="index-pagination-button"
+          href="{{page.path_to(page, group_value=group_value, npage=n)}}">{{n}}</a>
+      {% else %}
+        <span class="index-pagination-button index-pagination-button-current">{{n}}</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if e != num_pages %}
+       ・・・
+    {% endif %}
+
+    {% if not is_last %}
+      <a class="index-pagination-button"
+         href="{{page.path_to(page, group_value=group_value, npage=cur_page+1)}}">→</a>
+      <a class="index-pagination-button"
+         href="{{page.path_to(page, group_value=group_value, npage=num_pages)}}">⇥</a>
+    {% else %}
+      <span class="index-pagination-button index-pagination-button-disabled">→</span>
+      <span class="index-pagination-button index-pagination-button-disabled">⇥</span>
+    {% endif %}
+  </div>
+
+{%- endmacro %}

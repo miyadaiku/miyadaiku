@@ -68,16 +68,3 @@ a {
   width: 300px;
 }
 
-.index-pagination {
-   font-size: 20px;
-}
-
-.index-navi {
-  border-style: solid;
-  padding: 3px;
-}
-
-.disabled-link {
-  pointer-events: none;
-  color: #d0d0d0;
-}
