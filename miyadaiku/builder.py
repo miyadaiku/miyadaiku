@@ -132,6 +132,8 @@ class IndexBuilder(Builder):
 
                 ret.append(cls(content, value, articles, page + 1, num_pages))
 
+        if not ret:
+            ret = [cls(content, "", [], 1, 1)]
         return ret
 
     def build_context(self, site: Site, jinjaenv: Environment) -> context.OutputContext:

@@ -8,13 +8,11 @@ import tzlocal
 
 from miyadaiku import MODULES_DIR, CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, __version__
 
-locale.setlocale(locale.LC_ALL, '')
+locale.setlocale(locale.LC_ALL, "")
 
-parser = argparse.ArgumentParser(description='Start new miyadaiku document.')
-parser.add_argument('directory', help='directory name')
-parser.add_argument('--version', '-v', action='version',
-                    version=f'{__version__}')
-
+parser = argparse.ArgumentParser(description="Start new miyadaiku document.")
+parser.add_argument("directory", help="directory name")
+parser.add_argument("--version", "-v", action="version", version=f"{__version__}")
 
 
 src = f"""
@@ -26,19 +24,19 @@ Hello world.
 """
 
 
-def main()->None:
+def main() -> None:
     args = parser.parse_args()
 
     d = pathlib.Path(args.directory)
     if d.exists():
-        print(f'{str(d)!r} already exists', file=sys.stderr)
+        print(f"{str(d)!r} already exists", file=sys.stderr)
         sys.exit(1)
 
     tz = tzlocal.get_localzone().zone
 
-    locale.setlocale(locale.LC_ALL, '')
+    locale.setlocale(locale.LC_ALL, "")
     lang = locale.getlocale()[0]
-    lang = (lang or "en-US").replace('_', '-')
+    lang = (lang or "en-US").replace("_", "-")
     charset = "utf-8"
 
     (d / CONTENTS_DIR).mkdir(parents=True)
@@ -68,9 +66,9 @@ timezone: {tz}
 
 """
 
-    (d / 'config.yml').write_text(yaml, 'utf-8')
-    (d / CONTENTS_DIR / 'hello.md').write_text(src, 'utf-8')
+    (d / "config.yml").write_text(yaml, "utf-8")
+    (d / CONTENTS_DIR / "hello.md").write_text(src, "utf-8")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -69,7 +69,7 @@ def test_fence(sitedir: Path) -> None:
     print(text)
     assert (
         text
-        == """<div class="codehilite"><pre><span></span><code>{{abcdef}}
+        == """<div class="highlight"><pre><span></span><code>{{abcdef}}
 </code></pre></div>"""
     )
 
@@ -84,7 +84,7 @@ def test_code(sitedir: Path) -> None:
     metadata, text = md.load(sitedir / "a.md")
     assert (
         text
-        == """<div class="codehilite"><pre><span></span><code>{{abcdef}}
+        == """<div class="highlight"><pre><span></span><code>{{abcdef}}
 </code></pre></div>"""
     )
 

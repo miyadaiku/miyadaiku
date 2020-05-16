@@ -101,7 +101,9 @@ def load(src: Union[ContentSrc, Path]) -> Tuple[Dict[str, Any], str]:
 
 def load_string(string: str) -> Tuple[Dict[str, Any], str]:
     extensions = [
-        markdown.extensions.codehilite.CodeHiliteExtension(guess_lang=False),
+        markdown.extensions.codehilite.CodeHiliteExtension(
+            css_class="highlight", guess_lang=False
+        ),
         "markdown.extensions.extra",
         Ext(),
     ]

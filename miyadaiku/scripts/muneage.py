@@ -27,9 +27,16 @@ def exec_server(dir, bind, port):
 
 
 def build(path, props, args):
+    print(f"Building {path.resolve()} ...")
+
     site = miyadaiku.site.Site(rebuild=args.rebuild, debug=args.debug)
     site.load(path, props)
-    site.build()
+    ok, err, *_ = site.build()
+
+    msg = f"Build finished... Built {ok} files. {err} error found.\n"
+    if err:
+        s = mp_log.Color.RED.value + msg + mp_log.Color.RESET.value
+    print(msg)
 
 
 parser = argparse.ArgumentParser(description="Build miyadaiku project.")
@@ -99,7 +106,6 @@ def _main() -> None:
 
     try:
         if not args.watch:
-            print(f"Building {d.resolve()} ...")
             build(d, props, args)
         else:
             print(f"Watching {d.resolve()} ...")
@@ -115,9 +121,7 @@ def _main() -> None:
                 time.sleep(0.1)
                 ev.clear()
 
-                print(f"Building {d.resolve()} ...")
                 build(d, props, args)
-                print("Build finished...\n")
 
         if args.server:
             server.join()
