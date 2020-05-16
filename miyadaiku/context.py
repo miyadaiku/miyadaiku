@@ -91,8 +91,7 @@ class ContentProxy:
 
     @safe_prop
     def abstract(self) -> Union[None, str]:
-        ret = self.content.build_abstract(self.context)
-        return to_markupsafe(ret)
+        return self.get_abstract()
 
     @safe_prop
     def html(self) -> Union[None, str]:
@@ -123,6 +122,10 @@ class ContentProxy:
         if self.contentpath == other.contentpath:
             return True
         return False
+
+    def get_abstract(self, abstract_length:Optional[int]=None)-> Union[None, str]:
+        ret = self.content.build_abstract(self.context, abstract_length)
+        return to_markupsafe(ret)
 
     def get_headertext(self, fragment: str) -> Optional[str]:
         return self.content.get_headertext(self.context, fragment)

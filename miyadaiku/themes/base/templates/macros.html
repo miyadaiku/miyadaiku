@@ -45,16 +45,16 @@
 {%- endmacro %}
 
 
-{% macro opengraph(page) -%}
+{% macro opengraph(page, abstract_length=None) -%}
 <meta property="og:url" content="{{ page.url }}" />
 <meta property="og:locale" content="{{ page.lang }}" />
 <meta property="og:type" content="{{ page.og_type }}" />
 {% set title = (page.og_title or page.title) | striptags %}
 <meta property="og:title" content="{{ title }} - {{ page.site_title | striptags }}" />
-{% set descr = (page.og_description or page.abstract) | striptags %}
+{% set descr = (page.og_description or page.get_abstract(abstract_length)) %}
 {% if descr -%}
-<meta name="description" content="{{ descr }}"/>
-<meta property="og:description" content="{{ descr }}" />
+<meta name="description" content="{{ descr | striptags }}"/>
+<meta property="og:description" content="{{ descr | striptags }}" />
 {%- endif %}
 {% if page.og_image -%}
 <meta property="og:image" content="{{ page.load(page.og_image).url }}" />

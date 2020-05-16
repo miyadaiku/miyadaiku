@@ -372,7 +372,7 @@ date: {datestr}
             elem.extract()
 
         if abstract_length is None:
-            abstract_length = self.get_metadata(context.site, "abstract_length")
+            abstract_length = context.content.get_metadata(context.site, "abstract_length")
 
         if abstract_length == 0:
             return str(soup)
