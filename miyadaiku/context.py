@@ -123,7 +123,7 @@ class ContentProxy:
             return True
         return False
 
-    def get_abstract(self, abstract_length:Optional[int]=None)-> Union[None, str]:
+    def get_abstract(self, abstract_length: Optional[int] = None) -> Union[None, str]:
         ret = self.content.build_abstract(self.context, abstract_length)
         return to_markupsafe(ret)
 

@@ -8,9 +8,9 @@ def test_props(siteroot: SiteRoot) -> None:
     (ctx,) = create_contexts(siteroot, srcs=[("docfile.html", "hi")])
 
     proxy = context.ContentProxy(ctx, ctx.content)
-    assert proxy.abstract_length == 500
+    assert proxy.abstract_length == 256
     assert proxy.article_template == "page_article.html"
-    assert proxy.category == ""
+    assert not proxy.category
     assert proxy.canonical_url is None
     assert proxy.charset == "utf-8"
     assert proxy.draft is False
