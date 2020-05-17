@@ -480,8 +480,6 @@ class IndexPage(Content):
         args.update(pageargs)
 
         ret = context.eval_jinja(ctx, self, "filename", filename_templ, args)
-        if "index_None" in ret:
-            breakpoint()
 
         return ret
 

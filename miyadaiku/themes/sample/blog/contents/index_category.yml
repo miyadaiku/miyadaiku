@@ -1,3 +1,2 @@
 type: index
 groupby: category
-indexpage_filename_templ: index_{{groupby}}_{{value}}.html
