@@ -220,3 +220,27 @@ prop2: value3
 
     with pytest.raises(exceptions.ConfigNotFound):
         assert proxy["prop3"]
+
+
+def test_title_or_abstract(siteroot: SiteRoot) -> None:
+    siteroot.write_text(
+        siteroot.contents / "doc.html",
+        """{{ page.load("doc1.html").get_title_or_abstract(10) }} """,
+    )
+
+    siteroot.write_text(
+        siteroot.contents / "doc1.html",
+        """
+[hello wo]rld
+test1 test2
+""",
+    )
+
+    site = siteroot.load({}, {})
+    jinjaenv = site.build_jinjaenv()
+
+    ctx = context.JinjaOutput(site, jinjaenv, ((), "doc.html"))
+    (filename,) = ctx.build()
+
+    html = Path(filename).read_text()
+    assert "[hello wo]" in html

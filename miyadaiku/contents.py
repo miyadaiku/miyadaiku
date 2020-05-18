@@ -51,7 +51,7 @@ class Content:
 
     _omit = object()
 
-    def _get_config_metadata(
+    def get_config_metadata(
         self, site: site.Site, name: str, default: Any = _omit
     ) -> Any:
         if name in self.src.metadata:
@@ -69,7 +69,7 @@ class Content:
         if method:
             return method(site, default)
 
-        return self._get_config_metadata(site, name, default)
+        return self.get_config_metadata(site, name, default)
 
     def metadata_dirname(self, site: site.Site, default: Any) -> PathTuple:
         return self.src.contentpath[0]
@@ -78,7 +78,7 @@ class Content:
         return self.src.contentpath[1]
 
     def metadata_date(self, site: site.Site, default: Any) -> Any:
-        date = self._get_config_metadata(site, "date")
+        date = self.get_config_metadata(site, "date")
         if not date:
             return
         if not date.tzinfo:
@@ -87,7 +87,7 @@ class Content:
         return date
 
     def metadata_title(self, site: site.Site, default: Any) -> str:
-        title = self._get_config_metadata(site, "title", "")
+        title = self.get_config_metadata(site, "title", "")
         if not title:
             return os.path.splitext(self.src.contentpath[1])[0]
         return cast(str, title)
@@ -105,7 +105,7 @@ class Content:
         return ret
 
     def metadata_stem(self, site: site.Site, default: Any) -> str:
-        stem = self._get_config_metadata(site, "stem", None)
+        stem = self.get_config_metadata(site, "stem", None)
         if stem is not None:
             return cast(str, stem)
 
@@ -116,7 +116,7 @@ class Content:
         return posixpath.splitext(name)[0]
 
     def metadata_ext(self, site: site.Site, default: Any) -> str:
-        ext = self._get_config_metadata(site, "ext", None)
+        ext = self.get_config_metadata(site, "ext", None)
         if ext is not None:
             return cast(str, ext)
 
@@ -149,7 +149,7 @@ class Content:
         cached = ctx.get_filename_cache(self, tp_pagearg)
         if cached:
             return cached
-        filename = self._get_config_metadata(ctx.site, "filename", "")
+        filename = self.get_config_metadata(ctx.site, "filename", "")
         if filename:
             ctx.set_filename_cache(self, tp_pagearg, filename)
             return cast(str, filename)
@@ -228,7 +228,7 @@ class BinContent(Content):
 
 class HTMLContent(Content):
     def metadata_ext(self, site: site.Site, default: Any) -> str:
-        ext = self._get_config_metadata(site, "ext", None)
+        ext = self.get_config_metadata(site, "ext", None)
         if ext is not None:
             return cast(str, ext)
 
