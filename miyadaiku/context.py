@@ -124,12 +124,20 @@ class ContentProxy:
         return False
 
     def get_title_or_abstract(self, abstract_len: Optional[int] = None) -> str:
+        """
+        1. Examin title property of the content.
+        2. get abstract of the content.
+        3. file name of the content.
+        """
+
         title = self.content.get_config_metadata(self.context.site, "title", None)
         if not title:
-            title = self.get_abstract(abstract_len)
+            title = str(self.get_abstract(abstract_len, plain=True))
         return title or self.content.metadata_title(self.context.site, "")
 
-    def get_abstract(self, abstract_length: Optional[int] = None) -> Union[None, str]:
+    def get_abstract(
+        self, abstract_length: Optional[int] = None, plain: bool = False
+    ) -> Union[None, str]:
         ret = self.content.build_abstract(self.context, abstract_length)
         return to_markupsafe(ret)
 

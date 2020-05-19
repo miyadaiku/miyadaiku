@@ -363,7 +363,10 @@ date: {datestr}
             self._in_get_headers = False
 
     def build_abstract(
-        self, context: context.OutputContext, abstract_length: Optional[int] = None
+        self,
+        context: context.OutputContext,
+        abstract_length: Optional[int] = None,
+        plain: bool = False,
     ) -> str:
         html = self.build_html(context)
         soup = BeautifulSoup(html, "html.parser")
@@ -376,29 +379,39 @@ date: {datestr}
                 context.site, "abstract_length"
             )
 
+        def return_abstract() -> str:
+            if not plain:
+                return str(soup)
+            else:
+                return " ".join(soup.text.strip().split())
+
         if abstract_length == 0:
-            return str(soup)
+            return return_abstract()
 
         slen = 0
         gen = soup.recursiveChildGenerator()
         for c in gen:
             if isinstance(c, NavigableString):
-                curlen = len(c.strip())
-                if slen + curlen > abstract_length:
-                    last_c = c
-                    valid_len = abstract_length - slen - curlen
-                    break
-                slen += curlen
+                for i, char in enumerate(c):
+                    if not char.isspace():
+                        slen += 1
+                        if slen >= abstract_length:
+                            valid_len = i + 1
+                            break
+                else:
+                    continue
+                break
         else:
-            return str(soup)
+            return return_abstract()
 
+        last_c = c
         while c:
             while c.next_sibling:
                 c.next_sibling.extract()
             c = c.parent
 
         last_c.string.replace_with(last_c[:valid_len])
-        return str(soup)
+        return return_abstract()
 
     def get_headers(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
         headers, header_anchors, fragments = self._get_headers(ctx)

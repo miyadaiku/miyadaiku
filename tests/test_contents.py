@@ -88,27 +88,43 @@ ext: .222
 def test_get_abstract(siteroot: SiteRoot) -> None:
     body = f"<div>123<div>456<div>789<div>abc</div>def</div>ghi</div>jkl</div>"
 
+    maxlen = len("".join(re.sub(r"<[^>]*>", "", body).split()))
+
     (ctx,) = create_contexts(siteroot, srcs=[("doc.html", body)])
 
-    abstract = ctx.content.build_abstract(ctx, 2)
-    txt = re.sub(r"<[^>]*>", "", abstract)
-    assert len(txt) == 2
+    def to_plain(s: str) -> str:
+        return "".join(re.sub(r"<[^>]*>", "", abstract).split())
 
-    abstract = ctx.content.build_abstract(ctx, 6)
-    txt = re.sub(r"<[^>]*>", "", abstract)
-    assert len(txt) == 6
+    abstract = ctx.content.build_abstract(ctx)
+    txt = to_plain(abstract)
+    assert len(txt) == maxlen
 
-    abstract = ctx.content.build_abstract(ctx, 14)
-    txt = re.sub(r"<[^>]*>", "", abstract)
-    assert len(txt) == 14
+    for i in range(1, maxlen + 1):
+        abstract = ctx.content.build_abstract(ctx, i)
+        txt = to_plain(abstract)
+        assert len(txt) == min(i, maxlen)
 
-    abstract = ctx.content.build_abstract(ctx, 100)
-    txt = re.sub(r"<[^>]*>", "", abstract)
-    assert len(txt) == 21
 
-    proxy = context.ContentProxy(ctx, ctx.content)
-    txt = re.sub(r"<[^>]*>", "", str(proxy.abstract))
-    assert len(txt) == 21
+def test_get_plain_abstract(siteroot: SiteRoot) -> None:
+    body = f"""
+<div>
+
+
+1   23<div>4
+
+
+
+56<div>789<div>abc</div>def</div>ghi</div>jkl</div>
+"""
+    maxlen = len("".join(re.sub(r"<[^>]*>", "", body).split()))
+    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", body)])
+
+    abstract = ctx.content.build_abstract(ctx, plain=True)
+    assert len("".join(abstract.split())) == maxlen
+
+    for i in range(1, maxlen + 1):
+        abstract = ctx.content.build_abstract(ctx, i, plain=True)
+        assert len("".join(abstract.split())) == min(i, maxlen)
 
 
 def test_imports(siteroot: SiteRoot) -> None:
