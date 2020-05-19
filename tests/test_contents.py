@@ -260,3 +260,25 @@ hi""",
     )
     proxy = context.ContentProxy(ctx, ctx.content)
     assert proxy.url == "http://localhost:8888/a/b/abc.html"
+
+
+def test_title(siteroot: SiteRoot) -> None:
+    src1 = """
+title: Title text
+hi"""
+
+    src2 = """
+<span>01234567890</span>"""
+
+    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", src1)])
+    assert ctx.content.build_title(ctx) == "Title text"
+
+    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", src2)],)
+    assert ctx.content.build_title(ctx) == "doc"
+
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[("doc.html", src2)],
+        config={"title_fallback": "abstract", "title_abstract_len": 5},
+    )
+    assert ctx.content.build_title(ctx) == "01234"

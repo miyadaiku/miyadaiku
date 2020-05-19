@@ -164,3 +164,83 @@ test
     assert set(f.src.contentpath for f in d[("tag3",)]) == set(
         [((), "b.rst"), (("sub1",), "c.rst")]
     )
+
+
+def test_get_contents_none(siteroot: SiteRoot) -> None:
+    siteroot.write_text(
+        siteroot.contents / "a.rst",
+        """
+.. article::
+   :date: 2017-01-01
+   :category: A
+   :tags: tag1, tag2
+   :prop1: propvalue1
+test
+""",
+    )
+
+    siteroot.write_text(
+        siteroot.contents / "b.rst",
+        """
+.. article::
+   :date: 2017-01-01
+test
+""",
+    )
+
+    s = siteroot.load({}, {})
+
+    found = s.files.get_contents(s, filters={"tags": None})
+    assert set(f.src.contentpath for f in found) == set([((), "b.rst")])
+
+    found = s.files.get_contents(s, filters={"prop1": None})
+    assert set(f.src.contentpath for f in found) == set([((), "b.rst")])
+
+
+def test_get_contents_exclude(siteroot: SiteRoot) -> None:
+    siteroot.write_text(
+        siteroot.contents / "a.rst",
+        """
+.. article::
+   :date: 2017-01-01
+   :category: A
+   :tags: tag1, tag2
+   :prop1: propvalue1
+test
+""",
+    )
+
+    siteroot.write_text(
+        siteroot.contents / "b.rst",
+        """
+.. article::
+   :date: 2017-01-02
+   :category: B
+   :prop1: propvalue2
+
+test
+""",
+    )
+
+    siteroot.write_text(
+        siteroot.contents / "c.rst",
+        """
+.. article::
+   :date: 2017-01-03
+   :tags: tag2, tag3
+
+test
+""",
+    )
+
+    s = site.Site()
+    s = siteroot.load({}, {})
+
+    found = s.files.get_contents(s, excludes=dict(prop1="propvalue1"))
+    assert set(f.src.contentpath for f in found) == set([((), "b.rst"), ((), "c.rst")])
+
+    found = s.files.get_contents(s, excludes=dict(category=[None]))
+    assert set(f.src.contentpath for f in found) == set([((), "a.rst"), ((), "b.rst")])
+
+    found = s.files.get_contents(s, excludes=dict(tags=None))
+    assert set(f.src.contentpath for f in found) == set([((), "a.rst"), ((), "c.rst")])

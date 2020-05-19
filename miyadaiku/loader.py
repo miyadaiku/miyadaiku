@@ -222,6 +222,7 @@ class ContentFiles:
         self,
         site: site.Site,
         filters: Optional[Dict[str, Any]] = None,
+        excludes: Optional[Dict[str, Any]] = None,
         subdirs: Optional[Sequence[PathTuple]] = None,
         recurse: bool = True,
     ) -> List[Content]:
@@ -237,28 +238,47 @@ class ContentFiles:
         if "type" not in filters_copy:
             filters_copy["type"] = {"article"}
 
-        def f(content: Content) -> bool:
+        def adj(content: Content, filters: Dict[str, Any]) -> bool:
             notfound = object()
-            for k, v in filters_copy.items():
+            for k, v in filters.items():
                 prop = content.get_metadata(site, k, notfound)
                 if prop is notfound:
-                    return False
+                    if v is None:
+                        continue
+                    else:
+                        return False
 
                 if isinstance(prop, str):
+                    if v is None:
+                        return False
+
                     if prop not in v:
                         return False
+
                 elif isinstance(prop, collections.abc.Collection):
+                    if v is None:
+                        if not prop:
+                            continue
+                        else:
+                            return False
+
                     for e in prop:
                         if e in v:
                             break
                     else:
                         return False
                 else:
+                    if v is None:
+                        return False
+
                     if prop not in v:
                         return False
             return True
 
-        contents = [c for c in self._contentfiles.values() if f(c)]
+        contents = [c for c in self._contentfiles.values() if adj(c, filters_copy)]
+
+        if excludes:
+            contents = [c for c in contents if not adj(c, excludes)]
 
         if subdirs is not None:
             dirs = subdirs
@@ -286,15 +306,18 @@ class ContentFiles:
         site: site.Site,
         group: str,
         filters: Optional[Dict[str, Any]] = None,
+        excludes: Optional[Dict[str, Any]] = None,
         subdirs: Optional[Sequence[PathTuple]] = None,
         recurse: bool = True,
     ) -> List[Tuple[Tuple[str, ...], List[Content]]]:
 
         if not group:
-            return [((), list(self.get_contents(site, filters, subdirs, recurse)))]
+            return [
+                ((), list(self.get_contents(site, filters, excludes, subdirs, recurse)))
+            ]
 
         d = collections.defaultdict(list)
-        for c in self.get_contents(site, filters, subdirs, recurse):
+        for c in self.get_contents(site, filters, excludes, subdirs, recurse):
             g = c.get_metadata(site, group, None)
 
             if g is not None:

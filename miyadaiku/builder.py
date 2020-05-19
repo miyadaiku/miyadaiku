@@ -86,15 +86,25 @@ class IndexBuilder(Builder):
     def create_builders(cls, site: Site, content: Content) -> List[Builder]:
         filters = content.get_metadata(site, "filters", {}).copy()
 
-        filters["type"] = {"article"}
-        filters["draft"] = {False}
+        if "type" not in filters:
+            filters["type"] = {"article"}
+
+        if "draft" not in filters:
+            filters["draft"] = {False}
+
+        excludes = content.get_metadata(site, "excludes", {}).copy()
 
         dirname = content.get_metadata(site, "directory", "")
         dir = dirname_to_tuple(dirname)
 
         groupby = content.get_metadata(site, "groupby", None)
         groups = site.files.group_items(
-            site, groupby, filters=filters, subdirs=[dir], recurse=True
+            site,
+            groupby,
+            filters=filters,
+            excludes=excludes,
+            subdirs=[dir],
+            recurse=True,
         )
 
         n_per_page = int(content.get_metadata(site, "indexpage_max_articles"))

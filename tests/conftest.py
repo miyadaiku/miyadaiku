@@ -1,7 +1,7 @@
 import pytest
 import pathlib
 import logging
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple, Optional
 
 import yaml
 import shutil
@@ -90,13 +90,17 @@ def siteroot(tmpdir: Any) -> SiteRoot:
 
 
 def create_contexts(
-    siteroot: SiteRoot, srcs: Sequence[Tuple[str, str]]
+    siteroot: SiteRoot,
+    srcs: Sequence[Tuple[str, str]],
+    config: Optional[Dict[Any, Any]] = None,
 ) -> List[context.JinjaOutput]:
     siteroot.clear()
     for path, src in srcs:
         siteroot.write_text(siteroot.contents / path, src)
 
-    site = siteroot.load({}, {})
+    if config is None:
+        config = {}
+    site = siteroot.load(config, {})
     ret = []
     jinjaenv = site.build_jinjaenv()
     for path, src in srcs:

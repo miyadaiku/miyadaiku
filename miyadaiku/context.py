@@ -82,6 +82,10 @@ class ContentProxy:
         return self.content.get_metadata(self.context.site, name)
 
     @safe_prop
+    def title(self) -> str:
+        return self.content.build_title(self.context)
+
+    @safe_prop
     def contentpath(self) -> ContentPath:
         return self.content.src.contentpath
 
@@ -114,7 +118,6 @@ class ContentProxy:
     def header_anchors(self) -> List[HTMLIDInfo]:
         return self.content.get_header_anchors(self.context)
 
-    @safe_prop
     def fragments(self, ctx: OutputContext) -> List[HTMLIDInfo]:
         return self.content.get_fragments(self.context)
 
@@ -123,22 +126,18 @@ class ContentProxy:
             return True
         return False
 
-    def get_title_or_abstract(self, abstract_len: Optional[int] = None) -> str:
-        """
-        1. Examin title property of the content.
-        2. get abstract of the content.
-        3. file name of the content.
-        """
+    _omit = object()
 
-        title = self.content.get_config_metadata(self.context.site, "title", None)
-        if not title:
-            title = str(self.get_abstract(abstract_len, plain=True))
-        return title or self.content.metadata_title(self.context.site, "")
+    def get_config(self, name: str, default: Any = _omit) -> Any:
+        if default is self._omit:
+            return self.content.get_config_metadata(self.context.site, name)
+        else:
+            return self.content.get_config_metadata(self.context.site, name, default)
 
     def get_abstract(
         self, abstract_length: Optional[int] = None, plain: bool = False
     ) -> Union[None, str]:
-        ret = self.content.build_abstract(self.context, abstract_length)
+        ret = self.content.build_abstract(self.context, abstract_length, plain=plain)
         return to_markupsafe(ret)
 
     def get_headertext(self, fragment: str) -> Optional[str]:
@@ -587,7 +586,7 @@ class OutputContext:
                     raise ValueError(f"Cannot find fragment: {fragment}")
 
             if not text:
-                text = markupsafe.escape(target.get_metadata(self.site, "title"))
+                text = markupsafe.escape(target.build_title(self))
 
         else:
             text = markupsafe.escape(text or "")
@@ -710,11 +709,19 @@ class FeedOutput(OutputContext):
         num_articles = int(self.content.get_metadata(self.site, "feed_num_articles"))
 
         filters = self.content.get_metadata(self.site, "filters", {}).copy()
-        filters["type"] = {"article"}
-        filters["draft"] = {False}
+        if "type" not in filters:
+            filters["type"] = {"article"}
+
+        if "draft" not in filters:
+            filters["draft"] = {False}
+
+        excludes = self.content.get_metadata(self.site, "excludes", {}).copy()
 
         contents = [
-            c for c in self.site.files.get_contents(self.site, filters=filters)
+            c
+            for c in self.site.files.get_contents(
+                self.site, filters=filters, excludes=excludes
+            )
         ][:num_articles]
 
         feedtype = self.content.get_metadata(self.site, "feedtype")
@@ -739,7 +746,7 @@ class FeedOutput(OutputContext):
 
             if date:
                 feed.add_item(
-                    title=c.get_metadata(self.site, "title", ""),
+                    title=c.build_title(self),
                     link=link,
                     unique_id=get_tag_uri(link, date),
                     description=str(description),

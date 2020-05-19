@@ -86,12 +86,6 @@ class Content:
             date = date.astimezone(tz)
         return date
 
-    def metadata_title(self, site: site.Site, default: Any) -> str:
-        title = self.get_config_metadata(site, "title", "")
-        if not title:
-            return os.path.splitext(self.src.contentpath[1])[0]
-        return cast(str, title)
-
     def metadata_tzinfo(self, site: site.Site, default: Any) -> datetime.tzinfo:
         timezone = self.get_metadata(site, "timezone")
         return pytz.timezone(timezone)
@@ -181,8 +175,25 @@ class Content:
     def build_html(self, context: context.OutputContext) -> Union[None, str]:
         return ""
 
+    def build_title(self, context: context.OutputContext) -> str:
+        title = self.get_config_metadata(context.site, "title", "").strip()
+        if title:
+            return str(title)
+        if self.get_config_metadata(context.site, "title_fallback") == "filename":
+            return posixpath.splitext(str(self.src.contentpath[1]))[0]
+
+        abstract_len = self.get_config_metadata(context.site, "title_abstract_len")
+        title = self.build_abstract(context, abstract_len, plain=True)
+        if title:
+            return str(title)
+
+        return posixpath.splitext(self.src.contentpath[1])[0]
+
     def build_abstract(
-        self, context: context.OutputContext, abstract_length: Optional[int] = None
+        self,
+        context: context.OutputContext,
+        abstract_length: Optional[int] = None,
+        plain: bool = False,
     ) -> Union[None, str]:
         return ""
 
