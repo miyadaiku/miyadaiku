@@ -267,11 +267,11 @@ def test_title(siteroot: SiteRoot) -> None:
 title: Title text
 hi"""
 
-    src2 = """
-<span>01234567890</span>"""
-
     (ctx,) = create_contexts(siteroot, srcs=[("doc.html", src1)])
     assert ctx.content.build_title(ctx) == "Title text"
+
+    src2 = """<span>01234   567890
+    abcddefg</span>"""
 
     (ctx,) = create_contexts(siteroot, srcs=[("doc.html", src2)],)
     assert ctx.content.build_title(ctx) == "doc"
@@ -279,6 +279,6 @@ hi"""
     (ctx,) = create_contexts(
         siteroot,
         srcs=[("doc.html", src2)],
-        config={"title_fallback": "abstract", "title_abstract_len": 5},
+        config={"title_fallback": "abstract", "title_abstract_len": 6},
     )
-    assert ctx.content.build_title(ctx) == "01234"
+    assert ctx.content.build_title(ctx) == "01234 5"
