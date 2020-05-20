@@ -38,6 +38,7 @@ def build(path, props, args):
         s = mp_log.Color.RED.value + msg + mp_log.Color.RESET.value
     print(msg)
 
+    return err
 
 parser = argparse.ArgumentParser(description="Build miyadaiku project.")
 parser.add_argument("directory", help="directory name")
@@ -106,7 +107,8 @@ def _main() -> None:
 
     try:
         if not args.watch:
-            build(d, props, args)
+            err = build(d, props, args)
+            return 1 if err else 0
         else:
             print(f"Watching {d.resolve()} ...")
 
