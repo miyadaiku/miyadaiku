@@ -30,6 +30,7 @@ css_mathjax = """
     <!-- End of mathjax configuration --><
 """
 
+
 def _build_head() -> str:
     from nbconvert.exporters import HTMLExporter
     import nbformat

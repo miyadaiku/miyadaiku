@@ -179,13 +179,27 @@ class Content:
         title = self.get_config_metadata(context.site, "title", "").strip()
         if title:
             return str(title)
-        if self.get_config_metadata(context.site, "title_fallback") == "filename":
-            return posixpath.splitext(str(self.src.contentpath[1]))[0]
 
-        abstract_len = self.get_config_metadata(context.site, "title_abstract_len")
-        title = self.build_abstract(context, abstract_len, plain=True)
-        if title:
-            return str(title)
+        fallback = self.get_config_metadata(context.site, "title_fallback")
+        if fallback and (fallback not in ["filename", "abstract", "header"]):
+            raise ValueError(f"Invalid title_fallback: {fallback}")
+
+        if fallback == "abstract":
+            abstract_len = self.get_config_metadata(context.site, "title_abstract_len")
+            title = self.build_abstract(context, abstract_len, plain=True)
+            if title:
+                return str(title)
+
+        elif fallback == "header":
+            html = self.build_html(context)
+            soup = BeautifulSoup(html, "html.parser")
+
+            for elem in soup(re.compile(r"h\d")):
+                text = elem.text.strip()
+                text = text.strip("\xb6")  # remove 'PILCROW SIGN'
+                text = elem.text.strip()
+                if text:
+                    return str(text)
 
         return posixpath.splitext(self.src.contentpath[1])[0]
 

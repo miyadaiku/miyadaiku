@@ -271,7 +271,9 @@ hi"""
     assert ctx.content.build_title(ctx) == "Title text"
 
     src2 = """<span>01234   567890
-    abcddefg</span>"""
+    abcddefg</span>
+    <h1>header</h1>
+    """
 
     (ctx,) = create_contexts(siteroot, srcs=[("doc.html", src2)],)
     assert ctx.content.build_title(ctx) == "doc"
@@ -282,3 +284,13 @@ hi"""
         config={"title_fallback": "abstract", "title_abstract_len": 6},
     )
     assert ctx.content.build_title(ctx) == "01234 5"
+
+
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[("doc.html", src2)],
+        config={"title_fallback": "header"},
+    )
+    assert ctx.content.build_title(ctx) == "header"
+
+

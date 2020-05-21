@@ -40,6 +40,7 @@ def build(path, props, args):
 
     return err
 
+
 parser = argparse.ArgumentParser(description="Build miyadaiku project.")
 parser.add_argument("directory", help="directory name")
 

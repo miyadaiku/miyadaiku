@@ -13,14 +13,6 @@ def _export(json: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     metadata = {"type": "article"}
     metadata.update(json.get("metadata", {}).get("miyadaiku", {}))
 
-    if "title" not in metadata:
-        soup = BeautifulSoup(html, "html.parser")
-        for elem in soup(re.compile(r"h\d")):
-            text = elem.text.strip()
-            text = text.strip("\xb6")  # remove 'PILCROW SIGN'
-            metadata["title"] = text
-            break
-
     return metadata, "<div>" + html + "</div>"
 
 

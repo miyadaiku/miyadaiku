@@ -34,7 +34,6 @@ type: feed
     entries = root.findall("./{http://www.w3.org/2005/Atom}entry")
     assert len(entries) == 20
 
-
     siteroot.write_text(
         siteroot.contents / "feed.yml",
         """
@@ -53,7 +52,6 @@ filters:
     entries = root.findall("./{http://www.w3.org/2005/Atom}entry")
     assert len(entries) == 11
 
-
     siteroot.write_text(
         siteroot.contents / "feed.yml",
         """
@@ -71,5 +69,3 @@ excludes:
 
     entries = root.findall("./{http://www.w3.org/2005/Atom}entry")
     assert len(entries) == 10
-
-

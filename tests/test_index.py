@@ -67,6 +67,7 @@ groupby: tags
     assert len(indexbuilders) == 4
     assert sum(len(b.items) for b in indexbuilders) == 21
 
+
 def test_index_filter(siteroot: SiteRoot) -> None:
     for i in range(21):
         tag = f"tag{i + 1}"
@@ -89,12 +90,12 @@ filters:
     )
 
     site = siteroot.load({}, {})
-    bldr, = builder.create_builders(
+    (bldr,) = builder.create_builders(
         site, site.files.get_content((("htmldir",), "index.yml"))
     )
-    item1, item2 = bldr.items
-    assert item1[1] == '19.html'
-    assert item2[1] == '0.html'
+    item1, item2 = cast(builder.IndexBuilder, bldr).items
+    assert item1[1] == "19.html"
+    assert item2[1] == "0.html"
 
     siteroot.write_text(
         siteroot.contents / "htmldir/index.yml",
@@ -108,11 +109,11 @@ excludes:
     )
 
     site = siteroot.load({}, {})
-    bldr, = builder.create_builders(
+    (bldr,) = builder.create_builders(
         site, site.files.get_content((("htmldir",), "index.yml"))
     )
-    item1, = bldr.items
-    assert item1[1] == '19.html'
+    (item1,) = cast(builder.IndexBuilder, bldr).items
+    assert item1[1] == "19.html"
 
 
 def test_index_filename(siteroot: SiteRoot) -> None:
