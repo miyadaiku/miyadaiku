@@ -128,6 +128,14 @@ class ContentProxy:
 
     _omit = object()
 
+    def has_config(self, name: str):
+        obj = object()
+        ret = self.get_config(name, default=obj)
+        if ret is obj:
+            return False
+        else:
+            return True
+
     def get_config(self, name: str, default: Any = _omit) -> Any:
         if default is self._omit:
             return self.content.get_config_metadata(self.context.site, name)
