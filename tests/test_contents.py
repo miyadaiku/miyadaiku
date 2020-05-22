@@ -285,12 +285,7 @@ hi"""
     )
     assert ctx.content.build_title(ctx) == "01234 5"
 
-
     (ctx,) = create_contexts(
-        siteroot,
-        srcs=[("doc.html", src2)],
-        config={"title_fallback": "header"},
+        siteroot, srcs=[("doc.html", src2)], config={"title_fallback": "header"},
     )
     assert ctx.content.build_title(ctx) == "header"
-
-

@@ -187,6 +187,8 @@ class Content:
         if fallback == "abstract":
             abstract_len = self.get_config_metadata(context.site, "title_abstract_len")
             title = self.build_abstract(context, abstract_len, plain=True)
+            title = title.replace("\xb6", "")  # remove 'PILCROW SIGN'
+
             if title:
                 return str(title)
 

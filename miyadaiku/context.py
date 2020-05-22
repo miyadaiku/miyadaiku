@@ -128,7 +128,7 @@ class ContentProxy:
 
     _omit = object()
 
-    def has_config(self, name: str):
+    def has_config(self, name: str) -> bool:
         obj = object()
         ret = self.get_config(name, default=obj)
         if ret is obj:
