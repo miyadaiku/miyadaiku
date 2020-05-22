@@ -38,8 +38,9 @@ def is_ignored(ignores: Set[str], name: str) -> bool:
     if name.lower().endswith(miyadaiku.METADATA_FILE_SUFFIX):
         return True
 
+    basename = os.path.basename(name)
     for p in ignores:
-        if fnmatch.fnmatch(name, p):
+        if fnmatch.fnmatch(basename, p):
             return True
     return False
 

@@ -32,7 +32,7 @@ def test_walk_directory(siteroot: SiteRoot) -> None:
 
 
 def test_walkpackage() -> None:
-    results = loader.walk_package("package1", "contents", set(["*.bak"]))
+    results = loader.walk_package("package1", "contents", {"*.bak", ".*"})
     all = sorted(results, key=lambda d: d.srcpath)
 
     assert len(all) == 7

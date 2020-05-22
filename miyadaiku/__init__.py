@@ -3,7 +3,7 @@ import posixpath
 import importlib_resources
 import tzlocal
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 
 YAML_ENCODING = "utf-8"
 
@@ -30,6 +30,7 @@ IGNORE = [
     "build",
     "ehthumbs.db",
     "Thumbs.db",
+    ".ipynb_checkpoints",
 ]
 
 METADATA_FILE_SUFFIX = ".props.yml"

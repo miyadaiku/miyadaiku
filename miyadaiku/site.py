@@ -150,7 +150,7 @@ class Site:
         self._init_themes()
 
         loader.loadfiles(
-            self, self.files, self.config, self.root, self.ignores, self.themes
+            self, self.files, self.config, self.root, self.ignores | set(miyadaiku.IGNORE), self.themes
         )
 
         self._generate_metadata_files()
