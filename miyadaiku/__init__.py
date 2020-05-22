@@ -3,7 +3,7 @@ import posixpath
 import importlib_resources
 import tzlocal
 
-__version__ = "1.4.2"
+__version__ = "1.5.0"
 
 YAML_ENCODING = "utf-8"
 
