@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from . import site
     from . import ContentSrc
     from .context import OutputContext
+    from .contents import Content
 
 HOOKS = enum.Enum(
     "HOOKS",
@@ -30,6 +31,7 @@ HOOKS = enum.Enum(
         "post_load",
         "pre_build",
         "post_build",
+        "post_build_html",
         "finished",
     ),
 )
@@ -42,6 +44,7 @@ def load_hook(path: Path) -> None:
     hooks_post_load.clear()
     hooks_pre_build.clear()
     hooks_post_build.clear()
+    hooks_post_build_html.clear()
     hooks_finished.clear()
     jinja_globals.clear()
 
@@ -179,6 +182,28 @@ def post_build(f: HOOK_POST_BUILD) -> HOOK_POST_BUILD:
 def run_post_build(context: OutputContext, filenames: Sequence[Path]) -> None:
     for hook in hooks_post_build:
         hook(context, filenames)
+
+
+
+if TYPE_CHECKING:
+    HOOK_POST_BUILD_HTML = Callable[[OutputContext, Content], Any]
+
+hooks_post_build_html: List[HOOK_POST_BUILD_HTML] = []
+
+
+def post_build_html(f: HOOK_POST_BUILD_HTML) -> HOOK_POST_BUILD_HTML:
+    hooks_post_build_html.append(f)
+    return f
+
+
+def run_post_build_html(context: OutputContext, content:Content, soup:Any) -> Any:
+    for hook in hooks_post_build_html:
+        soup = hook(context, content, soup)
+    return soup
+
+
+
+
 
 
 if TYPE_CHECKING:

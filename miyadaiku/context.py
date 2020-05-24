@@ -15,6 +15,7 @@ from typing import (
     List,
     Callable,
     cast,
+    DefaultDict
 )
 
 from abc import abstractmethod
@@ -25,6 +26,7 @@ import urllib.parse
 from urllib.parse import urlparse
 import posixpath
 import datetime
+from collections import defaultdict
 
 from jinja2 import Environment
 import jinja2.exceptions
@@ -99,7 +101,7 @@ class ContentProxy:
 
     @safe_prop
     def html(self) -> Union[None, str]:
-        ret = self.content.build_html(self.context)
+        ret = self.content.get_html(self.context)
         return to_markupsafe(ret)
 
     @safe_prop
@@ -492,9 +494,13 @@ class OutputContext:
     site: Site
     contentpath: ContentPath
     content: Content
-    _html_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], HTMLInfo]
-    _filename_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], str]
+#    _html_cache: Dict[ContentPath, HTMLInfo]
+
     depends: Set[ContentPath]
+
+    _filename_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], str]
+    _cache: DefaultDict[str, Dict[ContentPath, Any]]
+    _slugs: Set[str]
 
     def __init__(
         self, site: Site, jinjaenv: Environment, contentpath: ContentPath
@@ -504,8 +510,9 @@ class OutputContext:
         self.contentpath = contentpath
         self.content = site.files.get_content(self.contentpath)
         self.depends = set([contentpath])
-        self._html_cache = {}
         self._filename_cache = {}
+        self._cache = defaultdict(dict)
+        self._slugs = set()
 
     def get_outfilename(self, pagearg: Dict[Any, Any]) -> Path:
         filename = self.content.build_filename(self, pagearg)
@@ -515,15 +522,29 @@ class OutputContext:
     def add_depend(self, content: Content) -> None:
         self.depends.add(content.src.contentpath)
 
-    def get_html_cache(
-        self, content: Content, tp_pagearg: Tuple[Any, ...]
-    ) -> Union[HTMLInfo, None]:
-        return self._html_cache.get((content.src.contentpath, tp_pagearg), None)
+    def get_cache(self, cachename:str, content: Content)->Any:
+        return self._cache[cachename].get(content.src.contentpath, None)
 
-    def set_html_cache(
-        self, content: Content, tp_pagearg: Tuple[Any, ...], info: HTMLInfo
-    ) -> None:
-        self._html_cache[(content.src.contentpath, tp_pagearg)] = info
+    def set_cache(self, cachename:str, content: Content, value:Any)->None:
+        self._cache[cachename][content.src.contentpath] = value
+
+    def get_slug(self, slug:str)->str:
+        n = 1
+        while slug in self._slugs:
+            slug = f"{slug}_{n}"
+            n += 1
+
+        self._slugs.add(slug)
+        return slug
+
+#    def get_html_cache(
+#        self, content: Content ) -> Union[HTMLInfo, None]:
+#        return self._html_cache.get(content.src.contentpath, None)
+#
+#    def set_html_cache(
+#        self, content: Content, info: HTMLInfo
+#    ) -> None:
+#        self._html_cache[content.src.contentpath] = info
 
     def get_filename_cache(
         self, content: Content, tp_pagearg: Tuple[Any, ...]
