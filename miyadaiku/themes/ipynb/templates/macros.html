@@ -2,6 +2,10 @@
   <link rel="stylesheet" href="{{ page.path_to('/static/ipynb/ipynb.css') }}">
 {%- endmacro %}
 
+{% macro load_css_min(page) -%}
+  <link rel="stylesheet" href="{{ page.path_to('/static/ipynb/styles/min_ipynb.css') }}">
+{%- endmacro %}
+
 {% macro set_header() -%}
   {{ IPYNB_CSS }}
 {%- endmacro %}
