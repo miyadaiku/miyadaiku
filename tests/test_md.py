@@ -55,7 +55,7 @@ def test_esc(sitedir: Path) -> None:
     print(text)
 
 
-def test_fence(sitedir: Path) -> None:
+def test_fence1(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
         """
 
@@ -86,10 +86,9 @@ def test_fence2(sitedir: Path) -> None:
     metadata, text = md.load(sitedir / "a.md")
     print(text)
     assert (
-        text
-        == """<div class="highlight"><pre><span></span><code>{{abcdef}}
-</code></pre></div>"""
+        """&#123;</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">&#125;""" in text
     )
+
 
 
 def test_code(sitedir: Path) -> None:

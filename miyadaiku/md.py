@@ -1,15 +1,23 @@
 from typing import Tuple, Dict, Any, Union
 from pathlib import Path
 import re
+from collections import OrderedDict
+
 import markdown
 from markdown import util, preprocessors, postprocessors, blockprocessors
 import markdown.extensions.codehilite
 from miyadaiku import ContentSrc
 
+HTML_PLACEHOLDER2 = util.STX + "jgnkfkaj:%s" + util.ETX
+
+class HtmlStash2(util.HtmlStash):
+    def get_placeholder(self, key):
+        return HTML_PLACEHOLDER2 % key
 
 class Ext(markdown.Extension):  # type: ignore
     def extendMarkdown(self, md):  # type: ignore
         # prior to fenced_code_block
+        md.htmlStash2 = HtmlStash2()
         md.preprocessors.register(JinjaPreprocessor(md), "jinja", 27.5)
         #        md.preprocessors.add('jinja',
         #                             JinjaPreprocessor(md),
@@ -46,34 +54,40 @@ class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
                 break
             if m[1]:
                 # escaped
-                placeholder = self.md.htmlStash.store(m[0])
+                placeholder = self.md.htmlStash2.store(m[0])
             else:
-                placeholder = self.md.htmlStash.store(m[2])
+                placeholder = self.md.htmlStash2.store(m[2])
 
             text = "%s%s%s" % (text[: m.start()], placeholder, text[m.end(0) :])
 
-        text = text.translate({ord("{"): "&#123;", ord("}"): "&#125;"})
         return text.split("\n")
 
 
-class JinjaRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):  # type: ignore
-    def run(self, text):  # type: ignore
-        while True:
-            ret = super().run(text)
-            if ret == text:
-                # all stashes were restored
-                break
-            text = ret
-        return ret
+class JinjaPostprocessor(postprocessors.Postprocessor):  # type: ignore
+    def run(self, text):
+
+        text = text.translate({ord("{"): "&#123;", ord("}"): "&#125;"})
+
+        """ Iterate over html stash and restore html. """
+        replacements = OrderedDict()
+        for i in range(self.md.htmlStash2.html_counter):
+            html = self.md.htmlStash2.rawHtmlBlocks[i]
+            replacements[self.md.htmlStash2.get_placeholder(i)] = html
+
+        if replacements:
+            pattern = re.compile("|".join(re.escape(k) for k in replacements))
+            return pattern.sub(lambda m: replacements[m.group(0)], text)
+        else:
+            return text
+
+class MiyadaikuRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):  # type: ignore
+    def run(self, text):
+        return super().run(text)
 
     def isblocklevel(self, html):  # type: ignore
         if re.match(r"\{.*}$", html.strip(), re.DOTALL):
             return True
         return super().isblocklevel(html)
-
-
-# patch postprocessors.RawHtmlPostprocessor
-postprocessors.RawHtmlPostprocessor = JinjaRawHtmlPostprocessor
 
 
 class TargetProcessor(blockprocessors.BlockProcessor):  # type: ignore
@@ -109,6 +123,8 @@ def load_string(string: str) -> Tuple[Dict[str, Any], str]:
     ]
 
     md = markdown.Markdown(extensions=extensions)
+    md.postprocessors.register(MiyadaikuRawHtmlPostprocessor(md), 'raw_html', 10000)
+    md.postprocessors.register(JinjaPostprocessor(md), 'jinja_raw_html', 0)
     md.meta = {"type": "article", "has_jinja": True}
     html = md.convert(string)
     return md.meta, html
