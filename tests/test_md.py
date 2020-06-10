@@ -73,6 +73,24 @@ def test_fence(sitedir: Path) -> None:
 </code></pre></div>"""
     )
 
+def test_fence2(sitedir: Path) -> None:
+    (sitedir / "a.md").write_text(
+        """
+
+```python
+{1:1}
+```
+"""
+    )
+
+    metadata, text = md.load(sitedir / "a.md")
+    print(text)
+    assert (
+        text
+        == """<div class="highlight"><pre><span></span><code>{{abcdef}}
+</code></pre></div>"""
+    )
+
 
 def test_code(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
