@@ -72,22 +72,15 @@ class JinjaPostprocessor(postprocessors.Postprocessor):  # type: ignore
         replacements = OrderedDict()
         for i in range(self.md.htmlStash2.html_counter):
             html = self.md.htmlStash2.rawHtmlBlocks[i]
-            replacements[self.md.htmlStash2.get_placeholder(i)] = html
+            placefolder = self.md.htmlStash2.get_placeholder(i)
+            replacements["<p>%s</p>" % (placefolder )] = html + "\n"
+            replacements[placefolder] = html
 
         if replacements:
             pattern = re.compile("|".join(re.escape(k) for k in replacements))
             return pattern.sub(lambda m: replacements[m.group(0)], text)
         else:
             return text
-
-class MiyadaikuRawHtmlPostprocessor(postprocessors.RawHtmlPostprocessor):  # type: ignore
-    def run(self, text):
-        return super().run(text)
-
-    def isblocklevel(self, html):  # type: ignore
-        if re.match(r"\{.*}$", html.strip(), re.DOTALL):
-            return True
-        return super().isblocklevel(html)
 
 
 class TargetProcessor(blockprocessors.BlockProcessor):  # type: ignore
@@ -123,7 +116,6 @@ def load_string(string: str) -> Tuple[Dict[str, Any], str]:
     ]
 
     md = markdown.Markdown(extensions=extensions)
-    md.postprocessors.register(MiyadaikuRawHtmlPostprocessor(md), 'raw_html', 10000)
     md.postprocessors.register(JinjaPostprocessor(md), 'jinja_raw_html', 0)
     md.meta = {"type": "article", "has_jinja": True}
     html = md.convert(string)
