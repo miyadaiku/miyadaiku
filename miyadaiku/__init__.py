@@ -49,7 +49,7 @@ class ContentSrc(NamedTuple):
     contentpath: ContentPath
     mtime: Optional[float] = 0.0
 
-    def copy(self)->ContentSrc:
+    def copy(self) -> ContentSrc:
         return copy.deepcopy(self)
 
     def repr_filename(self) -> str:

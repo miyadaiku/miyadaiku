@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Any, Union
+from typing import Tuple, Dict, Any, Union, List
 from pathlib import Path
 import re
 from collections import OrderedDict
@@ -10,9 +10,11 @@ from miyadaiku import ContentSrc
 
 HTML_PLACEHOLDER2 = util.STX + "jgnkfkaj:%s" + util.ETX
 
-class HtmlStash2(util.HtmlStash):   # type: ignore
-    def get_placeholder(self, key): # type: ignore
+
+class HtmlStash2(util.HtmlStash):  # type: ignore
+    def get_placeholder(self, key):  # type: ignore
         return HTML_PLACEHOLDER2 % key
+
 
 class Ext(markdown.Extension):  # type: ignore
     def extendMarkdown(self, md):  # type: ignore
@@ -64,7 +66,7 @@ class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
 
 
 class JinjaPostprocessor(postprocessors.Postprocessor):  # type: ignore
-    def run(self, text):   # type: ignore
+    def run(self, text):  # type: ignore
 
         text = text.translate({ord("{"): "&#123;", ord("}"): "&#125;"})
 
@@ -73,7 +75,7 @@ class JinjaPostprocessor(postprocessors.Postprocessor):  # type: ignore
         for i in range(self.md.htmlStash2.html_counter):
             html = self.md.htmlStash2.rawHtmlBlocks[i]
             placefolder = self.md.htmlStash2.get_placeholder(i)
-            replacements["<p>%s</p>" % (placefolder )] = html + "\n"
+            replacements["<p>%s</p>" % (placefolder)] = html + "\n"
             replacements[placefolder] = html
 
         if replacements:
@@ -101,12 +103,14 @@ class TargetProcessor(blockprocessors.BlockProcessor):  # type: ignore
         util.etree.SubElement(parent, "div", attrib=attrs)
 
 
-def load(src: Union[ContentSrc, Path]) -> Tuple[Dict[str, Any], str]:
+def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
     s = src.read_text()
-    return load_string(s)
+    meta, html = _load_string(s)
+    src.metadata.update(meta)
+    return [(src, html)]
 
 
-def load_string(string: str) -> Tuple[Dict[str, Any], str]:
+def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
     extensions = [
         markdown.extensions.codehilite.CodeHiliteExtension(
             css_class="highlight", guess_lang=False
@@ -116,7 +120,7 @@ def load_string(string: str) -> Tuple[Dict[str, Any], str]:
     ]
 
     md = markdown.Markdown(extensions=extensions)
-    md.postprocessors.register(JinjaPostprocessor(md), 'jinja_raw_html', 0)
+    md.postprocessors.register(JinjaPostprocessor(md), "jinja_raw_html", 0)
     md.meta = {"type": "article", "has_jinja": True}
     html = md.convert(string)
     return md.meta, html

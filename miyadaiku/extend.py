@@ -184,7 +184,6 @@ def run_post_build(context: OutputContext, filenames: Sequence[Path]) -> None:
         hook(context, filenames)
 
 
-
 if TYPE_CHECKING:
     HOOK_POST_BUILD_HTML = Callable[[OutputContext, Content, Any], Any]
 
@@ -196,14 +195,10 @@ def post_build_html(f: HOOK_POST_BUILD_HTML) -> HOOK_POST_BUILD_HTML:
     return f
 
 
-def run_post_build_html(context: OutputContext, content:Content, soup:Any) -> Any:
+def run_post_build_html(context: OutputContext, content: Content, soup: Any) -> Any:
     for hook in hooks_post_build_html:
         soup = hook(context, content, soup)
     return soup
-
-
-
-
 
 
 if TYPE_CHECKING:

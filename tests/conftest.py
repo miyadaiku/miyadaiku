@@ -7,7 +7,7 @@ import yaml
 import shutil
 
 import miyadaiku.site
-from miyadaiku import context, to_contentpath, extend
+from miyadaiku import context, to_contentpath, extend, ContentSrc
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -15,6 +15,12 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 # miyadaiku.core.SHOW_TRACEBACK = True
 # miyadaiku.core.DEBUG = True
+
+
+def to_contentsrc(path: pathlib.Path) -> ContentSrc:
+    return ContentSrc(
+        package="", srcpath=str(path), metadata={}, contentpath=((), path.name), mtime=0
+    )
 
 
 def build_sitedir(path: pathlib.Path) -> pathlib.Path:

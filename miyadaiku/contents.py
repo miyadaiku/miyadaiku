@@ -174,11 +174,11 @@ class Content:
             path = self.build_output_path(ctx, pageargs)
         return cast(str, urllib.parse.urljoin(site_url, path))
 
-    def build_html_src(self, ctx: context.OutputContext)->None:
-        ctx.set_cache('html', self, "")
+    def build_html_src(self, ctx: context.OutputContext) -> None:
+        ctx.set_cache("html", self, "")
 
     def build_html(self, ctx: context.OutputContext) -> None:
-        ret = ctx.get_cache('html', self)
+        ret = ctx.get_cache("html", self)
         if ret is not None:
             return
 
@@ -187,7 +187,15 @@ class Content:
 
     def get_html(self, ctx: context.OutputContext) -> Optional[str]:
         self.build_html(ctx)
-        return cast(Optional[str], ctx.get_cache('html', self))
+        return cast(Optional[str], ctx.get_cache("html", self))
+
+    def get_soup(self, ctx: context.OutputContext) -> Any:
+        ret = ctx.get_cache("soup", self)
+        if ret:
+            return ret
+
+        self.build_html(ctx)
+        return ctx.get_cache("soup", self)
 
     def build_title(self, context: context.OutputContext) -> str:
         title = self.get_config_metadata(context.site, "title", "").strip()
@@ -201,15 +209,12 @@ class Content:
         if fallback == "abstract":
             abstract_len = self.get_config_metadata(context.site, "title_abstract_len")
             title = self.build_abstract(context, abstract_len, plain=True)
-            title = title.replace("\xb6", "")  # remove 'PILCROW SIGN'
-
+            title = title.replace("\xb6", "").strip()  # remove 'PILCROW SIGN'
             if title:
                 return str(title)
 
         elif fallback == "header":
-            html = self.get_html(context)
-            soup = BeautifulSoup(html, "html.parser")
-
+            soup = self.get_soup(context)
             for elem in soup(re.compile(r"h\d")):
                 text = elem.text.strip()
                 text = text.strip("\xb6")  # remove 'PILCROW SIGN'
@@ -305,7 +310,7 @@ date: {datestr}
 
         return html
 
-    def set_anchors(self, ctx: context.OutputContext, soup: Any)->Any:
+    def set_anchors(self, ctx: context.OutputContext, soup: Any) -> Any:
         """
         1. Record ".header_target" elems.
         2. Set id to header elems.
@@ -344,27 +349,25 @@ date: {datestr}
                 id = f"h_{slug}"
                 anchor_id = f"a_{slug}"
 
-                parent = soup.new_tag('div', id=id, **{'class': 'md_header_block'})
-                a = soup.new_tag('a', id=anchor_id,
-                                              **{'class': 'md_header_anchor'})
+                parent = soup.new_tag("div", id=id, **{"class": "md_header_block"})
+                a = soup.new_tag("a", id=anchor_id, **{"class": "md_header_anchor"})
                 parent.insert(0, a)
                 c.wrap(parent)
 
                 headers.append(context.HTMLIDInfo(id, c.name, contents))
                 header_anchors.append(context.HTMLIDInfo(anchor_id, c.name, contents))
 
-        ctx.set_cache('ids', self, ids)
-        ctx.set_cache('targets', self, targets)
-        ctx.set_cache('headers', self, headers)
-        ctx.set_cache('header_anchors', self, header_anchors)
+        ctx.set_cache("ids", self, ids)
+        ctx.set_cache("targets", self, targets)
+        ctx.set_cache("headers", self, headers)
+        ctx.set_cache("header_anchors", self, header_anchors)
         return soup
 
-    def build_html_src(self, ctx: context.OutputContext)->None:
+    def build_html_src(self, ctx: context.OutputContext) -> None:
         if self.has_jinja:
             html = self._generate_html(ctx)
         else:
             html = (self.body or b"").decode("utf-8")
-
 
         soup = BeautifulSoup(html, "html.parser")
 
@@ -372,18 +375,14 @@ date: {datestr}
 
         soup = extend.run_post_build_html(ctx, self, soup)
 
-        ctx.set_cache('html', self, str(soup))
-        ctx.set_cache('soup', self, soup)
-
-        
+        ctx.set_cache("html", self, str(soup))
+        ctx.set_cache("soup", self, soup)
 
     _in_build_headers = False
 
-    def _build_headers(
-        self, ctx: context.OutputContext
-    ) -> None:
+    def _build_headers(self, ctx: context.OutputContext) -> None:
 
-        if ctx.get_cache('headers', self) is not None:
+        if ctx.get_cache("headers", self) is not None:
             # already built
             return
 
@@ -404,15 +403,13 @@ date: {datestr}
     ) -> str:
 
         self.build_html(ctx)
-        soup = copy.copy(ctx.get_cache('soup', self))
+        soup = copy.copy(ctx.get_cache("soup", self))
 
         for elem in soup(["head", "style", "script", "title"]):
             elem.extract()
 
         if abstract_length is None:
-            abstract_length = ctx.content.get_metadata(
-                ctx.site, "abstract_length"
-            )
+            abstract_length = ctx.content.get_metadata(ctx.site, "abstract_length")
 
         def return_abstract() -> str:
             if not plain:
@@ -450,7 +447,7 @@ date: {datestr}
 
     def get_headers(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
         self._build_headers(ctx)
-        headers = ctx.get_cache('headers', self) or []
+        headers = ctx.get_cache("headers", self) or []
         return headers
 
     def get_header_anchors(
@@ -458,12 +455,12 @@ date: {datestr}
     ) -> List[context.HTMLIDInfo]:
 
         self._build_headers(ctx)
-        headers = ctx.get_cache('header_anchors', self) or []
+        headers = ctx.get_cache("header_anchors", self) or []
         return headers
 
     def get_targets(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
         self._build_headers(ctx)
-        headers = ctx.get_cache('targets', self) or []
+        headers = ctx.get_cache("targets", self) or []
         return headers
 
     def get_headertext(
@@ -472,8 +469,6 @@ date: {datestr}
 
         if self._in_build_headers:
             return "!!!! Circular reference detected !!!"
-
-        
 
         for id, elem, text in self.get_headers(ctx):
             if id == fragment:
@@ -487,10 +482,9 @@ date: {datestr}
             if id == fragment:
                 return text
 
-        for id, elem, text in ctx.get_cache('ids', self):
+        for id, elem, text in ctx.get_cache("ids", self):
             if id == fragment:
                 return text
-
 
         return None
 

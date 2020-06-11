@@ -161,8 +161,8 @@ imports: macro1.html, macro2.html
 
     proxy = context.ContentProxy(ctx, ctx.content)
     assert proxy.imports == ["macro1.html", "macro2.html"]
-    assert '<h1>header1-param: param</h1>' in proxy.html
-    assert '<h2>header2-macro2.macro2</h2>' in proxy.html
+    assert "<h1>header1-param: param</h1>" in proxy.html
+    assert "<h2>header2-macro2.macro2</h2>" in proxy.html
 
 
 def test_parent_dirs(siteroot: SiteRoot) -> None:

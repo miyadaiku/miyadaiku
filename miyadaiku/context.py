@@ -15,7 +15,7 @@ from typing import (
     List,
     Callable,
     cast,
-    DefaultDict
+    DefaultDict,
 )
 
 from abc import abstractmethod
@@ -494,7 +494,7 @@ class OutputContext:
     site: Site
     contentpath: ContentPath
     content: Content
-#    _html_cache: Dict[ContentPath, HTMLInfo]
+    #    _html_cache: Dict[ContentPath, HTMLInfo]
 
     depends: Set[ContentPath]
 
@@ -522,13 +522,13 @@ class OutputContext:
     def add_depend(self, content: Content) -> None:
         self.depends.add(content.src.contentpath)
 
-    def get_cache(self, cachename:str, content: Content)->Any:
+    def get_cache(self, cachename: str, content: Content) -> Any:
         return self._cache[cachename].get(content.src.contentpath, None)
 
-    def set_cache(self, cachename:str, content: Content, value:Any)->None:
+    def set_cache(self, cachename: str, content: Content, value: Any) -> None:
         self._cache[cachename][content.src.contentpath] = value
 
-    def get_slug(self, slug:str)->str:
+    def get_slug(self, slug: str) -> str:
         n = 1
         while slug in self._slugs:
             slug = f"{slug}_{n}"
@@ -537,14 +537,14 @@ class OutputContext:
         self._slugs.add(slug)
         return slug
 
-#    def get_html_cache(
-#        self, content: Content ) -> Union[HTMLInfo, None]:
-#        return self._html_cache.get(content.src.contentpath, None)
-#
-#    def set_html_cache(
-#        self, content: Content, info: HTMLInfo
-#    ) -> None:
-#        self._html_cache[content.src.contentpath] = info
+    #    def get_html_cache(
+    #        self, content: Content ) -> Union[HTMLInfo, None]:
+    #        return self._html_cache.get(content.src.contentpath, None)
+    #
+    #    def set_html_cache(
+    #        self, content: Content, info: HTMLInfo
+    #    ) -> None:
+    #        self._html_cache[content.src.contentpath] = info
 
     def get_filename_cache(
         self, content: Content, tp_pagearg: Tuple[Any, ...]

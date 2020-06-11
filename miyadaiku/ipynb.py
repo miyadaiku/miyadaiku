@@ -1,4 +1,4 @@
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 import re
 from nbconvert.exporters import HTMLExporter
 import nbformat
@@ -16,15 +16,18 @@ def _export(json: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     return metadata, "<div>" + html + "</div>"
 
 
-def load(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
-    if src.package:
-        s = src.read_text()
-        return load_string(s)
-    else:
-        json = nbformat.read(src.srcpath, nbformat.current_nbformat)
-        return _export(json)
-
-
-def load_string(s: str) -> Tuple[Dict[str, Any], str]:
+def _load_string(s: str) -> Tuple[Dict[str, Any], str]:
     json = nbformat.reads(s, nbformat.current_nbformat)
     return _export(json)
+
+
+def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
+    if src.package:
+        s = src.read_text()
+        meta, html = _load_string(s)
+    else:
+        json = nbformat.read(src.srcpath, nbformat.current_nbformat)
+        meta, html = _export(json)
+
+    src.metadata.update(meta)
+    return [(src, html)]

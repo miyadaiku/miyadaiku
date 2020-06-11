@@ -1,14 +1,16 @@
-from typing import Tuple, Dict, Any, Union
+from typing import Tuple, Dict, Any, Union, List
 from pathlib import Path
 import re
 from miyadaiku import ContentSrc
 
 
-def load(src: Union[ContentSrc, Path]) -> Tuple[Dict[str, Any], str]:
-    return load_string(src.read_text())
+def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
+    meta, html = _load_string(src.read_text())
+    src.metadata.update(meta)
+    return [(src, html)]
 
 
-def load_string(string: str) -> Tuple[Dict[str, Any], str]:
+def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
     meta = {"type": "article", "has_jinja": True}
     lines = string.splitlines()
 

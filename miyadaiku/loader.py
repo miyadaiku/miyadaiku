@@ -132,32 +132,34 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
         )
 
 
-def yamlloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[bytes]]:
+def yamlloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, None]]:
     text = src.read_bytes()
     metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
     if "type" not in metadata:
         metadata["type"] = "config"
 
-    return metadata, None
+    src.metadata.update(metadata)
+    return [(src, None)]
 
 
-def binloader(src: ContentSrc) -> Tuple[Dict[str, Any], Optional[str]]:
-    return {"type": "binary"}, None
+def binloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
+    src.metadata["type"] = "binary"
+    return [(src, None)]
 
 
-def rstloader(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
+def rstloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     from . import rst
 
     return rst.load(src)
 
 
-def mdloader(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
+def mdloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     from . import md
 
     return md.load(src)
 
 
-def ipynbloader(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
+def ipynbloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     from . import ipynb
 
     return ipynb.load(src)
@@ -333,7 +335,7 @@ class ContentFiles:
         return sorted(d.items())
 
 
-def loadfile(src: ContentSrc, bin: bool) -> Optional[bytes]:
+def loadfile(src: ContentSrc, bin: bool) -> List[Tuple[ContentSrc, Optional[bytes]]]:
     if not bin:
         assert src.srcpath
         ext = os.path.splitext(src.srcpath)[1]
@@ -341,15 +343,15 @@ def loadfile(src: ContentSrc, bin: bool) -> Optional[bytes]:
     else:
         loader = binloader
 
-    metadata, body = loader(src)
-    src.metadata.update(metadata)
-
-    if isinstance(body, bytes):
-        return body
-    if isinstance(body, str):
-        return body.encode("utf-8")
-    else:
-        return None
+    ret: List[Tuple[ContentSrc, Optional[bytes]]] = []
+    for contentsrc, body in loader(src):
+        if isinstance(body, bytes):
+            ret.append((contentsrc, body))
+        if isinstance(body, str):
+            ret.append((contentsrc, body.encode("utf-8")))
+        else:
+            ret.append((contentsrc, None))
+    return ret
 
 
 def loadfiles(
@@ -370,18 +372,21 @@ def loadfiles(
             if not f:
                 continue
 
-            body = loadfile(f, bin)
-            f, body = extend.run_post_load(site, f, bin, body)
+            for f, body in loadfile(f, bin):
+                if not f:
+                    continue
 
-            if not f:
-                continue
+                f, body = extend.run_post_load(site, f, bin, body)
 
-            if bin:
-                files.add(f, body)
-            elif f.metadata["type"] == "config":
-                cfg.add(f.contentpath[0], f.metadata, f)
-            else:
-                files.add(f, body)
+                if not f:
+                    continue
+
+                if bin:
+                    files.add(f, body)
+                elif f.metadata["type"] == "config":
+                    cfg.add(f.contentpath[0], f.metadata, f)
+                else:
+                    files.add(f, body)
 
     load(walk_directory(root / miyadaiku.CONTENTS_DIR, ignores))
     load(walk_directory(root / miyadaiku.FILES_DIR, ignores), bin=True)

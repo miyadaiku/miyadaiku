@@ -15,8 +15,8 @@ def test_load() -> None:
         mtime=0,
     )
 
-    metadata, text = ipynb.load(contentsrc)
-    assert metadata["type"] == "article"
+    ((src, text),) = ipynb.load(contentsrc)
+    assert src.metadata["type"] == "article"
     print(text)
 
 
@@ -29,8 +29,8 @@ def test_package() -> None:
         mtime=0,
     )
 
-    metadata, text = ipynb.load(contentsrc)
-    assert metadata["type"] == "article"
+    ((src, text),) = ipynb.load(contentsrc)
+    assert src.metadata["type"] == "article"
     print(text)
 
 

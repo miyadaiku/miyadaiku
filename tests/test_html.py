@@ -1,5 +1,6 @@
 from pathlib import Path
 from miyadaiku import html
+from conftest import to_contentsrc
 
 
 def test_load(sitedir: Path) -> None:
@@ -14,8 +15,8 @@ date: 2017-1-1
 """
     )
 
-    metadata, text = html.load(sitedir.joinpath("a.html"))
+    ((src, text),) = html.load(to_contentsrc(sitedir.joinpath("a.html")))
 
-    assert metadata["title"] == "title<>"
+    assert src.metadata["title"] == "title<>"
 
     assert text == "<a>"

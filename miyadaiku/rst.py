@@ -203,22 +203,25 @@ def _parse(pub: Any) -> Tuple[Dict[str, Any], str]:
     return metadata, parts.get("body")
 
 
-def load_string(string: str) -> Tuple[Dict[str, Any], str]:
+def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
     pub = _make_pub(docutils.io.StringInput)  # type: ignore
     pub.set_source(source=string)
     return _parse(pub)
 
 
-def load_file(filename: str) -> Tuple[Dict[str, Any], str]:
+def _load_file(filename: str) -> Tuple[Dict[str, Any], str]:
     pub = _make_pub(docutils.io.FileInput)  # type: ignore
     pub.set_source(source_path=os.fspath(filename))
     return _parse(pub)
 
 
-def load(src: ContentSrc) -> Tuple[Dict[str, Any], str]:
+def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
     if src.package:
         s = src.read_text()
-        return load_string(s)
+        metadata, body = _load_string(s)
     else:
         assert src.srcpath
-        return load_file(src.srcpath)
+        metadata, body = _load_file(src.srcpath)
+
+    src.metadata.update(metadata)
+    return [(src, body)]

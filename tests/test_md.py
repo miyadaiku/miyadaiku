@@ -1,5 +1,7 @@
 from pathlib import Path
-from miyadaiku import md
+from miyadaiku import ContentSrc, md
+
+from conftest import to_contentsrc
 
 
 def test_meta(sitedir: Path) -> None:
@@ -17,16 +19,16 @@ adfas
 """
     )
 
-    metadata, text = md.load(sitedir / "a.md")
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
 
-    assert metadata["type"] == "article"
-    assert metadata["title"] == "title<>"
+    assert src.metadata["type"] == "article"
+    assert src.metadata["title"] == "title<>"
 
 
 def test_inline(sitedir: Path) -> None:
     (sitedir / "a.md").write_text("""a :jinja:`{{abc}}` b""")
 
-    metadata, text = md.load(sitedir / "a.md")
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     assert text == "<p>a {{abc}} b</p>"
 
 
@@ -37,7 +39,7 @@ def test_multiline(sitedir: Path) -> None:
 def}}`
 """
     )
-    metadata, text = md.load(sitedir / "a.md")
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     assert (
         text
         == """{{abc
@@ -51,8 +53,9 @@ def test_esc(sitedir: Path) -> None:
 :jinja:`{{abcdef}}`
 """
     )
-    metadata, text = md.load(sitedir / "a.md")
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     print(text)
+    assert text == "{{abcdef}}"
 
 
 def test_fence1(sitedir: Path) -> None:
@@ -65,13 +68,14 @@ def test_fence1(sitedir: Path) -> None:
 """
     )
 
-    metadata, text = md.load(sitedir / "a.md")
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     print(text)
     assert (
         text
         == """<div class="highlight"><pre><span></span><code>{{abcdef}}
 </code></pre></div>"""
     )
+
 
 def test_fence2(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
@@ -83,12 +87,12 @@ def test_fence2(sitedir: Path) -> None:
 """
     )
 
-    metadata, text = md.load(sitedir / "a.md")
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     print(text)
     assert (
-        """&#123;</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">&#125;""" in text
+        """&#123;</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">&#125;"""
+        in text
     )
-
 
 
 def test_code(sitedir: Path) -> None:
@@ -98,7 +102,7 @@ def test_code(sitedir: Path) -> None:
     :jinja:`{{abcdef}}`
 """
     )
-    metadata, text = md.load(sitedir / "a.md")
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     assert (
         text
         == """<div class="highlight"><pre><span></span><code>{{abcdef}}
@@ -114,7 +118,7 @@ def test_target(sitedir: Path) -> None:
 hello
 """
     )
-    metadata, text = md.load(sitedir / "a.md")
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     assert (
         text
         == """<div class="header_target" id="abcdefg"></div>
