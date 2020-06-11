@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from typing import Dict, Tuple, NamedTuple, Any, Optional, Union, cast, Set
 import posixpath
+import copy
 import importlib_resources
 import tzlocal
 
@@ -45,6 +48,9 @@ class ContentSrc(NamedTuple):
     metadata: Dict[str, Any]
     contentpath: ContentPath
     mtime: Optional[float] = 0.0
+
+    def copy(self)->ContentSrc:
+        return copy.deepcopy(self)
 
     def repr_filename(self) -> str:
         if self.srcpath:

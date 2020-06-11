@@ -186,7 +186,7 @@ def run_post_build(context: OutputContext, filenames: Sequence[Path]) -> None:
 
 
 if TYPE_CHECKING:
-    HOOK_POST_BUILD_HTML = Callable[[OutputContext, Content], Any]
+    HOOK_POST_BUILD_HTML = Callable[[OutputContext, Content, Any], Any]
 
 hooks_post_build_html: List[HOOK_POST_BUILD_HTML] = []
 

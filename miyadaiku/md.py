@@ -10,8 +10,8 @@ from miyadaiku import ContentSrc
 
 HTML_PLACEHOLDER2 = util.STX + "jgnkfkaj:%s" + util.ETX
 
-class HtmlStash2(util.HtmlStash):
-    def get_placeholder(self, key):
+class HtmlStash2(util.HtmlStash):   # type: ignore
+    def get_placeholder(self, key): # type: ignore
         return HTML_PLACEHOLDER2 % key
 
 class Ext(markdown.Extension):  # type: ignore
@@ -64,7 +64,7 @@ class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
 
 
 class JinjaPostprocessor(postprocessors.Postprocessor):  # type: ignore
-    def run(self, text):
+    def run(self, text):   # type: ignore
 
         text = text.translate({ord("{"): "&#123;", ord("}"): "&#125;"})
 
@@ -78,7 +78,7 @@ class JinjaPostprocessor(postprocessors.Postprocessor):  # type: ignore
 
         if replacements:
             pattern = re.compile("|".join(re.escape(k) for k in replacements))
-            return pattern.sub(lambda m: replacements[m.group(0)], text)
+            return pattern.sub(lambda m: replacements[m.group(0)], text)  # type: ignore
         else:
             return text
 
