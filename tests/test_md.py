@@ -124,3 +124,63 @@ hello
         == """<div class="header_target" id="abcdefg"></div>
 <p>hello</p>"""
     )
+
+
+def test_yaml(sitedir: Path) -> None:
+    sitedir.joinpath("a.md").write_text(
+        """---
+title: title<>
+tags:
+    - a
+    - b
+    - c
+---
+test
+"""
+    )
+
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
+
+    assert src.metadata["type"] == "article"
+    assert src.metadata["title"] == "title<>"
+    assert src.metadata["tags"] == ["a", "b", "c"]
+    assert text == "<p>test</p>"
+
+
+def test_split(sitedir: Path) -> None:
+    sitedir.joinpath("a.md").write_text(
+        """%%%% b.md
+first
+"""
+    )
+
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
+
+    assert src.metadata["type"] == "article"
+    assert src.contentpath == ((), "b.md")
+    assert text == "<p>first</p>"
+
+    sitedir.joinpath("a.md").write_text(
+        """%%%% b.md
+---
+tags:
+  - a
+  - b
+  - c
+---
+first
+%%%% c.md
+second
+"""
+    )
+
+    ((src1, text1), (src2, text2),) = md.load(to_contentsrc(sitedir / "a.md"))
+
+    assert src1.metadata["type"] == "article"
+    assert src1.contentpath == ((), "b.md")
+    assert src1.metadata["tags"] == ["a", "b", "c"]
+    assert text1 == "<p>first</p>"
+
+    assert src2.metadata["type"] == "article"
+    assert src2.contentpath == ((), "c.md")
+    assert text2 == "<p>second</p>"

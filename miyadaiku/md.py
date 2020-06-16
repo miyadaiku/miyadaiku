@@ -3,10 +3,12 @@ from pathlib import Path
 import re
 from collections import OrderedDict
 
+import yaml
 import markdown
 from markdown import util, preprocessors, postprocessors, blockprocessors
 import markdown.extensions.codehilite
 from miyadaiku import ContentSrc
+from . import parsesrc
 
 HTML_PLACEHOLDER2 = util.STX + "jgnkfkaj:%s" + util.ETX
 
@@ -21,17 +23,9 @@ class Ext(markdown.Extension):  # type: ignore
         # prior to fenced_code_block
         md.htmlStash2 = HtmlStash2()
         md.preprocessors.register(JinjaPreprocessor(md), "jinja", 27.5)
-        #        md.preprocessors.add('jinja',
-        #                             JinjaPreprocessor(md),
-        #                             ">normalize_whitespace")
 
         # top priority
         md.parser.blockprocessors.register(TargetProcessor(md.parser), "target", 110)
-
-
-#        md.parser.blockprocessors.add('target',
-#                                      TargetProcessor(md.parser),
-#                                      '_begin')
 
 
 class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
@@ -105,12 +99,19 @@ class TargetProcessor(blockprocessors.BlockProcessor):  # type: ignore
 
 def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
     s = src.read_text()
-    meta, html = _load_string(s)
-    src.metadata.update(meta)
-    return [(src, html)]
+
+    ret = []
+    srces = parsesrc.splitsrc(src, s)
+    for f, txt in srces:
+        meta, html = _load_string(txt)
+        f.metadata.update(meta)
+        ret.append((f, html))
+
+    return ret
 
 
 def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
+
     extensions = [
         markdown.extensions.codehilite.CodeHiliteExtension(
             css_class="highlight", guess_lang=False
@@ -122,5 +123,9 @@ def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
     md = markdown.Markdown(extensions=extensions)
     md.postprocessors.register(JinjaPostprocessor(md), "jinja_raw_html", 0)
     md.meta = {"type": "article", "has_jinja": True}
+
+    meta, string = parsesrc.split_yaml(string, sep="---")
+    md.meta.update(meta)
+
     html = md.convert(string)
     return md.meta, html
