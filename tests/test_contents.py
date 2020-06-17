@@ -2,6 +2,7 @@ import re
 from miyadaiku import context
 from conftest import SiteRoot, create_contexts
 import tzlocal
+import datetime
 
 
 def test_props(siteroot: SiteRoot) -> None:
@@ -42,6 +43,20 @@ date: 2020-01-01 00:00:00+09:00
 
     proxy = context.ContentProxy(ctx, ctx.content)
     assert str(proxy.date) == "2020-01-01 00:00:00+09:00"
+
+
+def test_props_date_fromfilenane(siteroot: SiteRoot) -> None:
+    (ctx,) = create_contexts(siteroot, srcs=[("20200101.html", "hi")])
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert str(proxy.date) == "2020-01-01 00:00:00+09:00"
+
+    (ctx,) = create_contexts(siteroot, srcs=[("2020-01-01T0203.html", "hi")])
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert str(proxy.date) == "2020-01-01 02:03:00+09:00"
+
+    (ctx,) = create_contexts(siteroot, srcs=[("2020-::::::::.html", "hi")])
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert proxy.date is None
 
 
 def test_filename(siteroot: SiteRoot) -> None:

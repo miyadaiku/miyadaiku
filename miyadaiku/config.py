@@ -42,6 +42,8 @@ DEFAULTS = dict(
     title_fallback="filename",
     title_abstract_len=30,
     date=None,
+    date_from_filename=True,
+    templ_date_from_filename=r"\d{4}[\dT:Z+-]{4,}",
     category=None,
     tags=(),
     order=0,
@@ -52,6 +54,7 @@ DEFAULTS = dict(
     ga_tracking_id="",
     imports="",
     generate_metadata_file=False,
+    has_jinja=False,
 )
 
 
@@ -249,6 +252,11 @@ def date(value: str) -> Any:
         return ret
 
 
+@value_converter
+def date_from_filename(value: Any) -> Any:
+    return to_bool(value)
+
+
 # @value_converter
 # def timezone(value: str) -> datetime.tzinfo:
 #    return pytz.timezone(value)
@@ -268,6 +276,10 @@ def imports(value: Optional[Union[str, List[str]]]) -> Any:
         return [s.strip() for s in value.split(",")]
     else:
         return []
+
+@value_converter
+def has_jinja(value: Any) -> Any:
+    return to_bool(value)
 
 
 def format_value(name: str, value: Any) -> Any:

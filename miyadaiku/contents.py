@@ -32,10 +32,6 @@ class Content:
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} at {hex(id(self))} {self.src.srcpath}>"
 
-    @property
-    def has_jinja(self) -> bool:
-        return bool(self.src.metadata.get("has_jinja"))
-
     def repr_filename(self) -> str:
         return repr(self)
 
@@ -73,16 +69,35 @@ class Content:
 
         return self.get_config_metadata(site, name, default)
 
+    def metadata_has_jinja(self, site: site.Site, default: Any) -> Any:
+        return self.get_config_metadata(site, "has_jinja")
+
     def metadata_dirname(self, site: site.Site, default: Any) -> PathTuple:
         return self.src.contentpath[0]
 
     def metadata_name(self, site: site.Site, default: Any) -> str:
         return self.src.contentpath[1]
 
+    def _get_date_from_filename(self, site: site.Site) -> Optional[Any]:
+        if self.get_metadata(site, "date_from_filename", False):
+            stem = self.get_metadata(site, "stem", "")
+            reg = self.get_metadata(site, "templ_date_from_filename", "")
+            if stem and reg:
+                m = re.search(reg, stem, re.ASCII)
+                if m:
+                    datestr = m[0]
+                    try:
+                        return config.format_value("date", datestr)
+                    except ValueError:
+                        pass
+        return None
+
     def metadata_date(self, site: site.Site, default: Any) -> Any:
         date = self.get_config_metadata(site, "date")
         if not date:
-            return
+            date = self._get_date_from_filename(site)
+            if not date:
+                return
         if not date.tzinfo:
             tz = self.get_metadata(site, "tzinfo")
             date = date.astimezone(tz)
@@ -197,30 +212,40 @@ class Content:
         self.build_html(ctx)
         return ctx.get_cache("soup", self)
 
-    def build_title(self, context: context.OutputContext) -> str:
+    def get_first_header(self, context: context.OutputContext) -> Optional[str]:
+        soup = self.get_soup(context)
+        for elem in soup(re.compile(r"h\d")):
+            text = elem.text.strip()
+            text = text.strip("\xb6")  # remove 'PILCROW SIGN'
+            text = elem.text.strip()
+            if text:
+                return str(text)
+        return None
+
+    def build_title(
+        self, context: context.OutputContext, fallback: Optional[str] = None
+    ) -> str:
         title = self.get_config_metadata(context.site, "title", "").strip()
         if title:
             return str(title)
 
-        fallback = self.get_config_metadata(context.site, "title_fallback")
+        if not fallback:
+            fallback = self.get_metadata(context.site, "title_fallback")
+
         if fallback and (fallback not in ["filename", "abstract", "header"]):
             raise ValueError(f"Invalid title_fallback: {fallback}")
 
         if fallback == "abstract":
-            abstract_len = self.get_config_metadata(context.site, "title_abstract_len")
+            abstract_len = self.get_metadata(context.site, "title_abstract_len")
             title = self.build_abstract(context, abstract_len, plain=True)
             title = title.replace("\xb6", "").strip()  # remove 'PILCROW SIGN'
             if title:
                 return str(title)
 
         elif fallback == "header":
-            soup = self.get_soup(context)
-            for elem in soup(re.compile(r"h\d")):
-                text = elem.text.strip()
-                text = text.strip("\xb6")  # remove 'PILCROW SIGN'
-                text = elem.text.strip()
-                if text:
-                    return str(text)
+            header = self.get_first_header(context)
+            if header:
+                return header
 
         return posixpath.splitext(self.src.contentpath[1])[0]
 
@@ -364,7 +389,7 @@ date: {datestr}
         return soup
 
     def build_html_src(self, ctx: context.OutputContext) -> None:
-        if self.has_jinja:
+        if self.get_metadata(ctx.site, "has_jinja"):
             html = self._generate_html(ctx)
         else:
             html = (self.body or b"").decode("utf-8")

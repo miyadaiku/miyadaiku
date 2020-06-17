@@ -17,3 +17,4 @@ _depends.pickle
 .eggs
 pip-wheel-metadata
 .eggs
+.ipynb_checkpoints
