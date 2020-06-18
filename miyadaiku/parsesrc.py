@@ -1,9 +1,9 @@
-from typing import Tuple, Dict, Any, List, Optional
+from typing import Any, Dict, List, Tuple
 import yaml
 import re
 from . import ContentSrc
 
-SEP = re.compile("^%%%+\s+(\S.*)$(\n)?", re.M)
+SEP = re.compile(r"^%%%+\s+(\S.*)$(\n)?", re.M)
 
 
 def splitsrc(src: ContentSrc, text: str) -> List[Tuple[ContentSrc, str]]:

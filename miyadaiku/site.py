@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, List, Set, TYPE_CHECKING, Tuple
+from typing import Any, Dict, Iterator, List, Set, TYPE_CHECKING, Tuple, Optional
 import sys
 import os
 from pathlib import Path
@@ -133,9 +133,14 @@ class Site:
     def add_jinja_global(self, name: str, value: Any) -> None:
         self.jinja_global_vars[name] = value
 
-    def load(self, root: Path, props: Dict[str, Any]) -> None:
+    def load(
+        self, root: Path, props: Dict[str, Any], outputdir: Optional[Path] = None
+    ) -> None:
         self.root = root.resolve()
-        self.outputdir = self.root / miyadaiku.OUTPUTS_DIR
+        if outputdir:
+            self.outputdir = outputdir
+        else:
+            self.outputdir = self.root / miyadaiku.OUTPUTS_DIR
 
         self.jinja_global_vars = {}
         self.jinja_templates = {}

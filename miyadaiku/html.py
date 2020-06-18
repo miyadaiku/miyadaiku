@@ -1,5 +1,4 @@
-from typing import Tuple, Dict, Any, Union, List
-from pathlib import Path
+from typing import Any, Dict, List, Tuple
 import re
 from miyadaiku import ContentSrc
 

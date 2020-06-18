@@ -1,9 +1,7 @@
 from typing import Dict, Any, Tuple, List, Optional
 import copy
-import re
 from nbconvert.exporters import HTMLExporter
 import nbformat
-from bs4 import BeautifulSoup
 from miyadaiku import ContentSrc
 from . import parsesrc
 

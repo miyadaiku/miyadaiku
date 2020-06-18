@@ -26,16 +26,16 @@ def exec_server(dir, bind, port):
     http.server.test(http.server.SimpleHTTPRequestHandler, bind=bind, port=port)
 
 
-def build(path, props, args):
+def build(path, outputdir, props, args):
     print(f"Building {path.resolve()} ...")
 
     site = miyadaiku.site.Site(rebuild=args.rebuild, debug=args.debug)
-    site.load(path, props)
+    site.load(path, props, outputdir)
     ok, err, *_ = site.build()
 
     msg = f"Build finished... Built {ok} files. {err} error found.\n"
     if err:
-        s = mp_log.Color.RED.value + msg + mp_log.Color.RESET.value
+        mp_log.Color.RED.value + msg + mp_log.Color.RESET.value
     print(msg)
 
     return err
@@ -56,6 +56,8 @@ parser.add_argument(
     help="Set default property value.",
 )
 
+
+parser.add_argument("--output", "-o", default="", type=str, help="Output direcotry")
 
 parser.add_argument(
     "--debug", "-D", action="store_true", default=False, help="Run debug mode"
@@ -93,7 +95,11 @@ def _main() -> None:
 
     mp_log.init_logging()
 
-    outputs = d / OUTPUTS_DIR
+    if args.output:
+        outputs = Path(args.output)
+    else:
+        outputs = d / OUTPUTS_DIR
+
     if not outputs.is_dir():
         outputs.mkdir()
 
@@ -108,7 +114,9 @@ def _main() -> None:
 
     try:
         if not args.watch:
-            err = build(d, props, args)
+            err = build(d, outputs, props, args)
+            if args.server:
+                server.join()
             return 1 if err else 0
         else:
             print(f"Watching {d.resolve()} ...")

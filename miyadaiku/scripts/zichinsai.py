@@ -1,12 +1,10 @@
-import re
 import sys
 import locale
 import argparse
-import os
 import pathlib
 import tzlocal
 
-from miyadaiku import MODULES_DIR, CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, __version__
+from miyadaiku import CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, __version__
 
 locale.setlocale(locale.LC_ALL, "")
 

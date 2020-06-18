@@ -2,7 +2,6 @@ import re
 from miyadaiku import context
 from conftest import SiteRoot, create_contexts
 import tzlocal
-import datetime
 
 
 def test_props(siteroot: SiteRoot) -> None:

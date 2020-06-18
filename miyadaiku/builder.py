@@ -209,9 +209,11 @@ def split_batch(builders: Sequence[Any]) -> Sequence[Any]:
 
 def build_batch(
     site: Site, jinjaev: Environment, builders: List[Builder]
-) -> Tuple[int, int, List[Tuple[ContentSrc, Set[ContentPath]]], Set[ContentPath]]:
+) -> Tuple[
+    int, int, List[Tuple[ContentSrc, Set[ContentPath], Set[str]]], Set[ContentPath]
+]:
 
-    ret: List[Tuple[ContentSrc, Set[ContentPath]]] = []
+    ret: List[Tuple[ContentSrc, Set[ContentPath], Set[str]]] = []
     errors: Set[ContentPath] = set()
 
     ok = err = 0
@@ -225,8 +227,15 @@ def build_batch(
             filenames = context.build()
             extend.run_post_build(context, filenames)
 
-            ret.append((context.content.src, set(context.depends)))
+            ret.append(
+                (
+                    context.content.src,
+                    set(context.depends),
+                    set(str(f) for f in filenames),
+                )
+            )
             ok += 1
+
         except Exception:
             err += 1
             errors.add(builder.contentpath)
@@ -294,7 +303,9 @@ def run_build(
 
 async def submit(
     site: Site, batches: Sequence[List[Builder]]
-) -> Tuple[int, int, List[Tuple[ContentSrc, Set[ContentPath]]], Set[ContentPath]]:
+) -> Tuple[
+    int, int, List[Tuple[ContentSrc, Set[ContentPath], Set[str]]], Set[ContentPath]
+]:
 
     fd, picklefile = tempfile.mkstemp()
 
@@ -336,7 +347,9 @@ async def submit(
 
 def submit_debug(
     site: Site, batches: Sequence[List[Builder]]
-) -> Tuple[int, int, List[Tuple[ContentSrc, Set[ContentPath]]], Set[ContentPath]]:
+) -> Tuple[
+    int, int, List[Tuple[ContentSrc, Set[ContentPath], Set[str]]], Set[ContentPath]
+]:
 
     site.load_modules()
     jinjaenv = site.build_jinjaenv()

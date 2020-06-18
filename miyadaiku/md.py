@@ -1,9 +1,7 @@
-from typing import Tuple, Dict, Any, Union, List
-from pathlib import Path
+from typing import Any, Dict, List, Tuple
 import re
 from collections import OrderedDict
 
-import yaml
 import markdown
 from markdown import util, preprocessors, postprocessors, blockprocessors
 import markdown.extensions.codehilite

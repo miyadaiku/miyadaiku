@@ -1,5 +1,5 @@
 from pathlib import Path
-from miyadaiku import ContentSrc, md
+from miyadaiku import md
 
 from conftest import to_contentsrc
 
@@ -90,7 +90,8 @@ def test_fence2(sitedir: Path) -> None:
     ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     print(text)
     assert (
-        """&#123;</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">&#125;"""
+        ('&#123;</span><span class="mi">1</span><span class="p">:'
+         '</span><span class="mi">1</span><span class="p">&#125;')
         in text
     )
 

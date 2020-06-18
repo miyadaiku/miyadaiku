@@ -6,7 +6,7 @@ import copy
 import importlib_resources
 import tzlocal
 
-__version__ = "1.9.0"
+__version__ = "1.10.0"
 
 YAML_ENCODING = "utf-8"
 
@@ -92,7 +92,7 @@ class ContentSrc(NamedTuple):
             return open(self.srcpath, "rb").read()
 
 
-DependsDict = Dict[ContentPath, Tuple[ContentSrc, Set[ContentPath]]]
+DependsDict = Dict[ContentPath, Tuple[ContentSrc, Set[ContentPath], Set[str]]]
 
 
 def repr_contentpath(path: ContentPath) -> str:

@@ -404,7 +404,7 @@ def prepare_output_path(path: Path, directory: PathTuple, filename: str) -> Path
     if os.path.exists(dest):
         os.unlink(dest)
 
-    return Path(dest)
+    return Path(dest).absolute()
 
 
 def eval_jinja(

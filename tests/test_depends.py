@@ -36,6 +36,35 @@ def test_update(siteroot: SiteRoot) -> None:
     assert updated == set((((), "file1.rst"),))
 
 
+def test_update_file(siteroot: SiteRoot) -> None:
+    siteroot.write_text(
+        siteroot.contents / "file1.rst",
+        """
+:jinja:`{{ page.link_to("./file2.rst") }}`
+""",
+    )
+    siteroot.write_text(
+        siteroot.contents / "file2.rst",
+        """
+""",
+    )
+
+    site = siteroot.load({}, {})
+
+    ok, err, deps, errors = site.build()
+    depends.save_deps(site, deps, errors)
+
+    output = siteroot.outputs / "file1.html"
+    output.unlink()
+
+    rebuild, updated, depdict = depends.check_depends(site)
+    assert rebuild is False
+    assert updated == set((((), "file1.rst"),))
+
+    ok, err, deps, errors = site.build()
+    assert deps[((), 'file1.rst')][2] == {'file1.html'}
+    assert deps[((), 'file2.rst')][2] == {'file2.html'}
+
 def test_refs(siteroot: SiteRoot) -> None:
     siteroot.write_text(
         siteroot.contents / "file1.rst",

@@ -277,6 +277,7 @@ def imports(value: Optional[Union[str, List[str]]]) -> Any:
     else:
         return []
 
+
 @value_converter
 def has_jinja(value: Any) -> Any:
     return to_bool(value)

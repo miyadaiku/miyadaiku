@@ -5,7 +5,7 @@ from conftest import SiteRoot
 
 def test_index(siteroot: SiteRoot) -> None:
     for i in range(21):
-        tag = f"tag{i % 2 + 1}"
+        f"tag{i % 2 + 1}"
         siteroot.write_text(
             siteroot.contents / f"htmldir/{i}.html",
             f"""
