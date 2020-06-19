@@ -132,7 +132,7 @@ def _main() -> None:
                 time.sleep(0.1)
                 ev.clear()
 
-                build(d, props, args)
+                build(d, outputs, props, args)
 
         if args.server:
             server.join()
