@@ -22,7 +22,7 @@ def _load_string(s: str) -> Tuple[Dict[str, Any], str]:
 
 
 def get_cellfilename(cell: Dict[str, Any]) -> Optional[str]:
-    if cell.get("cell_type", "") == "markdown":
+    if cell.get("cell_type", "") != "code":
         src = cell.get("source", "")
         m = parsesrc.SEP.match(src)
         if m:
@@ -66,13 +66,38 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
         cellmeta: Dict[str, Any] = {}
         if subcells:
             top = subcells[0]
-            if top.get("cell_type", "") == "markdown":
+            if top.get("cell_type", "") != "code":
                 srcstr = top.get("source", "")
                 if srcstr:
                     cellmeta, srcstr = parsesrc.split_yaml(srcstr, "---")
                     top["source"] = srcstr
 
-        subjson["cells"] = subcells
+
+        # remove raw cells
+        newcells = [c for c in subcells if c.get('cell_type', '') != 'raw']
+
+        # remove empty cells at bottom
+        while len(newcells ) > 1:
+            c = newcells[-1]
+            celltype = c.get('cell_type', "" )
+
+            if celltype == "markdown":
+                if c["source"].strip():
+                    break
+
+            elif celltype == "code":
+                if c["source"].strip() or c["outputs"]:
+                    break
+
+            else:
+                break
+
+            # remove cell
+            del newcells [-1]
+
+
+
+        subjson["cells"] = newcells
 
         meta, html = _export(subjson)
         meta.update(cellmeta)
