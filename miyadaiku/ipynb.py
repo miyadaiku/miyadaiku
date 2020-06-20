@@ -72,14 +72,13 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
                     cellmeta, srcstr = parsesrc.split_yaml(srcstr, "---")
                     top["source"] = srcstr
 
-
         # remove raw cells
-        newcells = [c for c in subcells if c.get('cell_type', '') != 'raw']
+        newcells = [c for c in subcells if c.get("cell_type", "") != "raw"]
 
         # remove empty cells at bottom
-        while len(newcells ) > 1:
+        while len(newcells) > 1:
             c = newcells[-1]
-            celltype = c.get('cell_type', "" )
+            celltype = c.get("cell_type", "")
 
             if celltype == "markdown":
                 if c["source"].strip():
@@ -93,9 +92,7 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
                 break
 
             # remove cell
-            del newcells [-1]
-
-
+            del newcells[-1]
 
         subjson["cells"] = newcells
 

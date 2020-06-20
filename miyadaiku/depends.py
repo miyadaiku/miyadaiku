@@ -119,7 +119,7 @@ def update_deps(
         new[contentpath] = (set(), set())
 
     for contentpath, (contentsrc, depends, filenames) in d.items():
-        new[contentpath] = (depends, {(site.outputdir / f) for f in filenames})
+        new[contentpath] = (depends, {str(site.outputdir / f) for f in filenames})
 
     for contentsrc, depends, filenames in deps:
         if contentsrc.contentpath in new:
@@ -138,7 +138,7 @@ def update_deps(
     for contentpath, (depends, filenames) in new.items():
         if site.files.has_content(contentpath):
             src = site.files.get_content(contentpath).src
-        
+
             filenames = {os.path.relpath(f, outputpath) for f in filenames}
             ret[contentpath] = (src, depends, filenames)
 

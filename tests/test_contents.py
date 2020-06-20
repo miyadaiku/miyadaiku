@@ -2,6 +2,7 @@ import re
 from miyadaiku import context
 from conftest import SiteRoot, create_contexts
 import tzlocal
+from bs4 import BeautifulSoup
 
 
 def test_props(siteroot: SiteRoot) -> None:
@@ -303,3 +304,37 @@ hi"""
         siteroot, srcs=[("doc.html", src2)], config={"title_fallback": "header"},
     )
     assert ctx.content.build_title(ctx) == "header"
+
+
+def test_headers(siteroot: SiteRoot) -> None:
+    src1 = """
+
+{% for id, tag, text in page.headers %}
+    [{{id}}, {{tag}}, {{text}}]
+{% endfor %}
+
+{% for id, tag, text in page.header_anchors %}
+    [{{id}}, {{tag}}, {{text}}]
+{% endfor %}
+
+<h1>text</h1>
+<h1>text</h1>
+"""
+
+    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", src1)])
+    proxy = context.ContentProxy(ctx, ctx.content)
+
+    html = proxy.html
+
+    assert "[h_text, h1, text]" in html
+    assert "[h_text_1, h1, text]" in html
+    assert "[a_text, h1, text]" in html
+    assert "[a_text_1, h1, text]" in html
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    assert soup.select("#h_text")[0].text == "text"
+    assert soup.select("#a_text")[0].text == ""
+
+    assert soup.select("#h_text_1")[0].text == "text"
+    assert soup.select("#a_text_1")[0].text == ""

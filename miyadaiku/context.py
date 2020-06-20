@@ -500,7 +500,7 @@ class OutputContext:
 
     _filename_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], str]
     _cache: DefaultDict[str, Dict[ContentPath, Any]]
-    _slugs: Set[str]
+    _slugs: Dict[str, ContentPath]
 
     def __init__(
         self, site: Site, jinjaenv: Environment, contentpath: ContentPath
@@ -512,7 +512,7 @@ class OutputContext:
         self.depends = set([contentpath])
         self._filename_cache = {}
         self._cache = defaultdict(dict)
-        self._slugs = set()
+        self._slugs = {}
 
     def get_outfilename(self, pagearg: Dict[Any, Any]) -> Path:
         filename = self.content.build_filename(self, pagearg)
@@ -528,23 +528,16 @@ class OutputContext:
     def set_cache(self, cachename: str, content: Content, value: Any) -> None:
         self._cache[cachename][content.src.contentpath] = value
 
-    def get_slug(self, slug: str) -> str:
+    def get_slug(self, path: ContentPath, slug: str) -> str:
         n = 1
         while slug in self._slugs:
+            if self._slugs[slug] == path:
+                return slug
             slug = f"{slug}_{n}"
             n += 1
 
-        self._slugs.add(slug)
+        self._slugs[slug] = path
         return slug
-
-    #    def get_html_cache(
-    #        self, content: Content ) -> Union[HTMLInfo, None]:
-    #        return self._html_cache.get(content.src.contentpath, None)
-    #
-    #    def set_html_cache(
-    #        self, content: Content, info: HTMLInfo
-    #    ) -> None:
-    #        self._html_cache[content.src.contentpath] = info
 
     def get_filename_cache(
         self, content: Content, tp_pagearg: Tuple[Any, ...]

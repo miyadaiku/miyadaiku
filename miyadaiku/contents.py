@@ -347,6 +347,8 @@ date: {datestr}
         headers: List[context.HTMLIDInfo] = []
         header_anchors: List[context.HTMLIDInfo] = []
 
+        slugs = set()
+
         target_id = None
         for c in soup.recursiveChildGenerator():
             if not isinstance(c, str):
@@ -368,8 +370,14 @@ date: {datestr}
 
                 slug = unicodedata.normalize("NFKC", c.text[:40])
                 slug = re.sub(r"[^\w?.]+", "", slug)
-                slug = ctx.get_slug(slug)
-                slug = urllib.parse.quote_plus(slug)
+
+                n = 1
+                while slug in slugs:
+                    slug = f"{slug}_{n}"
+                    n += 1
+                slugs.add(slug)
+
+                slug = ctx.get_slug(self.src.contentpath, slug)
 
                 id = f"h_{slug}"
                 anchor_id = f"a_{slug}"
