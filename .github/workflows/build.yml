@@ -1,0 +1,26 @@
+name: Build miyadaiku
+
+on: [push]
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Create venv
+        run: |
+          python3 -m venv .venv
+
+      - name: Install dependencies
+        run: |
+          .venv/bin/pip3 install -e .\[dev\]
+
+      - name: Test
+        run: |
+          .venv/bin/pytest
