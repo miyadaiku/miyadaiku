@@ -1,10 +1,11 @@
-name: Build miyadaiku
+name: Test miyadaiku
 
-on: [push]
+on:
+  push:
 
 jobs:
-  build:
-    name: build
+  test:
+    name: run test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

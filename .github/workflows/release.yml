@@ -1,0 +1,34 @@
+name: Release miyadaiku
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Create venv
+        run: |
+          python3 -m venv .venv
+
+      - name: Install dependencies
+        run: |
+          .venv/bin/pip3 install -e .\[dev\]
+
+      - name: Build wheel
+        run: |
+          .venv/bin/python setup.py bdist_wheel
+
+      - name: Upload
+        env:
+          PYPI_PASS: ${{ secrets.PYPI }}
+        run: |
+          .venv/bin/twine upload -u atsuoi -p "$PYPI_PASS" dist/*.whl
