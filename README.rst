@@ -39,6 +39,18 @@ Use pip to install miyadaiku.
 
    $ pip3 install miyadaiku
 
+
+History
+------------------
+
+1.12.0
+~~~~~~~~~~~~
+
+- Build title from abstract if ``title_fallback`` is ``title`` and header element not found in the content.
+
+- Preserve newline in content.abstract
+
+
 Upgrading to Miyadaiku 1.0.0
 ----------------------------------------
 

@@ -235,17 +235,17 @@ class Content:
         if fallback and (fallback not in ["filename", "abstract", "header"]):
             raise ValueError(f"Invalid title_fallback: {fallback}")
 
-        if fallback == "abstract":
+        if fallback == "header":
+            header = self.get_first_header(context)
+            if header:
+                return header
+
+        if fallback != "filename":
             abstract_len = self.get_metadata(context.site, "title_abstract_len")
             title = self.build_abstract(context, abstract_len, plain=True)
             title = title.replace("\xb6", "").strip()  # remove 'PILCROW SIGN'
             if title:
                 return str(title)
-
-        elif fallback == "header":
-            header = self.get_first_header(context)
-            if header:
-                return header
 
         return posixpath.splitext(self.src.contentpath[1])[0]
 

@@ -21,7 +21,7 @@ title
     ctx.site.config.add("/", {"ga_tracking_id": "12345"})
     (output,) = ctx.build()
 
-    assert "ga('create', '12345', 'auto')" in output.read_text()
+    assert "id=12345" in output.read_text()
 
 
 def test_image(siteroot: SiteRoot) -> None:
