@@ -93,9 +93,9 @@ filters:
     (bldr,) = builder.create_builders(
         site, site.files.get_content((("htmldir",), "index.yml"))
     )
-    item1, item2 = cast(builder.IndexBuilder, bldr).items
-    assert item1[1] == "19.html"
-    assert item2[1] == "0.html"
+    item1, item2 = sorted(cast(builder.IndexBuilder, bldr).items)
+    assert item1[1] == "0.html"
+    assert item2[1] == "19.html"
 
     siteroot.write_text(
         siteroot.contents / "htmldir/index.yml",
