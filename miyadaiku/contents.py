@@ -214,6 +214,9 @@ class Content:
 
     def get_first_header(self, context: context.OutputContext) -> Optional[str]:
         soup = self.get_soup(context)
+        if not soup:
+            return None
+
         for elem in soup(re.compile(r"h\d")):
             text = elem.get_text(" ")
             text = text.strip("\xb6")  # remove 'PILCROW SIGN'
@@ -436,6 +439,10 @@ date: {datestr}
     ) -> str:
 
         self.build_html(ctx)
+        soup = ctx.get_cache("soup", self)
+        if not soup:
+            return ""
+
         soup = copy.copy(ctx.get_cache("soup", self))
 
         for elem in soup(["head", "style", "script", "title"]):
