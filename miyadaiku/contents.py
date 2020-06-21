@@ -215,9 +215,9 @@ class Content:
     def get_first_header(self, context: context.OutputContext) -> Optional[str]:
         soup = self.get_soup(context)
         for elem in soup(re.compile(r"h\d")):
-            text = elem.text.strip()
+            text = elem.get_text(" ")
             text = text.strip("\xb6")  # remove 'PILCROW SIGN'
-            text = elem.text.strip()
+            text = " ".join(text.split())
             if text:
                 return str(text)
         return None
@@ -448,7 +448,7 @@ date: {datestr}
             if not plain:
                 return str(soup)
             else:
-                return " ".join(soup.text.strip().split())
+                return " ".join(soup.get_text(" ").split())
 
         if abstract_length == 0:
             return return_abstract()
