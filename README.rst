@@ -52,6 +52,7 @@ History
 
 - Add .anchor-link style for .ipynb file.
 
+
 Upgrading to Miyadaiku 1.0.0
 ----------------------------------------
 
