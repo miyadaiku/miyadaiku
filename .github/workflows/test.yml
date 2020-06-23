@@ -2,6 +2,8 @@ name: Test miyadaiku
 
 on:
   push:
+    tags-ignore:
+        - *
 
 jobs:
   test:

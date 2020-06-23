@@ -48,8 +48,9 @@ History
 
 - Build title from abstract if ``title_fallback`` is ``title`` and header element not found in the content.
 
-- Preserve newline in content.abstract
+- Preserve newline in content.abstract.
 
+- Add .anchor-link style for .ipynb file.
 
 Upgrading to Miyadaiku 1.0.0
 ----------------------------------------
