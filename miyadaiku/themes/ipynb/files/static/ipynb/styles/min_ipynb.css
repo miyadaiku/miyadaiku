@@ -65,14 +65,6 @@ div.inner_cell {
   flex: 1;
 }
 
-/* input_area and input_prompt must match in top border and margin for alignment */
-div.input_area {
-  border: 1px solid #cfcfcf;
-  border-radius: 2px;
-  background: #f7f7f7;
-  line-height: 1.21429em;
-
-}
 /* This is needed so that empty prompt areas can collapse to zero height when there
    is no content in the output_subarea and the prompt. The main purpose of this is
    to make sure that empty JavaScript output_subareas have no height. */
@@ -111,16 +103,8 @@ div.input {
   }
 }
 
-/* input_area and input_prompt must match in top border and margin for alignment */
-div.input_prompt {
-  color: #303F9F;
-  border-top: 1px solid transparent;
-}
-
 div.input_area > div.highlight {
-  margin: 0.4em;
   border: none;
-  padding: 0px;
   background-color: transparent;
 }
 
@@ -174,9 +158,7 @@ div.out_prompt_overlay:hover {
   box-shadow: inset 0 0 1px #000;
   background: rgba(240, 240, 240, 0.5);
 }
-div.output_prompt {
-  color: #D84315;
-}
+
 /* This class is the outer container of all output sections. */
 div.output_area {
   padding: 0px;
