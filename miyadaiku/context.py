@@ -140,9 +140,9 @@ class ContentProxy:
 
     def get_config(self, name: str, default: Any = _omit) -> Any:
         if default is self._omit:
-            return self.content.get_config_metadata(self.context.site, name)
+            return self.content.get_metadata(self.context.site, name)
         else:
-            return self.content.get_config_metadata(self.context.site, name, default)
+            return self.content.get_metadata(self.context.site, name, default)
 
     def get_abstract(
         self, abstract_length: Optional[int] = None, plain: bool = False
