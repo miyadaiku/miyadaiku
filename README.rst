@@ -52,7 +52,9 @@ History
 
 - Add .anchor-link style for .ipynb file.
 
-- YAML can be used in HTML content
+- YAML can be used in HTML content.
+
+- Add setattr/getattr to jinja variables.
 
 
 Upgrading to Miyadaiku 1.0.0

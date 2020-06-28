@@ -88,6 +88,8 @@ def create_env(
     env.globals["type"] = type
     env.globals["dir"] = dir
     env.globals["isinstance"] = isinstance
+    env.globals["setattr"] = setattr
+    env.globals["getattr"] = getattr
 
     env.filters["urlquote"] = urlquote
     env.filters["safepath"] = safepath
