@@ -359,7 +359,7 @@ date: {datestr}
                 if cid:
                     ids.append(context.HTMLIDInfo(cid, c.name, c.text))
 
-            if c.name and ("header_target" in (c.get("class", "") or [])):
+            if c.name and ("header_target" in (c.get("class", []) or [])):
                 target_id = c.get("id", None)
                 if target_id:
                     targets.append(context.HTMLIDInfo(target_id, "", ""))
@@ -370,6 +370,17 @@ date: {datestr}
                 if target_id:
                     targets[-1] = context.HTMLIDInfo(target_id, c.name, contents)
                     target_id = None
+
+                if c.parent:
+                    cls = c.parent.get("class", [])
+                    if "md_header_block" in cls:
+                        # Anchor is already inserted
+                        id = parent.get("id")
+                        headers.append(context.HTMLIDInfo(id, c.name, contents))
+
+                        anchor_id = parent.a.get("id")
+                        header_anchors.append(context.HTMLIDInfo(anchor_id, c.name, contents))
+                        continue
 
                 slug = unicodedata.normalize("NFKC", c.text[:40])
                 slug = re.sub(r"[^\w?.]+", "", slug)
@@ -522,7 +533,7 @@ date: {datestr}
             if id == fragment:
                 return text
 
-        for id, elem, text in ctx.get_cache("ids", self):
+        for id, elem, text in ctx.get_cache("ids", self) or ():
             if id == fragment:
                 return text
 

@@ -85,6 +85,7 @@ def create_env(
     env.globals["site"] = site
 
     env.globals["repr"] = repr
+    env.globals["print"] = print
     env.globals["type"] = type
     env.globals["dir"] = dir
     env.globals["isinstance"] = isinstance
