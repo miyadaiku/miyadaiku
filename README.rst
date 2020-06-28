@@ -52,6 +52,8 @@ History
 
 - Add .anchor-link style for .ipynb file.
 
+- YAML can be used in HTML content
+
 
 Upgrading to Miyadaiku 1.0.0
 ----------------------------------------

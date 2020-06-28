@@ -100,7 +100,7 @@ class Content:
                 return
         if not date.tzinfo:
             tz = self.get_metadata(site, "tzinfo")
-            date = date.replace(tzinfo = tz)
+            date = date.replace(tzinfo=tz)
         return date
 
     def metadata_tzinfo(self, site: site.Site, default: Any) -> datetime.tzinfo:

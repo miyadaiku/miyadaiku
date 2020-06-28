@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Tuple
 import re
-from miyadaiku import ContentSrc
+from miyadaiku import ContentSrc, parsesrc
 
 
 def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
@@ -10,7 +10,11 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
 
 
 def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
+    loaded, string = parsesrc.split_yaml(string, sep="---")
+
     meta = {"type": "article", "has_jinja": True}
+    meta.update(loaded)
+
     lines = string.splitlines()
 
     n = 0
