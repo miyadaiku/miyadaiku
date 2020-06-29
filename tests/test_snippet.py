@@ -35,6 +35,7 @@ title: title
     assert "aaa" in text
     assert "bbb" in text
 
+
 def test_header(siteroot: SiteRoot) -> None:
     siteroot.write_text(
         siteroot.contents / "doc1.html",
@@ -62,4 +63,3 @@ title: title
     site.build()
 
     assert len(list(siteroot.outputs.iterdir())) == 1
-    text = (siteroot.outputs / "doc2.html").read_text()

@@ -276,9 +276,7 @@ class Content:
     ) -> Optional[str]:
         return None
 
-    def search_header(
-        self, ctx: context.OutputContext, search: str
-    ) -> Optional[str]:
+    def search_header(self, ctx: context.OutputContext, search: str) -> Optional[str]:
         return None
 
     def get_jinja_vars(self, ctx: context.OutputContext) -> Dict[str, Any]:
@@ -383,10 +381,12 @@ date: {datestr}
                         headers.append(context.HTMLIDInfo(id, c.name, contents))
 
                         anchor_id = c.parent.a.get("id")
-                        header_anchors.append(context.HTMLIDInfo(anchor_id, c.name, contents))
+                        header_anchors.append(
+                            context.HTMLIDInfo(anchor_id, c.name, contents)
+                        )
                         continue
 
-                slug = f'{repr_contentpath(self.src.contentpath)}_{c.text[:80]}_{nth}'
+                slug = f"{repr_contentpath(self.src.contentpath)}_{c.text[:80]}_{nth}"
                 nth += 1
 
                 slug = unicodedata.normalize("NFKC", slug)
@@ -538,8 +538,7 @@ date: {datestr}
 
         return None
 
-
-    def search_header(self, ctx: context.OutputContext, search: str)->Optional[str]:
+    def search_header(self, ctx: context.OutputContext, search: str) -> Optional[str]:
         if self._in_build_headers:
             return "!!!! Circular reference detected !!!"
 
@@ -562,6 +561,7 @@ date: {datestr}
                 return id
 
         return None
+
 
 class Article(HTMLContent):
     pass

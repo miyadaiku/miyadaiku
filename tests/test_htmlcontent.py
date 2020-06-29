@@ -44,8 +44,6 @@ def test_get_headers(siteroot: SiteRoot) -> None:
 #    print(ctx.content.build_html(ctx))
 
 
-
-
 def test_search_header(siteroot: SiteRoot) -> None:
     (ctx,) = create_contexts(
         siteroot,
@@ -67,7 +65,7 @@ def test_search_header(siteroot: SiteRoot) -> None:
 
     proxy = context.ContentProxy(ctx, ctx.content)
     soup = BeautifulSoup(proxy.html, "html.parser")
-    assert soup.find_all('a')[-1].text == "header24"
+    assert soup.find_all("a")[-1].text == "header24"
 
 
 def test_header_target(siteroot: SiteRoot) -> None:

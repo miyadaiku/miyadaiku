@@ -86,12 +86,12 @@ class ContentProxy:
 
         return self.content.get_metadata(self.context.site, name)
 
-    def set(self, **kwargs:Any)->str:
+    def set(self, **kwargs: Any) -> str:
         for k, v in kwargs.items():
             setattr(self.content, k, v)
 
         self.context.invalidate_cache()
-        return ''
+        return ""
 
     @safe_prop
     def title(self) -> str:
@@ -534,7 +534,7 @@ class OutputContext:
     def add_depend(self, content: Content) -> None:
         self.depends.add(content.src.contentpath)
 
-    def invalidate_cache(self)->None:
+    def invalidate_cache(self) -> None:
         self._filename_cache = {}
         self._cache = defaultdict(dict)
 
