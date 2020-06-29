@@ -332,15 +332,15 @@ def test_headers(siteroot: SiteRoot) -> None:
 
     html = proxy.html
 
-    assert "[h_text, h1, text]" in html
-    assert "[h_text_1, h1, text]" in html
-    assert "[a_text, h1, text]" in html
-    assert "[a_text_1, h1, text]" in html
+    assert "[h_doc_html_text_1, h1, text]" in html
+    assert "[h_doc_html_text_2, h1, text]" in html
+    assert "[a_doc_html_text_1, h1, text]" in html
+    assert "[a_doc_html_text_2, h1, text]" in html
 
     soup = BeautifulSoup(html, "html.parser")
 
-    assert soup.select("#h_text")[0].text == "text"
-    assert soup.select("#a_text")[0].text == ""
+    assert soup.select("#h_doc_html_text_1")[0].text == "text"
+    assert soup.select("#a_doc_html_text_1")[0].text == ""
 
-    assert soup.select("#h_text_1")[0].text == "text"
-    assert soup.select("#a_text_1")[0].text == ""
+    assert soup.select("#h_doc_html_text_2")[0].text == "text"
+    assert soup.select("#a_doc_html_text_2")[0].text == ""

@@ -56,6 +56,9 @@ History
 
 - Add setattr/getattr to jinja variables.
 
+- Modified convention of anchor name generation.
+
+- Add search option to link()/link_to().
 
 Upgrading to Miyadaiku 1.0.0
 ----------------------------------------

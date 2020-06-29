@@ -221,6 +221,7 @@ class ContentProxy:
         *,
         text: Optional[str] = None,
         fragment: Optional[str] = None,
+        search: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
         group_value: Optional[Any] = None,
@@ -231,6 +232,7 @@ class ContentProxy:
             {"group_value": group_value, "npage": npage},
             text=text,
             fragment=fragment,
+            search=search,
             abs_path=abs_path,
             attrs=attrs,
         )
@@ -241,6 +243,7 @@ class ContentProxy:
         *,
         text: Optional[str] = None,
         fragment: Optional[str] = None,
+        search: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
         group_value: Optional[Any] = None,
@@ -252,6 +255,7 @@ class ContentProxy:
             {"group_value": group_value, "npage": npage},
             text=text,
             fragment=fragment,
+            search=search,
             abs_path=abs_path,
             attrs=attrs,
         )
@@ -510,7 +514,6 @@ class OutputContext:
 
     _filename_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], str]
     _cache: DefaultDict[str, Dict[ContentPath, Any]]
-    _slugs: Dict[str, ContentPath]
 
     def __init__(
         self, site: Site, jinjaenv: Environment, contentpath: ContentPath
@@ -522,7 +525,6 @@ class OutputContext:
         self.depends = set([contentpath])
         self._filename_cache = {}
         self._cache = defaultdict(dict)
-        self._slugs = {}
 
     def get_outfilename(self, pagearg: Dict[Any, Any]) -> Path:
         filename = self.content.build_filename(self, pagearg)
@@ -532,7 +534,7 @@ class OutputContext:
     def add_depend(self, content: Content) -> None:
         self.depends.add(content.src.contentpath)
 
-    def invalidate_cache(self):
+    def invalidate_cache(self)->None:
         self._filename_cache = {}
         self._cache = defaultdict(dict)
 
@@ -541,17 +543,6 @@ class OutputContext:
 
     def set_cache(self, cachename: str, content: Content, value: Any) -> None:
         self._cache[cachename][content.src.contentpath] = value
-
-    def get_slug(self, path: ContentPath, slug: str) -> str:
-        n = 1
-        while slug in self._slugs:
-            if self._slugs[slug] == path:
-                return slug
-            slug = f"{slug}_{n}"
-            n += 1
-
-        self._slugs[slug] = path
-        return slug
 
     def get_filename_cache(
         self, content: Content, tp_pagearg: Tuple[Any, ...]
@@ -612,9 +603,16 @@ class OutputContext:
         *,
         text: Optional[str] = None,
         fragment: Optional[str] = None,
+        search: Optional[str] = None,
         abs_path: bool = False,
         attrs: Optional[Dict[str, Any]] = None,
     ) -> str:
+
+        if search:
+            fragment = target.search_header(self, search)
+            if fragment is None:
+                raise ValueError(f"Cannot find text: {search}")
+
         if text is None:
             if fragment:
                 text = target.get_headertext(self, fragment)

@@ -108,25 +108,25 @@ def test_link(siteroot: SiteRoot) -> None:
     soup = BeautifulSoup(link, "html.parser")
     assert soup.a.text == "<>text<>"
 
-    link = proxy2.link(fragment="h_header1")
+    link = proxy2.link(fragment="h_doc2_html_header1_1")
     soup = BeautifulSoup(link, "html.parser")
-    assert soup.a["href"] == "doc2.html#h_header1"
+    assert soup.a["href"] == "doc2.html#h_doc2_html_header1_1"
     assert soup.a.text == "header1"
 
-    link = proxy2.link(fragment="h_header1", text="text")
+    link = proxy2.link(fragment="h_doc2_html_header1_1", text="text")
     soup = BeautifulSoup(link, "html.parser")
     assert soup.a.text == "text"
 
-    link = proxy2.link(fragment="h_header1")
+    link = proxy2.link(fragment="h_doc2_html_header1_1")
     soup = BeautifulSoup(link, "html.parser")
-    assert soup.a["href"] == "doc2.html#h_header1"
+    assert soup.a["href"] == "doc2.html#h_doc2_html_header1_1"
     assert soup.a.text == "header1"
 
     link = proxy2.link(abs_path=True)
     soup = BeautifulSoup(link, "html.parser")
     assert soup.a["href"] == "http://localhost:8888/doc2.html"
 
-    link = proxy2.link(fragment="h_header2")
+    link = proxy2.link(fragment="h_doc2_html_header2_2")
     soup = BeautifulSoup(link, "html.parser")
     assert soup.a.text == "header2"
 

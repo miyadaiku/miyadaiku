@@ -55,8 +55,6 @@ title: title
 
 {{ page.load("./doc1.html").html }}
 
-{{ page.load("./doc1.html").html }}
-
 """,
     )
 
@@ -65,6 +63,3 @@ title: title
 
     assert len(list(siteroot.outputs.iterdir())) == 1
     text = (siteroot.outputs / "doc2.html").read_text()
-
-    assert False
-    add_test_here

@@ -12,7 +12,7 @@ import pytz
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
-from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX
+from miyadaiku import ContentSrc, PathTuple, METADATA_FILE_SUFFIX, repr_contentpath
 from . import site
 from . import config
 from . import context
@@ -276,6 +276,11 @@ class Content:
     ) -> Optional[str]:
         return None
 
+    def search_header(
+        self, ctx: context.OutputContext, search: str
+    ) -> Optional[str]:
+        return None
+
     def get_jinja_vars(self, ctx: context.OutputContext) -> Dict[str, Any]:
 
         ret = {}
@@ -350,9 +355,8 @@ date: {datestr}
         headers: List[context.HTMLIDInfo] = []
         header_anchors: List[context.HTMLIDInfo] = []
 
-        slugs = set()
-
         target_id = None
+        nth = 1
         for c in soup.recursiveChildGenerator():
             if not isinstance(c, str):
                 cid = c.get("id", None)
@@ -375,23 +379,18 @@ date: {datestr}
                     cls = c.parent.get("class", [])
                     if "md_header_block" in cls:
                         # Anchor is already inserted
-                        id = parent.get("id")
+                        id = c.parent.get("id")
                         headers.append(context.HTMLIDInfo(id, c.name, contents))
 
-                        anchor_id = parent.a.get("id")
+                        anchor_id = c.parent.a.get("id")
                         header_anchors.append(context.HTMLIDInfo(anchor_id, c.name, contents))
                         continue
 
-                slug = unicodedata.normalize("NFKC", c.text[:40])
-                slug = re.sub(r"[^\w?.]+", "", slug)
+                slug = f'{repr_contentpath(self.src.contentpath)}_{c.text[:80]}_{nth}'
+                nth += 1
 
-                n = 1
-                while slug in slugs:
-                    slug = f"{slug}_{n}"
-                    n += 1
-                slugs.add(slug)
-
-                slug = ctx.get_slug(self.src.contentpath, slug)
+                slug = unicodedata.normalize("NFKC", slug)
+                slug = re.sub(r"[^\w]+", "_", slug)
 
                 id = f"h_{slug}"
                 anchor_id = f"a_{slug}"
@@ -539,6 +538,30 @@ date: {datestr}
 
         return None
 
+
+    def search_header(self, ctx: context.OutputContext, search: str)->Optional[str]:
+        if self._in_build_headers:
+            return "!!!! Circular reference detected !!!"
+
+        re_search = re.compile(search, re.M | re.I)
+
+        for id, elem, text in self.get_headers(ctx):
+            if re_search.search(text):
+                return id
+
+        for id, elem, text in self.get_header_anchors(ctx):
+            if re_search.search(text):
+                return id
+
+        for id, elem, text in self.get_targets(ctx):
+            if re_search.search(text):
+                return id
+
+        for id, elem, text in ctx.get_cache("ids", self) or ():
+            if re_search.search(text):
+                return id
+
+        return None
 
 class Article(HTMLContent):
     pass

@@ -35,13 +35,39 @@ def test_get_headers(siteroot: SiteRoot) -> None:
     headers = ctx.content.get_headers(ctx)
 
     assert headers == [
-        context.HTMLIDInfo(id="h_header12", tag="h1", text="header12"),
-        context.HTMLIDInfo(id="h_header24", tag="h2", text="header24"),
-        context.HTMLIDInfo(id="h_header36", tag="h2", text="header36"),
+        context.HTMLIDInfo(id="h_doc_html_header12_1", tag="h1", text="header12"),
+        context.HTMLIDInfo(id="h_doc_html_header24_2", tag="h2", text="header24"),
+        context.HTMLIDInfo(id="h_doc_html_header36_3", tag="h2", text="header36"),
     ]
 
 
 #    print(ctx.content.build_html(ctx))
+
+
+
+
+def test_search_header(siteroot: SiteRoot) -> None:
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "doc.html",
+                """
+<h1>header1{{1+1}}</h1>
+<div>body1</div>
+
+<h2>header2{{2+2}}</h2>
+<div>body2</div>
+
+{{ page.link_to(page, search="header2") }}
+""",
+            )
+        ],
+    )
+
+    proxy = context.ContentProxy(ctx, ctx.content)
+    soup = BeautifulSoup(proxy.html, "html.parser")
+    assert soup.find_all('a')[-1].text == "header24"
 
 
 def test_header_target(siteroot: SiteRoot) -> None:
@@ -74,13 +100,13 @@ def test_link_xref(siteroot: SiteRoot) -> None:
                 "doc1.html",
                 """
 <h1>doc1-header1</h1>
-{{page.link_to("doc2.html", fragment="h_doc2header1")}}
+{{page.link_to("doc2.html", fragment="h_doc2_html_doc2_header1_1")}}
 """,
             ),
             (
                 "doc2.html",
                 """<h1>doc2-header1</h1>
-{{page.link_to("doc1.html", fragment="h_doc1header1")}}
+{{page.link_to("doc1.html", fragment="h_doc1_html_doc1_header1_1")}}
 
 """,
             ),
@@ -89,13 +115,13 @@ def test_link_xref(siteroot: SiteRoot) -> None:
     proxy1 = context.ContentProxy(ctx1, ctx1.content)
     soup = BeautifulSoup(proxy1.html, "html.parser")
     a = soup.find_all("a")[-1]
-    assert a["href"] == "doc2.html#h_doc2header1"
+    assert a["href"] == "doc2.html#h_doc2_html_doc2_header1_1"
     assert a.text == "doc2-header1"
 
     proxy2 = proxy1.load("doc2.html")
     soup = BeautifulSoup(proxy2.html, "html.parser")
     a = soup.find_all("a")[-1]
-    assert a["href"] == "doc1.html#h_doc1header1"
+    assert a["href"] == "doc1.html#h_doc1_html_doc1_header1_1"
     assert a.text == "doc1-header1"
 
 
