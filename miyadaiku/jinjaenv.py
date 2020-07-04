@@ -74,7 +74,7 @@ def create_env(
         undefined=make_logging_undefined(logger, DebugUndefined),
         # undefined=make_logging_undefined(logger, StrictUndefined),
         loader=ChoiceLoader(loaders),
-        autoescape=select_autoescape(["html", "xml"]),
+        autoescape=select_autoescape(["html", "xml", "j2"]),
         extensions=EXTENSIONS,
     )
 

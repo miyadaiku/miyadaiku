@@ -171,6 +171,7 @@ FILELOADERS = {
     ".md": mdloader,
     ".html": html.load,
     ".htm": html.load,
+    ".j2": html.load,
     ".yml": yamlloader,
     ".yaml": yamlloader,
     ".ipynb": ipynbloader,
