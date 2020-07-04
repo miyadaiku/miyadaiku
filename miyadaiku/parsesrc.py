@@ -1,7 +1,10 @@
 from typing import Any, Dict, List, Tuple
 import yaml
 import re
+import logging
 from . import ContentSrc
+
+logger = logging.getLogger(__name__)
 
 SEP = re.compile(r"^%%%+\s+(\S.*)$(\n)?", re.M)
 
@@ -39,6 +42,9 @@ def split_yaml(s: str, sep: str) -> Tuple[Dict[Any, Any], str]:
         if line.startswith(sep):
             meta = "\n".join(lines[1:n])
             d = yaml.load(meta, Loader=yaml.FullLoader,) or {}
+            if not isinstance(d, dict):
+                logger.warn("yaml should return dicionay: %s", meta)
+                return {}, s
             return d, "\n".join(lines[n + 1 :])
 
     return {}, s
