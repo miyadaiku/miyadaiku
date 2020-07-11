@@ -43,6 +43,14 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.13.0
+~~~~~~~~~~~~
+
+- File name with extension is .j2 is treated as HTML.
+
+- Ignore Yaml declaration which does not return dict.
+
+
 1.12.0
 ~~~~~~~~~~~~
 
