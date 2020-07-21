@@ -13,7 +13,7 @@ parser.add_argument("directory", help="directory name")
 parser.add_argument("--version", "-v", action="version", version=f"{__version__}")
 
 
-src = f"""
+src = """
 Title: sample document
 
 

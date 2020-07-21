@@ -65,17 +65,17 @@ class Content:
         methodname = f"metadata_{name}"
         method = getattr(self, methodname, None)
         if method:
-            return method(site, default)
+            return method(site)
 
         return self.get_config_metadata(site, name, default)
 
-    def metadata_has_jinja(self, site: site.Site, default: Any) -> Any:
+    def metadata_has_jinja(self, site: site.Site) -> Any:
         return self.get_config_metadata(site, "has_jinja")
 
-    def metadata_dirname(self, site: site.Site, default: Any) -> PathTuple:
+    def metadata_dirname(self, site: site.Site) -> PathTuple:
         return self.src.contentpath[0]
 
-    def metadata_name(self, site: site.Site, default: Any) -> str:
+    def metadata_name(self, site: site.Site) -> str:
         return self.src.contentpath[1]
 
     def _get_date_from_filename(self, site: site.Site) -> Optional[Any]:
@@ -92,7 +92,7 @@ class Content:
                         pass
         return None
 
-    def metadata_date(self, site: site.Site, default: Any) -> Any:
+    def metadata_date(self, site: site.Site) -> Any:
         date = self.get_config_metadata(site, "date")
         if not date:
             date = self._get_date_from_filename(site)
@@ -103,19 +103,27 @@ class Content:
             date = date.replace(tzinfo=tz)
         return date
 
-    def metadata_tzinfo(self, site: site.Site, default: Any) -> datetime.tzinfo:
+    def metadata_updated(self, site: site.Site) -> Any:
+        updated = self.get_config_metadata(site, "updated", default=None)
+        if updated:
+            if not updated.tzinfo:
+                tz = self.get_metadata(site, "tzinfo")
+                updated = updated.replace(tzinfo=tz)
+            return updated
+
+        return self.metadata_date(site)
+
+    def metadata_tzinfo(self, site: site.Site) -> datetime.tzinfo:
         timezone = self.get_metadata(site, "timezone")
         return pytz.timezone(timezone)
 
-    def metadata_parents_dirs(
-        self, site: site.Site, default: Any
-    ) -> List[Tuple[str, ...]]:
+    def metadata_parents_dirs(self, site: site.Site) -> List[Tuple[str, ...]]:
         ret: List[Tuple[str, ...]] = [()]
         for dirname in self.src.contentpath[0]:
             ret.append(ret[-1] + (dirname,))
         return ret
 
-    def metadata_stem(self, site: site.Site, default: Any) -> str:
+    def metadata_stem(self, site: site.Site) -> str:
         stem = self.get_config_metadata(site, "stem", None)
         if stem is not None:
             return cast(str, stem)
@@ -126,7 +134,7 @@ class Content:
         d, name = posixpath.split(name)
         return posixpath.splitext(name)[0]
 
-    def metadata_ext(self, site: site.Site, default: Any) -> str:
+    def metadata_ext(self, site: site.Site) -> str:
         ext = self.get_config_metadata(site, "ext", None)
         if ext is not None:
             return cast(str, ext)
@@ -304,7 +312,7 @@ class BinContent(Content):
 
 
 class HTMLContent(Content):
-    def metadata_ext(self, site: site.Site, default: Any) -> str:
+    def metadata_ext(self, site: site.Site) -> str:
         ext = self.get_config_metadata(site, "ext", None)
         if ext is not None:
             return cast(str, ext)
@@ -615,7 +623,7 @@ class IndexPage(Content):
 class FeedPage(Content):
     use_abs_path = True
 
-    def metadata_ext(self, site: site.Site, default: Any) -> str:
+    def metadata_ext(self, site: site.Site) -> str:
         feedtype = self.get_metadata(site, "feedtype")
         if feedtype == "atom":
             return ".xml"

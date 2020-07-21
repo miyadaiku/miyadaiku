@@ -295,15 +295,17 @@ class ContentFiles:
 
         recs = []
         for c in contents:
-            d = c.get_metadata(site, "date", None)
+            d = c.get_metadata(site, "updated", None)
             if d:
-                ts = d.timestamp()
+                updated = d.timestamp()
             else:
-                ts = 0
-            recs.append((ts, c))
+                updated = 0
 
-        recs.sort(reverse=True, key=lambda r: (r[0], r[1].get_metadata(site, "title")))
-        return [c for (ts, c) in recs]
+            title = c.get_metadata(site, "title")
+            recs.append((updated, title, c))
+
+        recs.sort(reverse=True, key=lambda r: (r[0], r[1]))
+        return [rec[2] for rec in recs]
 
     def group_items(
         self,

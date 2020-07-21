@@ -18,11 +18,11 @@ def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
     lines = string.splitlines()
 
     n = 0
-    for l in lines:
-        if not l.strip():
+    for line in lines:
+        if not line.strip():
             n += 1
             continue
-        m = re.match(r"([a-zA-Z0-9_-]+):\s(.+)$", l)
+        m = re.match(r"([a-zA-Z0-9_-]+):\s(.+)$", line)
         if not m:
             break
         n += 1

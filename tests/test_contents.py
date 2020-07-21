@@ -65,6 +65,67 @@ def test_props_date_fromfilenane(siteroot: SiteRoot) -> None:
     assert proxy.date is None
 
 
+def test_props_updated(siteroot: SiteRoot) -> None:
+    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", "hi")])
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert proxy.date is None
+
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "doc.html",
+                """
+date: 2020-01-01 00:00:00+09:00
+updated: 2020-01-02 00:00:00+09:00
+""",
+            )
+        ],
+    )
+
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert str(proxy.updated) == "2020-01-02 00:00:00+09:00"
+
+
+def test_props_updated_default(siteroot: SiteRoot) -> None:
+    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", "hi")])
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert proxy.date is None
+
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "doc.html",
+                """
+date: 2020-01-01 00:00:00+09:00
+""",
+            )
+        ],
+    )
+
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert str(proxy.updated) == "2020-01-01 00:00:00+09:00"
+
+    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", "hi")])
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert proxy.date is None
+
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "doc.html",
+                """
+""",
+            )
+        ],
+    )
+
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert proxy.updated is None
+
+
 def test_filename(siteroot: SiteRoot) -> None:
 
     (ctx,) = create_contexts(siteroot, srcs=[("doc.md", "")])
@@ -107,7 +168,7 @@ ext: .222
 
 
 def test_get_abstract(siteroot: SiteRoot) -> None:
-    body = f"<div>123<div>456<div>789<div>abc</div>def</div>ghi</div>jkl</div>"
+    body = "<div>123<div>456<div>789<div>abc</div>def</div>ghi</div>jkl</div>"
 
     maxlen = len("".join(re.sub(r"<[^>]*>", "", body).split()))
 
@@ -127,7 +188,7 @@ def test_get_abstract(siteroot: SiteRoot) -> None:
 
 
 def test_get_plain_abstract(siteroot: SiteRoot) -> None:
-    body = f"""
+    body = """
 <div>
 
 

@@ -44,6 +44,7 @@ DEFAULTS = dict(
     date=None,
     date_from_filename=True,
     templ_date_from_filename=r"\d{4}[\dT:Z+-]{4,}",
+    updated=None,
     category=None,
     tags=(),
     order=0,
@@ -216,6 +217,14 @@ def to_bool(s: Any) -> bool:
     raise ValueError(f"Invalid boolean string: {s}")
 
 
+def str_to_date(value: str) -> Any:
+    if value:
+        ret = dateutil.parser.parse(value)
+        if isinstance(ret, datetime.time):
+            raise ValueError(f"string does not contain a date: {value!r}")
+        return ret
+
+
 VALUE_CONVERTERS: Dict[str, Callable[[Any], Any]] = {}
 
 
@@ -245,11 +254,12 @@ def tags(value: Any) -> Any:
 
 @value_converter
 def date(value: str) -> Any:
-    if value:
-        ret = dateutil.parser.parse(value)
-        if isinstance(ret, datetime.time):
-            raise ValueError(f"string does not contain a date: {value!r}")
-        return ret
+    return str_to_date(value)
+
+
+@value_converter
+def updated(value: str) -> Any:
+    return str_to_date(value)
 
 
 @value_converter

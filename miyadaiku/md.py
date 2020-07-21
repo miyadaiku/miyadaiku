@@ -29,11 +29,11 @@ class Ext(markdown.Extension):  # type: ignore
 class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
     def run(self, lines):  # type: ignore
         n = 0
-        for l in lines:
-            if not l.strip():
+        for line in lines:
+            if not line.strip():
                 n += 1
                 continue
-            m = re.match(r"([a-zA-Z0-9_-]+):\s(.+)$", l)
+            m = re.match(r"([a-zA-Z0-9_-]+):\s(.+)$", line)
             if not m:
                 break
             n += 1
