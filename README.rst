@@ -46,10 +46,11 @@ History
 1.13.0
 ~~~~~~~~~~~~
 
-- File name with extension is .j2 is treated as HTML.
+- File name with extension '.j2' is treated as HTML.
 
-- Ignore Yaml declaration which does not return dict.
+- Ignore Yaml declarations which does not return dict.
 
+- New property: updated.
 
 1.12.0
 ~~~~~~~~~~~~
