@@ -100,7 +100,10 @@ class Content:
                 return
         if not date.tzinfo:
             tz = self.get_metadata(site, "tzinfo")
-            date = date.replace(tzinfo=tz)
+            if tz:
+                date = tz.localize(date)
+            else:
+                date = date.astimezone(datetime.timezone.utc)
         return date
 
     def metadata_updated(self, site: site.Site) -> Any:
@@ -108,7 +111,10 @@ class Content:
         if updated:
             if not updated.tzinfo:
                 tz = self.get_metadata(site, "tzinfo")
-                updated = updated.replace(tzinfo=tz)
+                if tz:
+                    updated = tz.localize(updated)
+                else:
+                    updated = updated.astimezone(datetime.timezone.utc)
             return updated
 
         return self.metadata_date(site)
@@ -332,8 +338,8 @@ class HTMLContent(Content):
         metafilename = Path(dir) / (fname + METADATA_FILE_SUFFIX)
         if metafilename.exists():
             return
-        tz: datetime.tzinfo = self.get_metadata(site, "tzinfo")
-        date = datetime.datetime.now().astimezone(tz).replace(microsecond=0)
+        tz = self.get_metadata(site, "tzinfo")
+        date = tz.localize(datetime.datetime.now()).replace(microsecond=0)
         datestr = date.isoformat(timespec="seconds")
         yaml = f"""
 date: {datestr}

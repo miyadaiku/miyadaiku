@@ -777,7 +777,6 @@ class FeedOutput(OutputContext):
             link = c.build_url(self, {})
             description = c.build_abstract(self)
             date = c.get_metadata(self.site, "date")
-
             if date:
                 feed.add_item(
                     title=c.build_title(self),
