@@ -223,6 +223,14 @@ date: {datestr}
             path = self.build_output_path(ctx, pageargs)
         return cast(str, urllib.parse.urljoin(site_url, path))
 
+    def eval_body(self, ctx: context.OutputContext, propname: str) -> str:
+        src = (self.body or b"").decode("utf-8")
+        src = "{% autoescape false %}" + src + "{% endautoescape %}"
+        args = self.get_jinja_vars(ctx)
+        ret = context.eval_jinja(ctx, self, propname, src, args)
+
+        return ret
+
     def build_html_src(self, ctx: context.OutputContext) -> None:
         ctx.set_cache("html", self, "")
 
@@ -345,13 +353,6 @@ class HTMLContent(Content):
 
         return ".html"
 
-    def _generate_html(self, ctx: context.OutputContext) -> str:
-        src = self.body or b""
-        args = self.get_jinja_vars(ctx)
-        html = context.eval_jinja(ctx, self, "html", src.decode("utf-8"), args)
-
-        return html
-
     def set_anchors(self, ctx: context.OutputContext, soup: Any) -> Any:
         """
         1. Record ".header_target" elems.
@@ -422,7 +423,7 @@ class HTMLContent(Content):
 
     def build_html_src(self, ctx: context.OutputContext) -> None:
         if self.get_metadata(ctx.site, "has_jinja"):
-            html = self._generate_html(ctx)
+            html = self.eval_body(ctx, "html")
         else:
             html = (self.body or b"").decode("utf-8")
 

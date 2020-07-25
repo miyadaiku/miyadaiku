@@ -48,9 +48,11 @@ def}}"""
 
 
 def test_esc(sitedir: Path) -> None:
-    (sitedir / "a.md").write_text(r"""
+    (sitedir / "a.md").write_text(
+        r"""
 :jinja:`{{abcdef\`}}`
-""")
+"""
+    )
 
     ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     print(text)

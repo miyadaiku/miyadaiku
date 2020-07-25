@@ -1,1 +1,1 @@
-{{ page.body.decode(page.charset) }}
+{% block body %}{{ page.body.decode(page.charset) }}{% endblock body %}

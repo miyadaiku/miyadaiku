@@ -111,11 +111,13 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
 
 def _load_string(src: ContentSrc, string: str) -> Tuple[Dict[str, Any], str]:
     ext = os.path.splitext(src.contentpath[1])[1]
-    meta = {"type": "article", "has_jinja": True, "ext": ext, "article_template":"plain.txt"}
+    meta = {
+        "type": "article",
+        "has_jinja": True,
+        "ext": ext,
+        "article_template": "plain.txt",
+    }
     filemeta, string = parsesrc.split_yaml(string, sep="---")
     meta.update(filemeta)
-
-    if meta["has_jinja"]:
-        string = parsesrc.replace_jinjatag(string)
 
     return meta, string

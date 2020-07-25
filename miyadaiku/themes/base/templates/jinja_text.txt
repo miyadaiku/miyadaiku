@@ -1,0 +1,1 @@
+{%- block body -%}{{ page.eval_body() }}{%- endblock body -%}

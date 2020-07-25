@@ -24,35 +24,6 @@ adfas
     assert src.metadata["title"] == "title<>"
 
 
-def test_inline(sitedir: Path) -> None:
-    (sitedir / "a.txt").write_text("""a :jinja:`{{abc}}` b""")
-
-    ((src, txt),) = text.load(to_contentsrc(sitedir / "a.txt"))
-    assert txt == "a {{abc}} b"
-
-
-def test_multiline(sitedir: Path) -> None:
-    (sitedir / "a.txt").write_text(
-        """:jinja:`{{abc
-def}}`"""
-    )
-    ((src, txt),) = text.load(to_contentsrc(sitedir / "a.txt"))
-    assert (
-        txt
-        == """{{abc
-def}}"""
-    )
-
-
-def test_esc(sitedir: Path) -> None:
-    (sitedir / "a.txt").write_text(r""":jinja:`{{abcdef\`}}`""")
-
-    ((src, txt),) = text.load(to_contentsrc(sitedir / "a.txt"))
-    print(txt)
-    assert txt == "{{abcdef\\`}}"
-
-
-
 def test_split(sitedir: Path) -> None:
     sitedir.joinpath("a.txt").write_text(
         """%%%% b.txt

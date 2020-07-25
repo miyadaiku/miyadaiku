@@ -138,6 +138,10 @@ class ContentProxy:
             return True
         return False
 
+    def eval_body(self) -> Union[None, str]:
+        ret = self.content.eval_body(self.context, "body")
+        return ret
+
     _omit = object()
 
     def has_config(self, name: str) -> bool:

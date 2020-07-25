@@ -118,8 +118,10 @@ class Site:
             if f:
                 f(self)
 
-    def load_modules(self) -> None:
+    def load_hooks(self) -> None:
         extend.load_hook(self.root)
+
+    def load_modules(self) -> None:
         for theme in self.themes:
             importlib.import_module(theme)
 
@@ -145,6 +147,7 @@ class Site:
         self.jinja_global_vars = {}
         self.jinja_templates = {}
 
+        self.load_hooks()
         self._load_config(props)
         self.files = loader.ContentFiles()
 

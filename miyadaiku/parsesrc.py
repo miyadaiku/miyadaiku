@@ -56,5 +56,6 @@ def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None) -> 
             return repl(m[1])
         else:
             return m[1]
+
     text = re.sub(r":jinja:`(.*?(?<!\\))`", sub_jinja, text, flags=re.DOTALL)
     return text

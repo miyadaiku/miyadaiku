@@ -10,14 +10,6 @@ def test_hook(siteroot: SiteRoot) -> None:
         """
 from miyadaiku.extend import *
 
-@started
-def start():
-    start.called = 1
-
-@started
-def start2():
-    start2.called = 1
-
 
 @finished
 def fin(site):
@@ -37,11 +29,7 @@ def initialized(site):
 
     extend.load_hook(siteroot.path)
     site = siteroot.load({}, {})
-    extend.run_start()
     extend.run_finished(site)
-
-    assert len(extend.hooks_started) == 2
-    assert [1, 1] == [f.called for f in extend.hooks_started]  # type: ignore
 
     assert len(extend.hooks_finished) == 2
     assert [1, 1] == [

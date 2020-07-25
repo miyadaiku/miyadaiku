@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 HOOKS = enum.Enum(
     "HOOKS",
     (
-        "start",
         "initialized",
         "pre_load",
         "post_load",
@@ -38,7 +37,6 @@ HOOKS = enum.Enum(
 
 
 def load_hook(path: Path) -> None:
-    hooks_started.clear()
     hooks_initialized.clear()
     hooks_pre_load.clear()
     hooks_post_load.clear()
@@ -51,22 +49,6 @@ def load_hook(path: Path) -> None:
     hook = (path / "hooks.py").resolve()
     if hook.exists():
         runpy.run_path(str(hook))
-
-
-if TYPE_CHECKING:
-    HOOK_START = Callable[[], None]
-
-hooks_started: List[HOOK_START] = []
-
-
-def started(f: HOOK_START) -> HOOK_START:
-    hooks_started.append(f)
-    return f
-
-
-def run_start() -> None:
-    for hook in hooks_started:
-        hook()
 
 
 if TYPE_CHECKING:
