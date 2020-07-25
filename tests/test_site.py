@@ -17,7 +17,7 @@ generate_metadata_file: true
         {"themes": ["package3"], "root_prop": "root_prop_value"}, {"prop": "prop_value"}
     )
 
-    assert not (siteroot.contents / "root1.txt.props.yml").exists()
+    assert (siteroot.contents / "root1.txt.props.yml").exists()
     assert (siteroot.contents / "root2.rst.props.yml").exists()
 
     assert len(site.files._contentfiles) == 6

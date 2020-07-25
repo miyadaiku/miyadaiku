@@ -165,6 +165,12 @@ def ipynbloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     return ipynb.load(src)
 
 
+def txtloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
+    from . import text
+
+    return text.load(src)
+
+
 FILELOADERS = {
     ".rst": rstloader,
     ".rest": rstloader,
@@ -175,6 +181,7 @@ FILELOADERS = {
     ".yml": yamlloader,
     ".yaml": yamlloader,
     ".ipynb": ipynbloader,
+    ".txt": txtloader,
 }
 
 

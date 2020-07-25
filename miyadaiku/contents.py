@@ -23,7 +23,7 @@ class Content:
     use_abs_path = False
 
     src: ContentSrc
-    _body: Optional[bytes]
+    body: Optional[bytes]
 
     def __init__(self, src: ContentSrc, body: Optional[bytes]) -> None:
         self.src = src
@@ -36,7 +36,27 @@ class Content:
         return repr(self)
 
     def generate_metadata_file(self, site: site.Site) -> None:
-        pass
+        if not self.get_metadata(site, "generate_metadata_file"):
+            return
+
+        if self.src.is_package():
+            return
+        if not self.src.srcpath:
+            return
+
+        dir, fname = os.path.split(self.src.srcpath)
+        metafilename = Path(dir) / (fname + METADATA_FILE_SUFFIX)
+        if metafilename.exists():
+            return
+        tz = self.get_metadata(site, "tzinfo")
+        date = tz.localize(datetime.datetime.now()).replace(microsecond=0)
+        datestr = date.isoformat(timespec="seconds")
+        yaml = f"""
+date: {datestr}
+"""
+        metafilename.write_text(yaml, "utf-8")
+
+        self.src.metadata["date"] = datestr
 
     def get_body(self) -> bytes:
         if self.body is None:
@@ -324,29 +344,6 @@ class HTMLContent(Content):
             return cast(str, ext)
 
         return ".html"
-
-    def generate_metadata_file(self, site: site.Site) -> None:
-        if not self.get_metadata(site, "generate_metadata_file"):
-            return
-
-        if self.src.is_package():
-            return
-        if not self.src.srcpath:
-            return
-
-        dir, fname = os.path.split(self.src.srcpath)
-        metafilename = Path(dir) / (fname + METADATA_FILE_SUFFIX)
-        if metafilename.exists():
-            return
-        tz = self.get_metadata(site, "tzinfo")
-        date = tz.localize(datetime.datetime.now()).replace(microsecond=0)
-        datestr = date.isoformat(timespec="seconds")
-        yaml = f"""
-date: {datestr}
-"""
-        metafilename.write_text(yaml, "utf-8")
-
-        self.src.metadata["date"] = datestr
 
     def _generate_html(self, ctx: context.OutputContext) -> str:
         src = self.body or b""

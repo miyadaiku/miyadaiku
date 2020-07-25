@@ -46,6 +46,8 @@ History
 1.13.0
 ~~~~~~~~~~~~
 
+- Support .txt file type.
+
 - Wrong tzinfo was picked to apply default timezone.
 
 - File name with extension '.j2' is treated as HTML.

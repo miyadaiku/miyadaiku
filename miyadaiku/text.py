@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Tuple
 import re
+import os
 from collections import OrderedDict
 
 import markdown
@@ -42,7 +43,17 @@ class JinjaPreprocessor(preprocessors.Preprocessor):  # type: ignore
             self.md.meta[name] = value
 
         text = "\n".join(lines[n:])
-        text = parsesrc.replace_jinjatag(text, self.md.htmlStash2.store)
+        while True:
+            m = re.search(r"(\\)?:jinja:`(.*?(?<!\\))`", text, re.DOTALL)
+            if not m:
+                break
+            if m[1]:
+                # escaped
+                placeholder = self.md.htmlStash2.store(m[0])
+            else:
+                placeholder = self.md.htmlStash2.store(m[2])
+
+            text = "%s%s%s" % (text[: m.start()], placeholder, text[m.end(0) :])
 
         return text.split("\n")
 
@@ -90,30 +101,21 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
 
     ret = []
     srces = parsesrc.splitsrc(src, s)
-    for f, txt in srces:
-        meta, html = _load_string(txt)
-        f.metadata.update(meta)
-        ret.append((f, html))
+    for src, txt in srces:
+        meta, html = _load_string(src, txt)
+        src.metadata.update(meta)
+        ret.append((src, html))
 
     return ret
 
 
-def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
+def _load_string(src: ContentSrc, string: str) -> Tuple[Dict[str, Any], str]:
+    ext = os.path.splitext(src.contentpath[1])[1]
+    meta = {"type": "article", "has_jinja": True, "ext": ext, "article_template":"plain.txt"}
+    filemeta, string = parsesrc.split_yaml(string, sep="---")
+    meta.update(filemeta)
 
-    extensions = [
-        markdown.extensions.codehilite.CodeHiliteExtension(
-            css_class="highlight", guess_lang=False
-        ),
-        "markdown.extensions.extra",
-        Ext(),
-    ]
+    if meta["has_jinja"]:
+        string = parsesrc.replace_jinjatag(string)
 
-    md = markdown.Markdown(extensions=extensions)
-    md.postprocessors.register(JinjaPostprocessor(md), "jinja_raw_html", 0)
-    md.meta = {"type": "article", "has_jinja": True}
-
-    meta, string = parsesrc.split_yaml(string, sep="---")
-    md.meta.update(meta)
-
-    html = md.convert(string)
-    return md.meta, html
+    return meta, string

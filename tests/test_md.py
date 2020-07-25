@@ -48,14 +48,13 @@ def}}"""
 
 
 def test_esc(sitedir: Path) -> None:
-    (sitedir / "a.md").write_text(
-        """
-:jinja:`{{abcdef}}`
-"""
-    )
+    (sitedir / "a.md").write_text(r"""
+:jinja:`{{abcdef\`}}`
+""")
+
     ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
     print(text)
-    assert text == "{{abcdef}}"
+    assert text == "{{abcdef\\`}}"
 
 
 def test_fence1(sitedir: Path) -> None:

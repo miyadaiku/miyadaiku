@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Callable, Match, Optional
 import yaml
 import re
 import logging
@@ -48,3 +48,13 @@ def split_yaml(s: str, sep: str) -> Tuple[Dict[Any, Any], str]:
             return d, "\n".join(lines[n + 1 :])
 
     return {}, s
+
+
+def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None) -> str:
+    def sub_jinja(m: Match[str]) -> str:
+        if repl:
+            return repl(m[1])
+        else:
+            return m[1]
+    text = re.sub(r":jinja:`(.*?(?<!\\))`", sub_jinja, text, flags=re.DOTALL)
+    return text
