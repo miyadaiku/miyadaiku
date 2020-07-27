@@ -43,6 +43,12 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.14.0
+~~~~~~~~~~~~
+
+- Escape \\:jinja:`` in markdown.
+
+
 1.13.0
 ~~~~~~~~~~~~
 
