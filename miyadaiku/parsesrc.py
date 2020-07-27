@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, Callable, Match, Optional
+from typing import Any, Dict, List, Tuple, Callable, Optional
 import yaml
 import re
 import logging
@@ -50,18 +50,17 @@ def split_yaml(s: str, sep: str) -> Tuple[Dict[Any, Any], str]:
     return {}, s
 
 
-def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None) -> str:
-    pos = 0
-    ret = ''
+def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None,) -> str:
 
-    jinja = re.compile(r"(\\)?:jinja:`")
-    tail = re.compile(r"(?<!\\)`")
+    re_start = re.compile(r"(\\)?:jinja:`")
+    re_end = re.compile(r"\\|`")
+
+    pos = 0
+    ret = ""
 
     while True:
-#        breakpoint()
-#        print(pos)
         # find :jinja:`
-        m = jinja.search(text, pos)
+        m = re_start.search(text, pos)
         if not m:
             break
 
@@ -69,40 +68,37 @@ def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None) -> 
         ret += text[pos:start]
 
         if m[1]:
-            # skip \\
-            ret += text[start+1:start+2]
-            pos = start+2
+            # skip \:jinja:
+            ret += text[start + 1 : start + 2]
+            pos = start + 2
             continue
 
-        # find `
-        m = tail.search(text, end)
-        if not m:
-            break
+        expr = ""
+        pos = end
+        while True:
+            # find `
+            m = re_end.search(text, pos)
+            if not m:
+                ret += text[start:]
+                pos = len(text)
+                break
 
-        expr_start, expr_end = m.span()
-        expr = text[end:expr_start]
+            expr_start, expr_end = m.span()
+            expr += text[pos:expr_start]
 
-        if repl:
-            expr = repl(expr)
-    
-        ret += expr
-        pos = expr_end
+            if m[0] == "\\":
+                expr += text[expr_start + 1 : expr_end + 1]
+                pos = expr_end + 1
+                continue
+            else:
+                # m[0] == '`'
+                if repl:
+                    expr = repl(expr)
+                ret += expr
+                pos = expr_end
+                break
 
     if pos != len(text):
         ret += text[pos:]
 
-
     return ret
-
-#    def sub_jinja(m: Match[str]) -> str:
-#        if m[1]:
-#            # escaped (e.g. \:jinja:``)
-#            return m[0][1:]
-#        s = m[2]
-#        if repl:
-#            return repl(s)
-#        else:
-#            return s
-
-#    text = re.sub(r"(\\)?:jinja:`(.*?(?<!\\))`", sub_jinja, text, flags=re.DOTALL)
-#    return text
