@@ -51,11 +51,58 @@ def split_yaml(s: str, sep: str) -> Tuple[Dict[Any, Any], str]:
 
 
 def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None) -> str:
-    def sub_jinja(m: Match[str]) -> str:
-        if repl:
-            return repl(m[1])
-        else:
-            return m[1]
+    pos = 0
+    ret = ''
 
-    text = re.sub(r":jinja:`(.*?(?<!\\))`", sub_jinja, text, flags=re.DOTALL)
-    return text
+    jinja = re.compile(r"(\\)?:jinja:`")
+    tail = re.compile(r"(?<!\\)`")
+
+    while True:
+#        breakpoint()
+#        print(pos)
+        # find :jinja:`
+        m = jinja.search(text, pos)
+        if not m:
+            break
+
+        start, end = m.span()
+        ret += text[pos:start]
+
+        if m[1]:
+            # skip \\
+            ret += text[start+1:start+2]
+            pos = start+2
+            continue
+
+        # find `
+        m = tail.search(text, end)
+        if not m:
+            break
+
+        expr_start, expr_end = m.span()
+        expr = text[end:expr_start]
+
+        if repl:
+            expr = repl(expr)
+    
+        ret += expr
+        pos = expr_end
+
+    if pos != len(text):
+        ret += text[pos:]
+
+
+    return ret
+
+#    def sub_jinja(m: Match[str]) -> str:
+#        if m[1]:
+#            # escaped (e.g. \:jinja:``)
+#            return m[0][1:]
+#        s = m[2]
+#        if repl:
+#            return repl(s)
+#        else:
+#            return s
+
+#    text = re.sub(r"(\\)?:jinja:`(.*?(?<!\\))`", sub_jinja, text, flags=re.DOTALL)
+#    return text

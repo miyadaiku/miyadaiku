@@ -47,6 +47,18 @@ def}}"""
     )
 
 
+def test_esc_head(sitedir: Path) -> None:
+    (sitedir / "a.md").write_text(
+        r"""
+\:jinja:`{{abcdef\`}}`
+"""
+    )
+
+    ((src, text),) = md.load(to_contentsrc(sitedir / "a.md"))
+    print(text)
+    assert text == '<p>:jinja:<code>&#123;&#123;abcdef\\</code>&#125;&#125;`</p>'
+
+
 def test_esc(sitedir: Path) -> None:
     (sitedir / "a.md").write_text(
         r"""
