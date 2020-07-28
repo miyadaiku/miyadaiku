@@ -167,8 +167,8 @@ div.output_area {
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  overflow-x: auto;
 }
-
 
 .rendered_html img, .rendered_html svg {
     max-width: 100%;
