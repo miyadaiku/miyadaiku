@@ -8,6 +8,7 @@ from miyadaiku import (
     CONFIG_FILE,
     MODULES_DIR,
     TEMPLATES_DIR,
+    CONTENTS_DIR,
     ContentPath,
     ContentSrc,
     DependsDict,
@@ -70,6 +71,10 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
 
     # check template directory
     if any(check_directory(site.root / TEMPLATES_DIR, mtime)):
+        return True, set(), {}
+
+    # check contents directory
+    if any(check_directory(site.root / CONTENTS_DIR , mtime)):
         return True, set(), {}
 
     # rebuild if contents are created or removed
