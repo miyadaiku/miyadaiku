@@ -136,7 +136,7 @@ def yamlloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, None]]:
     text = src.read_bytes()
     metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
     if not isinstance(metadata, (dict, list, tuple)):
-        logger.error(f"Error: {src.repr_filename()} is not valid YAML file." )
+        logger.error(f"Error: {src.repr_filename()} is not valid YAML file.")
 
     if "type" not in metadata:
         metadata["type"] = "config"

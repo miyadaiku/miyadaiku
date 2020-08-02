@@ -74,7 +74,7 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
         return True, set(), {}
 
     # check contents directory
-    if any(check_directory(site.root / CONTENTS_DIR , mtime)):
+    if any(check_directory(site.root / CONTENTS_DIR, mtime)):
         return True, set(), {}
 
     # rebuild if contents are created or removed

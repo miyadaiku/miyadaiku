@@ -80,6 +80,7 @@ def test_esc(sitedir: Path) -> None:
     print(text)
     assert text == r"{{\abcdef\\}}"
 
+
 def test_noclose(sitedir: Path) -> None:
     (sitedir / "a.md").write_text("""a :jinja:`{{abc}} b""")
 
