@@ -9,6 +9,7 @@ import time
 import multiprocessing
 import http.server
 import os
+import datetime
 
 import miyadaiku.site
 from . import observer
@@ -28,12 +29,18 @@ def exec_server(dir, bind, port):
 
 def build(path, outputdir, props, args):
     print(f"Building {path.resolve()} ...")
+    start = datetime.datetime.now()
 
     site = miyadaiku.site.Site(rebuild=args.rebuild, debug=args.debug)
     site.load(path, props, outputdir)
     ok, err, *_ = site.build()
 
-    msg = f"Build finished... Built {ok} files. {err} error found.\n"
+    finished = datetime.datetime.now()
+    secs = (finished - start).total_seconds()
+    msg = f"""Build finished at {finished}(ellapsed: {secs} secs)
+Built {ok} files. {err} error found.
+"""
+
     if err:
         mp_log.Color.RED.value + msg + mp_log.Color.RESET.value
     print(msg)
