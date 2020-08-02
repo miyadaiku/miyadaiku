@@ -112,6 +112,19 @@ def test_rebuild(siteroot: SiteRoot) -> None:
     assert rebuild is True
 
 
+def test_yaml(siteroot: SiteRoot) -> None:
+    siteroot.write_text(siteroot.contents / "file1.rst", "")
+
+    site = siteroot.load({}, {})
+    ok, err, deps, errors = site.build()
+    depends.save_deps(site, deps, errors)
+
+    siteroot.write_text(siteroot.contents / "file2.yml", "")
+
+    rebuild, updated, depdict = depends.check_depends(site)
+    assert rebuild is True
+
+
 def test_metadata(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "file1.rst", "")
     siteroot.write_text(siteroot.contents / "file2.rst", "")

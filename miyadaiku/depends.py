@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from typing import Dict, Iterator, Sequence, Set, TYPE_CHECKING, Tuple
+from typing import (
+    Dict,
+    Iterator,
+    Sequence,
+    Set,
+    TYPE_CHECKING,
+    Tuple,
+    Optional,
+    Callable,
+)
 import os
 import pickle
 from pathlib import Path
@@ -27,7 +36,9 @@ def is_newer(path: Path, mtime: float) -> bool:
     return path.stat().st_mtime > mtime
 
 
-def check_directory(path: Path, mtime: float) -> Iterator[Path]:
+def check_directory(
+    path: Path, mtime: float, pred: Optional[Callable[[Path], bool]] = None
+) -> Iterator[Path]:
     if not path.exists():
         return
 
@@ -35,6 +46,8 @@ def check_directory(path: Path, mtime: float) -> Iterator[Path]:
         rootpath = Path(root)
         for file in files:
             srcfile = rootpath / file
+            if pred and not pred(srcfile):
+                continue
             if is_newer(srcfile, mtime):
                 yield srcfile
 
@@ -73,8 +86,11 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
     if any(check_directory(site.root / TEMPLATES_DIR, mtime)):
         return True, set(), {}
 
+    def is_yaml(filename: Path) -> bool:
+        return filename.suffix in (".yml", ".yaml")
+
     # check contents directory
-    if any(check_directory(site.root / CONTENTS_DIR, mtime)):
+    if any(check_directory(site.root / CONTENTS_DIR, mtime, is_yaml)):
         return True, set(), {}
 
     # rebuild if contents are created or removed
@@ -151,14 +167,6 @@ def update_deps(
 
 
 def save_deps(site: site.Site, depsdict: DependsDict, errors: Set[ContentPath]) -> None:
-
-    #    for contentpath, content in site.files.items():
-    #        result[contentpath] = (content.src, set())
-    #
-    #    for contentsrc, depends in deps:
-    #        for dep_contentpath in depends:
-    #            if dep_contentpath in result:
-    #                result[dep_contentpath][1].add(contentsrc.contentpath)
 
     with open(site.root / DEP_FILE, "wb") as f:
         pickle.dump((site.files.mtime, DEP_VER, depsdict, errors), f)
