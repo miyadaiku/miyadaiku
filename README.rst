@@ -46,7 +46,11 @@ History
 1.14.0
 ~~~~~~~~~~~~
 
-- Escape \\:jinja:`` in markdown.
+- Update samile contents created by miyadaiku-start command.
+
+- Rebuild if YAML files in the project contents directory are updated.
+
+- Escape :jinja:`` notation in markdown.
 
 
 1.13.0
