@@ -103,7 +103,7 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
     if not path.endswith("/"):
         path = path + "/"
 
-    packagepath = importlib_resources.files(package)
+    packagepath = importlib_resources.files(package)  # type: ignore
     root = packagepath / path
     if not root.is_dir():
         return

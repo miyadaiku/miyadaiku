@@ -20,7 +20,8 @@ def load_package(site: site.Site) -> None:
         site.config.add("/", {"pygments_css_path": css_path})
 
         src_path = "externals/" + cssname
-        csscontent = importlib_resources.files(__name__).joinpath(src_path).read_bytes()
+        path = importlib_resources.files(__name__).joinpath(src_path)  # type: ignore
+        csscontent = path.read_bytes()
         site.files.add_bytes("binary", css_path, csscontent)
     else:
         stylename = site.config.get("/", "pygments_style")

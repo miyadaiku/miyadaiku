@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Tuple, NamedTuple, Any, Optional, Union, cast, Set
+from typing import Dict, Tuple, NamedTuple, Any, Optional, Union, Set
 import posixpath
 import copy
 import importlib_resources
@@ -69,24 +69,18 @@ class ContentSrc(NamedTuple):
 
     def read_text(self, encoding: str = "utf-8") -> str:
         if self.package and self.srcpath:
-            return cast(
-                str,
-                importlib_resources.files(self.package)
-                .joinpath(self.srcpath)
-                .read_text(),
-            )
+            path = importlib_resources.files(self.package).joinpath(self.srcpath)  # type: ignore
+            text: str = path.read_text()
+            return text
         else:
             assert self.srcpath
             return open(self.srcpath).read()
 
     def read_bytes(self) -> bytes:
         if self.package and self.srcpath:
-            return cast(
-                bytes,
-                importlib_resources.files(self.package)
-                .joinpath(self.srcpath)
-                .read_bytes(),
-            )
+            path = importlib_resources.files(self.package).joinpath(self.srcpath)  # type: ignore
+            ret: bytes = path.read_bytes()
+            return ret
         else:
             assert self.srcpath
             return open(self.srcpath, "rb").read()

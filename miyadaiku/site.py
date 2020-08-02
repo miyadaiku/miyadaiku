@@ -72,11 +72,8 @@ class Site:
     def _load_themes(self) -> None:
         def _load_theme_config(package: str) -> Dict[str, Any]:
             try:
-                s = (
-                    importlib_resources.files(package)
-                    .joinpath(miyadaiku.CONFIG_FILE)
-                    .read_bytes()
-                )
+                path = importlib_resources.files(package).joinpath(miyadaiku.CONFIG_FILE)  # type: ignore
+                s = path.read_bytes()
             except FileNotFoundError:
                 cfg = {}
             else:
