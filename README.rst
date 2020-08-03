@@ -46,7 +46,7 @@ History
 1.14.0
 ~~~~~~~~~~~~
 
-- Add ``directories`` property to index object.
+- Add ``directories`` property to index and feed.
 
 - Update samile contents created by miyadaiku-start command.
 

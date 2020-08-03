@@ -1,3 +1,4 @@
+from typing import cast
 from conftest import SiteRoot
 import datetime
 import xml.etree.ElementTree as ET
@@ -69,3 +70,43 @@ excludes:
 
     entries = root.findall("./{http://www.w3.org/2005/Atom}entry")
     assert len(entries) == 10
+
+
+def test_feed_dir(siteroot: SiteRoot) -> None:
+    d = datetime.datetime(2020, 1, 1)
+    siteroot.write_text(
+        siteroot.contents / 'dir1' / f"doc1.html",
+            f"""---
+date: {d.ctime()}
+---
+body
+""")
+
+    siteroot.write_text(
+        siteroot.contents / 'dir2' / f"doc2.html",
+            f"""---
+date: {d.ctime()}
+---
+body
+""")
+
+    siteroot.write_text(
+        siteroot.contents / "feed.yml",
+        """
+type: feed
+directories:
+   - dir1
+""")
+
+    site = siteroot.load({}, {})
+    site.build()
+
+    src = (site.root / "outputs/feed.xml").read_text()
+    root = ET.fromstring(src)
+
+    entries = root.findall("./{http://www.w3.org/2005/Atom}entry")
+    assert len(entries) == 1
+
+    link = entries[0].find('{http://www.w3.org/2005/Atom}link')
+    assert link
+    assert '/dir1/doc1.html' in cast(str, link.get('href'))

@@ -755,10 +755,18 @@ class FeedOutput(OutputContext):
 
         excludes = self.content.get_metadata(self.site, "excludes", {}).copy()
 
+        dirnames = self.content.get_metadata(self.site, "directories", [])
+        if dirnames:
+            dirs: Optional[List[PathTuple]] = [
+                parse_dir(d, self.content.src.contentpath[0]) for d in dirnames
+            ]
+        else:
+            dirs = None
+
         contents = [
             c
             for c in self.site.files.get_contents(
-                self.site, filters=filters, excludes=excludes
+                self.site, filters=filters, excludes=excludes, subdirs=dirs,
             )
         ][:num_articles]
 
