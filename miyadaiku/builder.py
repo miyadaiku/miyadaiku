@@ -11,6 +11,7 @@ from typing import (
     Union,
     Tuple,
     Set,
+    Optional,
 )
 import multiprocessing
 import pickle
@@ -23,7 +24,14 @@ import traceback
 
 from jinja2 import Environment
 
-from miyadaiku import ContentPath, PathTuple, ContentSrc, repr_contentpath, DependsDict
+from miyadaiku import (
+    ContentPath,
+    PathTuple,
+    ContentSrc,
+    repr_contentpath,
+    DependsDict,
+    parse_dir,
+)
 
 from . import context, mp_log, depends, extend
 
@@ -94,8 +102,13 @@ class IndexBuilder(Builder):
 
         excludes = content.get_metadata(site, "excludes", {}).copy()
 
-        dirname = content.get_metadata(site, "directory", "")
-        dir = dirname_to_tuple(dirname)
+        dirnames = content.get_metadata(site, "directories", [])
+        if dirnames:
+            dirs: Optional[List[PathTuple]] = [
+                parse_dir(d, content.src.contentpath[0]) for d in dirnames
+            ]
+        else:
+            dirs = None
 
         groupby = content.get_metadata(site, "groupby", None)
         groups = site.files.group_items(
@@ -103,7 +116,7 @@ class IndexBuilder(Builder):
             groupby,
             filters=filters,
             excludes=excludes,
-            subdirs=[dir],
+            subdirs=dirs,
             recurse=True,
         )
 

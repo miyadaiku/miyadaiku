@@ -18,20 +18,19 @@ DEFAULTS = dict(
     site_url="http://localhost:8888",
     site_title="(FIXME-site_title)",
     canonical_url=None,
-    filename_templ="{{content.stem | safepath}}{{content.ext | safepath}}",
+    filename_templ="{{content.stem }}{{content.ext }}",
     article_template="page_article.html",
     abstract_length=256,
     use_abs_path=False,
     indexpage_template="page_index.html",
     indexpage_template2="page_index.html",
     indexpage_filename_templ="{{content.stem}}.html",
-    indexpage_filename_templ2="{{content.stem | safepath}}_{{cur_page | safepath}}.html",
+    indexpage_filename_templ2="{{content.stem }}_{{cur_page }}.html",
     indexpage_group_filename_templ=(
-        "{{content.stem | safepath}}_{{content.groupby | safepath}}_{{group_value | safepath}}.html"
+        "{{content.stem }}_{{content.groupby }}_{{group_value }}.html"
     ),
     indexpage_group_filename_templ2=(
-        "{{content.stem | safepath}}_{{content.groupby | safepath}}_"
-        "{{group_value | safepath}}_{{cur_page | safepath}}.html"
+        "{{content.stem }}_{{content.groupby }}_" "{{group_value }}_{{cur_page }}.html"
     ),
     indexpage_max_num_pages=0,
     indexpage_max_articles=5,

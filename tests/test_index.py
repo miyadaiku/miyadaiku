@@ -163,3 +163,79 @@ groupby: tags
     assert (
         '<a href="index.html">index</a>' in (siteroot.outputs / "doc1.html").read_text()
     )
+
+
+def test_index_directory(siteroot: SiteRoot) -> None:
+    siteroot.write_text(siteroot.contents / "doc1.html", "")
+    siteroot.write_text(siteroot.contents / "subdir1" / "doc11.html", "")
+    siteroot.write_text(siteroot.contents / "subdir1" / "subdir12" / "doc121.html", "")
+    siteroot.write_text(siteroot.contents / "subdir2" / "doc21.html", "")
+
+    siteroot.write_text(
+        siteroot.contents / "index.yml",
+        """
+type: index
+directories:
+    - /
+""",
+    )
+
+    site = siteroot.load({}, {})
+    site.build()
+    index = (siteroot.outputs / "index.html").read_text()
+    assert 'href="doc1.html"' in index
+    assert 'href="subdir1/doc11.html"' in index
+    assert 'href="subdir1/subdir12/doc121.html"' in index
+    assert 'href="subdir2/doc21.html"' in index
+
+    siteroot.write_text(
+        siteroot.contents / "index.yml",
+        """
+type: index
+directories:
+    - /subdir1
+""",
+    )
+
+    site = siteroot.load({}, {})
+    site.build()
+    index = (siteroot.outputs / "index.html").read_text()
+    assert 'href="doc1.html"' not in index
+    assert 'href="subdir1/doc11.html"' in index
+    assert 'href="subdir1/subdir12/doc121.html"' in index
+    assert 'href="subdir2/doc21.html"' not in index
+
+    siteroot.write_text(
+        siteroot.contents / "index.yml",
+        """
+type: index
+directories:
+    - /subdir1
+    - /subdir2
+""",
+    )
+
+    site = siteroot.load({}, {})
+    site.build()
+    index = (siteroot.outputs / "index.html").read_text()
+    assert 'href="doc1.html"' not in index
+    assert 'href="subdir1/doc11.html"' in index
+    assert 'href="subdir1/subdir12/doc121.html"' in index
+    assert 'href="subdir2/doc21.html"' in index
+
+    siteroot.write_text(
+        siteroot.contents / "subdir1" / "index.yml",
+        """
+type: index
+directories:
+    - subdir12
+""",
+    )
+
+    site = siteroot.load({}, {})
+    site.build()
+    index = (siteroot.outputs / "subdir1" / "index.html").read_text()
+    assert "doc1.html" not in index
+    assert "doc11.html" not in index
+    assert "subdir12/doc121.html" in index
+    assert "doc21" not in index

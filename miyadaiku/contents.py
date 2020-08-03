@@ -17,6 +17,7 @@ from . import site
 from . import config
 from . import context
 from . import extend
+from .jinjaenv import safepath
 
 
 class Content:
@@ -181,7 +182,7 @@ date: {datestr}
 
         args = self.get_jinja_vars(ctx)
         ret = context.eval_jinja(ctx, self, "filename", filename_templ, args)
-        return ret
+        return safepath(ret)
 
     def _pagearg_to_tuple(self, pageargs: Dict[Any, Any]) -> Tuple[Any, ...]:
         return ()
@@ -621,7 +622,7 @@ class IndexPage(Content):
 
         ret = context.eval_jinja(ctx, self, "filename", filename_templ, args)
 
-        return ret
+        return safepath(ret)
 
 
 class FeedPage(Content):
