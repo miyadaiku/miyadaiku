@@ -52,7 +52,7 @@ def split_yaml(s: str, sep: str) -> Tuple[Dict[Any, Any], str]:
 
 def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None,) -> str:
 
-    re_start = re.compile(r"(\\)?:jinja:(`)?")
+    re_start = re.compile(r"(\\)?:jinja:`")
     re_end = re.compile(r"\\|`")
 
     pos = 0
@@ -67,11 +67,12 @@ def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None,) ->
         start, end = m.span()
         ret += text[pos:start]
 
-        if m[1] or (not m[2]):
+        if m[1]:
             # skip \:jinja:
-            ret += text[start + 1 : start + 2]
-            pos = start + 2
+            ret += text[start + 1 : end]
+            pos = end
             continue
+
 
         expr = ""
         pos = end

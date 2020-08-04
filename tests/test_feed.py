@@ -108,5 +108,4 @@ directories:
     assert len(entries) == 1
 
     link = entries[0].find('{http://www.w3.org/2005/Atom}link')
-    assert link
     assert '/dir1/doc1.html' in cast(str, link.get('href'))
