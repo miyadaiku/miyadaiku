@@ -104,8 +104,7 @@ def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
         markdown.extensions.codehilite.CodeHiliteExtension(
             css_class="highlight", guess_lang=False
         ),
-        "markdown.extensions.extra",
-        "nl2br",
+        "extra",
         "sane_lists",
         Ext(),
     ]

@@ -306,8 +306,10 @@ class ContentsProxy:
     def __getitem__(self, key: str) -> Any:
         return self.get_content(key)
 
-    def get_content(self, path: str) -> ContentProxy:
-        contentpath = parse_path(path, self.content.src.contentpath[0])
+    def get_content(self, path: str, base:Any=None) -> ContentProxy:
+        if not base:
+            base = self.content
+        contentpath = parse_path(path, base.src.contentpath[0])
 
         content = self.context.site.files.get_content(contentpath)
         return ContentProxy(self.context, content)
@@ -316,16 +318,21 @@ class ContentsProxy:
         self,
         subdirs: Optional[Sequence[str]] = None,
         recurse: bool = True,
+        base:Any = None,
         filters: Optional[Dict[str, Any]] = None,
+        excludes: Optional[Dict[str, Any]] = None,
     ) -> Sequence[ContentProxy]:
         subdirs_path = None
+        if not base:
+            base = self.content
         if subdirs:
             subdirs_path = [
-                parse_dir(path, self.content.src.contentpath[0]) for path in subdirs
+                parse_dir(path, base.src.contentpath[0]) for path in subdirs
             ]
+            print(subdirs_path)
 
         ret = self.context.site.files.get_contents(
-            self.context.site, filters=filters, subdirs=subdirs_path, recurse=recurse
+            self.context.site, filters=filters, subdirs=subdirs_path, recurse=recurse, excludes=excludes
         )
         return [ContentProxy(self.context, content) for content in ret]
 
@@ -335,6 +342,7 @@ class ContentsProxy:
         subdirs: Optional[Sequence[str]] = None,
         recurse: bool = True,
         filters: Optional[Dict[str, Any]] = None,
+        excludes: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Tuple[str, ...], List[ContentProxy]]]:
         subdirs_path = None
         if subdirs:
@@ -346,6 +354,7 @@ class ContentsProxy:
             self.context.site,
             group,
             filters=filters,
+            excludes=excludes,
             subdirs=subdirs_path,
             recurse=recurse,
         )

@@ -142,6 +142,9 @@ def parse_path(path: str, cwd: PathTuple) -> ContentPath:
 
 
 def parse_dir(path: str, cwd: PathTuple) -> PathTuple:
+    if isinstance(path, tuple):
+        return path
+
     path = to_posixpath(path)
 
     if not path.startswith("/"):
