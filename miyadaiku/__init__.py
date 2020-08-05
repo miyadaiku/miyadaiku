@@ -6,7 +6,7 @@ import copy
 import importlib_resources
 import tzlocal
 
-__version__ = "1.14.dev2"
+__version__ = "1.14.0"
 
 YAML_ENCODING = "utf-8"
 
