@@ -596,7 +596,7 @@ class IndexPage(Content):
         groupby = self.get_metadata(ctx.site, "groupby", None)
         group_value = pageargs.get("group_value", None)
 
-        if groupby and group_value:
+        if groupby:
             if (not curpage) or (curpage == 1):
                 filename_templ = self.get_metadata(
                     ctx.site, "indexpage_group_filename_templ"
