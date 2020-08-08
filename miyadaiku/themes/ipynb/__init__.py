@@ -6,6 +6,7 @@ from miyadaiku import site
 
 EMPTY_IPYNB = "empty.ipynb"
 
+
 def _build_head() -> str:
     from nbconvert.exporters import HTMLExporter
     import nbformat

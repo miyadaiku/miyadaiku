@@ -152,11 +152,10 @@ tags: tag1, tag2
     for i in range(21):
         siteroot.write_text(
             siteroot.contents / f"htmldir/{i}.html",
-            f"""
+            """
 tags: tag1
 """,
         )
-
 
     siteroot.write_text(
         siteroot.contents / "index.yml",
@@ -170,11 +169,13 @@ indexpage_max_articles: 2
     site = siteroot.load({}, {})
     site.build()
     assert (
-        '<a href="index_tags_tag1.html">index</a>' in (siteroot.outputs / "doc1.html").read_text()
+        '<a href="index_tags_tag1.html">index</a>'
+        in (siteroot.outputs / "doc1.html").read_text()
     )
 
     assert len(list(siteroot.outputs.glob("index_tags_tag1*"))) == 11
     assert len(list(siteroot.outputs.glob("index_tags_tag2*"))) == 1
+
 
 def test_index_directory(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "doc1.html", "")

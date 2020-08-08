@@ -289,7 +289,7 @@ date: {datestr}
         if fallback != "filename":
             abstract_len = self.get_metadata(context.site, "title_abstract_len")
             title = self.build_abstract(context, abstract_len, plain=True)
-            title = title.replace("\xb6", "").strip() # remove ¶ 'Paragraph symbol'
+            title = title.replace("\xb6", "").strip()  # remove ¶ 'Paragraph symbol'
             if title:
                 return str(title)
 
@@ -331,11 +331,11 @@ date: {datestr}
             modulename = PurePosixPath(fname).stem
             ret[modulename] = template.module
 
+        ret["context"] = ctx
         ret["page"] = context.ContentProxy(
             ctx, ctx.site.files.get_content(ctx.contentpath)
         )
         ret["content"] = context.ContentProxy(ctx, self)
-
         ret["contents"] = context.ContentsProxy(ctx, self)
         ret["config"] = context.ConfigProxy(ctx, self)
 
@@ -382,7 +382,7 @@ class HTMLContent(Content):
             elif re.match(r"h\d", c.name or ""):
                 contents = " ".join(c.text.split() or [""])
                 contents = contents.strip("\xb6 \t\r\n")  # remove ¶ 'Paragraph symbol'
-                
+
                 if target_id:
                     targets[-1] = context.HTMLIDInfo(target_id, c.name, contents)
                     target_id = None
@@ -595,7 +595,6 @@ class IndexPage(Content):
 
         curpage = pageargs.get("cur_page", None)
         groupby = self.get_metadata(ctx.site, "groupby", None)
-        group_value = pageargs.get("group_value", None)
 
         if groupby:
             if (not curpage) or (curpage == 1):

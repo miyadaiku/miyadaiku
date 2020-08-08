@@ -116,7 +116,12 @@ class ContentProxy:
 
     @safe_prop
     def url(self) -> str:
-        return self.content.build_url(self.context, {})
+        # TODO: should be deprecated
+        if self.is_same(self.context):
+            pageargs = self.context._build_pagearg()
+        else:
+            pageargs = {}
+        return self.content.build_url(self.context, pageargs)
 
     @safe_prop
     def output_path(self) -> str:
@@ -130,9 +135,9 @@ class ContentProxy:
     def header_anchors(self) -> List[HTMLIDInfo]:
         return self.content.get_header_anchors(self.context)
 
-    def build_title(self, fallback:str='')->str:
+    def build_title(self, fallback: str = "") -> str:
         return self.content.build_title(self.context, fallback)
-        
+
     def fragments(self, ctx: OutputContext) -> List[HTMLIDInfo]:
         return self.content.get_fragments(self.context)
 
@@ -309,7 +314,7 @@ class ContentsProxy:
     def __getitem__(self, key: str) -> Any:
         return self.get_content(key)
 
-    def get_content(self, path: str, base:Any=None) -> ContentProxy:
+    def get_content(self, path: str, base: Any = None) -> ContentProxy:
         if not base:
             base = self.content
         contentpath = parse_path(path, base.src.contentpath[0])
@@ -321,7 +326,7 @@ class ContentsProxy:
         self,
         subdirs: Optional[Sequence[str]] = None,
         recurse: bool = True,
-        base:Any = None,
+        base: Any = None,
         filters: Optional[Dict[str, Any]] = None,
         excludes: Optional[Dict[str, Any]] = None,
     ) -> Sequence[ContentProxy]:
@@ -335,7 +340,11 @@ class ContentsProxy:
             print(subdirs_path)
 
         ret = self.context.site.files.get_contents(
-            self.context.site, filters=filters, subdirs=subdirs_path, recurse=recurse, excludes=excludes
+            self.context.site,
+            filters=filters,
+            subdirs=subdirs_path,
+            recurse=recurse,
+            excludes=excludes,
         )
         return [ContentProxy(self.context, content) for content in ret]
 
@@ -676,7 +685,8 @@ class JinjaOutput(OutputContext):
 
     def build(self) -> Sequence[Path]:
         templatename = self.content.get_metadata(self.site, "article_template")
-        output = eval_jinja_template(self, self.content, templatename, {})
+        pagearg = self._build_pagearg()
+        output = eval_jinja_template(self, self.content, templatename, pagearg)
 
         outfilename = self.get_outfilename({})
         outfilename.write_text(output)
@@ -708,7 +718,15 @@ class IndexOutput(OutputContext):
         self.num_pages = num_pages
 
     def _build_pagearg(self) -> Dict[Any, Any]:
-        return {"group_value": self.value, "cur_page": self.cur_page}
+        pagearg = {
+            "group_value": self.value,
+            "cur_page": self.cur_page,
+            "num_pages": self.num_pages,
+            "is_last": self.num_pages == self.cur_page,
+            "articles": [ContentProxy(self, item) for item in self.items],
+            "groupby": self.content.get_metadata(self.site, "groupby", None),
+        }
+        return pagearg
 
     def _get_templatename(self) -> str:
         if self.cur_page == 1:
@@ -721,14 +739,8 @@ class IndexOutput(OutputContext):
 
     def build(self) -> Sequence[Path]:
         templatename = self._get_templatename()
-        pagearg = {
-            "group_value": self.value,
-            "cur_page": self.cur_page,
-            "num_pages": self.num_pages,
-            "is_last": self.num_pages == self.cur_page,
-            "articles": [ContentProxy(self, item) for item in self.items],
-            "groupby": self.content.get_metadata(self.site, "groupby", None),
-        }
+
+        pagearg = self._build_pagearg()
         output = eval_jinja_template(self, self.content, templatename, pagearg)
 
         outfilename = self.get_outfilename(pagearg)

@@ -73,7 +73,6 @@ def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None,) ->
             pos = end
             continue
 
-
         expr = ""
         pos = end
         while True:
