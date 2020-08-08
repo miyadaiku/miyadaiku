@@ -262,7 +262,7 @@ date: {datestr}
 
         for elem in soup(re.compile(r"h\d")):
             text = elem.get_text(" ")
-            text = text.strip("\xb6")  # remove 'PILCROW SIGN'
+            text = text.strip("\xb6 \t\r\n")  # remove ¶ 'Paragraph symbol'
             text = " ".join(text.split())
             if text:
                 return str(text)
@@ -289,7 +289,7 @@ date: {datestr}
         if fallback != "filename":
             abstract_len = self.get_metadata(context.site, "title_abstract_len")
             title = self.build_abstract(context, abstract_len, plain=True)
-            title = title.replace("\xb6", "").strip()  # remove 'PILCROW SIGN'
+            title = title.replace("\xb6", "").strip() # remove ¶ 'Paragraph symbol'
             if title:
                 return str(title)
 
@@ -380,8 +380,9 @@ class HTMLContent(Content):
                     targets.append(context.HTMLIDInfo(target_id, "", ""))
 
             elif re.match(r"h\d", c.name or ""):
-                contents = c.text
-
+                contents = " ".join(c.text.split() or [""])
+                contents = contents.strip("\xb6 \t\r\n")  # remove ¶ 'Paragraph symbol'
+                
                 if target_id:
                     targets[-1] = context.HTMLIDInfo(target_id, c.name, contents)
                     target_id = None

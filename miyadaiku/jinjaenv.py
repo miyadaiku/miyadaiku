@@ -81,9 +81,11 @@ def create_env(
     env.globals["str"] = str
     env.globals["list"] = list
     env.globals["tuple"] = tuple
+    env.globals["dict"] = dict
 
     env.globals["site"] = site
 
+    env.globals["len"] = len
     env.globals["repr"] = repr
     env.globals["print"] = print
     env.globals["type"] = type

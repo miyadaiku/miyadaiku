@@ -130,6 +130,9 @@ class ContentProxy:
     def header_anchors(self) -> List[HTMLIDInfo]:
         return self.content.get_header_anchors(self.context)
 
+    def build_title(self, fallback:str='')->str:
+        return self.content.build_title(self.context, fallback)
+        
     def fragments(self, ctx: OutputContext) -> List[HTMLIDInfo]:
         return self.content.get_fragments(self.context)
 
