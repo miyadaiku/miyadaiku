@@ -67,7 +67,10 @@ groupby: tags
         (f,) = ctx.build()
         url = ctx.get_url()
         if ctx.cur_page == 1:
-            assert f'{ctx.content.get_metadata(ctx.site, "groupby")}_{ctx.value}.html' in url
+            assert (
+                f'{ctx.content.get_metadata(ctx.site, "groupby")}_{ctx.value}.html'
+                in url
+            )
         else:
             assert (
                 f'{ctx.content.get_metadata(ctx.site, "groupby")}_{ctx.value}_{ctx.cur_page}.html'

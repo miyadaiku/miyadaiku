@@ -358,7 +358,6 @@ class HTMLContent(Content):
         """
         1. Record ".header_target" elems.
         2. Set id to header elems.
-        3. Add div elem that wrap header elem.
         """
 
         ids: List[context.HTMLIDInfo] = []
@@ -387,35 +386,34 @@ class HTMLContent(Content):
                     targets[-1] = context.HTMLIDInfo(target_id, c.name, contents)
                     target_id = None
 
-                if c.parent:
-                    cls = c.parent.get("class", [])
-                    if "md_header_block" in cls:
-                        # Anchor is already inserted
-                        id = c.parent.get("id")
-                        headers.append(context.HTMLIDInfo(id, c.name, contents))
+                cls = c.get("class", [])
+                if "md_header_block" in cls:
+                    # Anchor is already inserted
+                    id = c.get("id")
+                    headers.append(context.HTMLIDInfo(id, c.name, contents))
 
-                        anchor_id = c.parent.a.get("id")
-                        header_anchors.append(
-                            context.HTMLIDInfo(anchor_id, c.name, contents)
-                        )
-                        continue
+                    header_anchors.append(context.HTMLIDInfo(id, c.name, contents))
+                    continue
 
-                slug = f"{repr_contentpath(self.src.contentpath)}_{c.text[:80]}_{nth}"
-                nth += 1
+                id = c.get("id", None)
+                if id is None:
+                    slug = (
+                        f"{repr_contentpath(self.src.contentpath)}_{c.text[:80]}_{nth}"
+                    )
+                    nth += 1
 
-                slug = unicodedata.normalize("NFKC", slug)
-                slug = re.sub(r"[^\w]+", "_", slug)
+                    slug = unicodedata.normalize("NFKC", slug)
+                    slug = re.sub(r"[^\w]+", "_", slug)
 
-                id = f"h_{slug}"
-                anchor_id = f"a_{slug}"
+                    id = f"h_{slug}"
+                    c["id"] = id
 
-                parent = soup.new_tag("div", id=id, **{"class": "md_header_block"})
-                a = soup.new_tag("a", id=anchor_id, **{"class": "md_header_anchor"})
-                parent.insert(0, a)
-                c.wrap(parent)
+                c["class"] = c.get("class", []) + ["md_header_block"]
 
                 headers.append(context.HTMLIDInfo(id, c.name, contents))
-                header_anchors.append(context.HTMLIDInfo(anchor_id, c.name, contents))
+                header_anchors.append(
+                    context.HTMLIDInfo(id, c.name, contents)
+                )  # header_anchors is deprecated
 
         ctx.set_cache("ids", self, ids)
         ctx.set_cache("targets", self, targets)

@@ -17,7 +17,6 @@ def test_load() -> None:
 
     ((src, text),) = ipynb.load(contentsrc)
     assert src.metadata["type"] == "article"
-    print(text)
 
 
 def test_package() -> None:

@@ -43,6 +43,12 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.16.0
+~~~~~~~~~~~~
+
+- Removed div and a elements around headers.
+
+
 1.15.0
 ~~~~~~~~~~~~
 

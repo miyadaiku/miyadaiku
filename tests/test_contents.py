@@ -243,8 +243,8 @@ imports: macro1.html, macro2.html
 
     proxy = context.ContentProxy(ctx, ctx.content)
     assert proxy.imports == ["macro1.html", "macro2.html"]
-    assert "<h1>header1-param: param</h1>" in proxy.html
-    assert "<h2>header2-macro2.macro2</h2>" in proxy.html
+    assert ">header1-param: param</h1>" in proxy.html
+    assert ">header2-macro2.macro2</h2>" in proxy.html
 
 
 def test_parent_dirs(siteroot: SiteRoot) -> None:
@@ -395,13 +395,8 @@ def test_headers(siteroot: SiteRoot) -> None:
 
     assert "[h_doc_html_text_1, h1, text]" in html
     assert "[h_doc_html_text_2, h1, text]" in html
-    assert "[a_doc_html_text_1, h1, text]" in html
-    assert "[a_doc_html_text_2, h1, text]" in html
 
     soup = BeautifulSoup(html, "html.parser")
 
     assert soup.select("#h_doc_html_text_1")[0].text == "text"
-    assert soup.select("#a_doc_html_text_1")[0].text == ""
-
     assert soup.select("#h_doc_html_text_2")[0].text == "text"
-    assert soup.select("#a_doc_html_text_2")[0].text == ""

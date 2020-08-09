@@ -556,7 +556,7 @@ class OutputContext:
         self._filename_cache = {}
         self._cache = defaultdict(dict)
 
-    def get_url(self)->str:
+    def get_url(self) -> str:
         pageargs = self._build_pagearg()
         return self.content.build_url(self, pageargs)
 
