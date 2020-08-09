@@ -43,6 +43,14 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.15.0
+~~~~~~~~~~~~
+
+- Add ``context.get_url()``.
+
+- Deprecate ``ContentPropxy.url`` property.
+
+
 1.14.0
 ~~~~~~~~~~~~
 
