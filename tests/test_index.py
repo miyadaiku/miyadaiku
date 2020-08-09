@@ -1,5 +1,5 @@
 from typing import cast, List
-from miyadaiku import builder
+from miyadaiku import builder, context
 from conftest import SiteRoot
 
 
@@ -62,7 +62,17 @@ groupby: tags
     jinjaenv = site.build_jinjaenv()
     for b in indexbuilders:
         ctx = b.build_context(site, jinjaenv)
+        assert isinstance(ctx, context.IndexOutput)
+
         (f,) = ctx.build()
+        url = ctx.get_url()
+        if ctx.cur_page == 1:
+            assert f'{ctx.content.get_metadata(ctx.site, "groupby")}_{ctx.value}.html' in url
+        else:
+            assert (
+                f'{ctx.content.get_metadata(ctx.site, "groupby")}_{ctx.value}_{ctx.cur_page}.html'
+                in url
+            )
 
     assert len(indexbuilders) == 4
     assert sum(len(b.items) for b in indexbuilders) == 21

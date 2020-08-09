@@ -18,6 +18,7 @@ from typing import (
     DefaultDict,
 )
 
+import warnings
 from abc import abstractmethod
 import os, time, random, shutil
 from pathlib import Path
@@ -116,6 +117,10 @@ class ContentProxy:
 
     @safe_prop
     def url(self) -> str:
+        warnings.warn(
+            "content.url is deprecated. Use contenxt.get_url().", DeprecationWarning
+        )
+
         # TODO: should be deprecated
         if self.is_same(self.context):
             pageargs = self.context._build_pagearg()
@@ -551,7 +556,11 @@ class OutputContext:
         self._filename_cache = {}
         self._cache = defaultdict(dict)
 
-    def get_outfilename(self, pagearg: Dict[Any, Any]) -> Path:
+    def get_url(self)->str:
+        pageargs = self._build_pagearg()
+        return self.content.build_url(self, pageargs)
+
+    def _get_outfilename(self, pagearg: Dict[Any, Any]) -> Path:
         filename = self.content.build_filename(self, pagearg)
         dir = self.content.src.contentpath[0]
         return prepare_output_path(self.site.outputdir, dir, filename)
@@ -675,7 +684,7 @@ class BinaryOutput(OutputContext):
             outpath.write_bytes(body)
 
     def build(self) -> Sequence[Path]:
-        outfilename = self.get_outfilename({})
+        outfilename = self._get_outfilename({})
         self.write_body(outfilename)
         return [outfilename]
 
@@ -688,7 +697,7 @@ class JinjaOutput(OutputContext):
         pagearg = self._build_pagearg()
         output = eval_jinja_template(self, self.content, templatename, pagearg)
 
-        outfilename = self.get_outfilename({})
+        outfilename = self._get_outfilename({})
         outfilename.write_text(output)
         return [outfilename]
 
@@ -743,7 +752,7 @@ class IndexOutput(OutputContext):
         pagearg = self._build_pagearg()
         output = eval_jinja_template(self, self.content, templatename, pagearg)
 
-        outfilename = self.get_outfilename(pagearg)
+        outfilename = self._get_outfilename(pagearg)
         outfilename.write_text(output)
         return [outfilename]
 
@@ -824,7 +833,7 @@ class FeedOutput(OutputContext):
 
         body = feed.writeString("utf-8")
 
-        outfilename = self.get_outfilename({})
+        outfilename = self._get_outfilename({})
         outfilename.write_text(body)
 
         return [outfilename]

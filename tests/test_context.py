@@ -19,6 +19,8 @@ def test_htmlcontext(siteroot: SiteRoot) -> None:
     html = Path(filename).read_text()
     assert html == "<div>hello<a>2</a></div>"
 
+    assert ctx.get_url() == "http://localhost:8888/doc.html"
+
 
 def test_binarycontext(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.files / "subdir" / "file1.txt", "subdir/file1")
