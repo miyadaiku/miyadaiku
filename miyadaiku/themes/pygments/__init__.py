@@ -1,6 +1,8 @@
-from typing import cast
 import posixpath
+from typing import cast
+
 import importlib_resources
+
 from miyadaiku import site
 
 DEST_PATH = "/static/pygments/"
@@ -20,7 +22,7 @@ def load_package(site: site.Site) -> None:
         site.config.add("/", {"pygments_css_path": css_path})
 
         src_path = "externals/" + cssname
-        path = importlib_resources.files(__name__).joinpath(src_path)  # type: ignore
+        path = importlib_resources.files(__name__).joinpath(src_path)
         csscontent = path.read_bytes()
         site.files.add_bytes("binary", css_path, csscontent)
     else:

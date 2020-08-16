@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, List, Set, TYPE_CHECKING, Tuple, Optional
-import sys
-import os
-from pathlib import Path
 import importlib
-import importlib.util
 import importlib.abc
-import yaml
-import importlib_resources
-import dateutil
+import importlib.util
+import os
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Set, Tuple
 
+import dateutil
+import importlib_resources
+import yaml
 from jinja2 import Environment
 
 import miyadaiku
-from .config import Config
+
 from . import ContentPath, DependsDict, extend, loader
 from .builder import Builder, build
+from .config import Config
 from .jinjaenv import create_env
 
 if TYPE_CHECKING:
@@ -72,7 +73,9 @@ class Site:
     def _load_themes(self) -> None:
         def _load_theme_config(package: str) -> Dict[str, Any]:
             try:
-                path = importlib_resources.files(package).joinpath(miyadaiku.CONFIG_FILE)  # type: ignore
+                path = importlib_resources.files(package).joinpath(
+                    miyadaiku.CONFIG_FILE
+                )
                 s = path.read_bytes()
             except FileNotFoundError:
                 cfg = {}

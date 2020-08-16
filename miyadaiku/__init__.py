@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Dict, Tuple, NamedTuple, Any, Optional, Union, Set
-import posixpath
 import copy
+import posixpath
+from typing import Any, Dict, NamedTuple, Optional, Set, Tuple, Union
+
 import importlib_resources
 import tzlocal
 
@@ -69,7 +70,7 @@ class ContentSrc(NamedTuple):
 
     def read_text(self, encoding: str = "utf-8") -> str:
         if self.package and self.srcpath:
-            path = importlib_resources.files(self.package).joinpath(self.srcpath)  # type: ignore
+            path = importlib_resources.files(self.package).joinpath(self.srcpath)
             text: str = path.read_text()
             return text
         else:
@@ -78,7 +79,7 @@ class ContentSrc(NamedTuple):
 
     def read_bytes(self) -> bytes:
         if self.package and self.srcpath:
-            path = importlib_resources.files(self.package).joinpath(self.srcpath)  # type: ignore
+            path = importlib_resources.files(self.package).joinpath(self.srcpath)
             ret: bytes = path.read_bytes()
             return ret
         else:

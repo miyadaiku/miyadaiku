@@ -1,35 +1,34 @@
 from __future__ import annotations
 
-from typing import (
-    List,
-    Iterator,
-    Dict,
-    Tuple,
-    Optional,
-    Set,
-    Any,
-    KeysView,
-    ItemsView,
-    Sequence,
-    Iterable,
-)
-import os
-import fnmatch
-import importlib_resources
-from pathlib import Path
-import logging
-import posixpath
 import collections.abc
+import fnmatch
+import logging
+import os
+import posixpath
 import time
+from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    ItemsView,
+    Iterable,
+    Iterator,
+    KeysView,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
+
+import importlib_resources
 import yaml
 
 import miyadaiku
 from miyadaiku import ContentPath, ContentSrc, PathTuple, to_contentpath
-from . import config, contents, html
-from . import site
+
+from . import config, contents, exceptions, extend, html, site
 from .contents import Content
-from . import exceptions
-from . import extend
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +102,7 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
     if not path.endswith("/"):
         path = path + "/"
 
-    packagepath = importlib_resources.files(package)  # type: ignore
+    packagepath = importlib_resources.files(package)
     root = packagepath / path
     if not root.is_dir():
         return

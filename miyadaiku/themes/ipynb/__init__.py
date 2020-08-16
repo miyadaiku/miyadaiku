@@ -1,6 +1,6 @@
 import importlib_resources
-from bs4 import BeautifulSoup, Doctype
 import markupsafe
+from bs4 import BeautifulSoup, Doctype
 
 from miyadaiku import site
 
@@ -8,10 +8,10 @@ EMPTY_IPYNB = "empty.ipynb"
 
 
 def _build_head() -> str:
-    from nbconvert.exporters import HTMLExporter
     import nbformat
+    from nbconvert.exporters import HTMLExporter
 
-    path = importlib_resources.files("miyadaiku.themes.ipynb") / EMPTY_IPYNB  # type: ignore
+    path = importlib_resources.files("miyadaiku.themes.ipynb") / EMPTY_IPYNB
     src = path.read_bytes()
     json = nbformat.reads(src, nbformat.current_nbformat)
 
