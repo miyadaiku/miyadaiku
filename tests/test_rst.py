@@ -1,4 +1,4 @@
-from conftest import create_contexts, SiteRoot
+from conftest import SiteRoot, create_contexts
 
 
 def test_load(siteroot: SiteRoot) -> None:

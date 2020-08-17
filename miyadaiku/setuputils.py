@@ -1,8 +1,8 @@
-from typing import List, Tuple
-import os
-import shutil
 import glob
+import os
 import pathlib
+import shutil
+from typing import List, Tuple
 
 
 def copyfiles(files: List[Tuple[pathlib.Path, List[str], pathlib.Path]]) -> None:

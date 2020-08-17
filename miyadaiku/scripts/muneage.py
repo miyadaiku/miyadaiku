@@ -1,21 +1,22 @@
 # type: ignore
-import locale
-import signal
 import argparse
+import datetime
+import http.server
+import locale
+import logging
+import multiprocessing
+import os
+import signal
 import sys
-from pathlib import Path
 import threading
 import time
-import multiprocessing
-import http.server
-import os
-import datetime
+from pathlib import Path
 
 import miyadaiku.site
-from . import observer
-from .. import mp_log
 from miyadaiku import OUTPUTS_DIR
-import logging
+
+from .. import mp_log
+from . import observer
 
 logger = logging.getLogger(__name__)
 

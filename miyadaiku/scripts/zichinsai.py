@@ -1,7 +1,8 @@
-import sys
-import locale
 import argparse
+import locale
 import pathlib
+import sys
+
 import tzlocal
 
 from miyadaiku import CONTENTS_DIR, FILES_DIR, TEMPLATES_DIR, __version__

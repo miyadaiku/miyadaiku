@@ -1,10 +1,10 @@
 # type: ignore
 import os
 
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
-from miyadaiku import CONTENTS_DIR, FILES_DIR, MODULES_DIR, TEMPLATES_DIR, CONFIG_FILE
+from miyadaiku import CONFIG_FILE, CONTENTS_DIR, FILES_DIR, MODULES_DIR, TEMPLATES_DIR
 
 
 class ContentDirHandler(FileSystemEventHandler):

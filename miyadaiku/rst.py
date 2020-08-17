@@ -1,19 +1,21 @@
-from typing import List, Any, Dict, Tuple
-import re
-import os
-import html
 import collections
+import html
+import os
+import re
+from typing import Any, Dict, List, Tuple
+
 import docutils
 import docutils.core
 import docutils.nodes
-import docutils.writers.html5_polyglot
 import docutils.utils
+import docutils.writers.html5_polyglot
+from bs4 import BeautifulSoup
 from docutils.parsers.rst import Directive, directives, roles
 from docutils.readers import standalone
 from docutils.transforms import frontmatter
-from bs4 import BeautifulSoup
 
 from miyadaiku import ContentSrc
+
 from . import pygment_directive  # noqa
 
 

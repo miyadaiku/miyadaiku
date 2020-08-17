@@ -1,8 +1,10 @@
 from pathlib import Path
-from miyadaiku import context, exceptions
-from conftest import SiteRoot, create_contexts
-from bs4 import BeautifulSoup
+
 import pytest
+from bs4 import BeautifulSoup
+from conftest import SiteRoot, create_contexts
+
+from miyadaiku import context, exceptions
 
 
 def test_htmlcontext(siteroot: SiteRoot) -> None:

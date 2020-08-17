@@ -1,7 +1,9 @@
-from typing import cast, List, Any
+from typing import Any, List, cast
 from unittest.mock import patch
-from miyadaiku import builder
+
 from conftest import SiteRoot
+
+from miyadaiku import builder
 
 
 def test_builder(siteroot: SiteRoot) -> None:

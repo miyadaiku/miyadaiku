@@ -1,26 +1,14 @@
 from __future__ import annotations
 
-from typing import (
-    Dict,
-    List,
-    Callable,
-    Any,
-    TYPE_CHECKING,
-    Optional,
-    Sequence,
-    Tuple,
-)
-import runpy
-
 import enum
+import runpy
 from pathlib import Path
-
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 if TYPE_CHECKING:
-    from . import site
-    from . import ContentSrc
-    from .context import OutputContext
+    from . import ContentSrc, site
     from .contents import Content
+    from .context import OutputContext
 
 HOOKS = enum.Enum(
     "HOOKS",

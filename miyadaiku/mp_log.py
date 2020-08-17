@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-
-from typing import Any, List, Dict
-import enum, sys
-import logging, logging.config
+import enum
+import logging
+import logging.config
+import sys
 import traceback
+from typing import Any, Dict, List
 
 _queue: Any = None
 _pendings: List[Dict[str, Any]] = []

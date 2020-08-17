@@ -1,5 +1,6 @@
-from typing import Any, Dict, List, Tuple
 import re
+from typing import Any, Dict, List, Tuple
+
 from miyadaiku import ContentSrc, parsesrc
 
 

@@ -8,7 +8,7 @@ Miyadaiku is a flexible static site generator for Jinja2 artists.
 
 - Jinja2 templates to create HTML pages.
 
-- Jinja2 tags can be used in your contents too. Miyadaiku provides ReST/Markdown extensions to write Jinja2 in content files. 
+- Jinja2 tags can be used in your contents too. Miyadaiku provides ReST/Markdown extensions to write Jinja2 in content files.
 
 - Hierarchical contents property. Each directory can have default property values for documents. These property values are also applied to contents of their sub-directories.
 
@@ -118,4 +118,3 @@ To upgrade from older version of Miyadaiku, please read following notes.
 
    - `value` argument of `path()`, `path_to()`, `link()`, `link_to()` methods are renamed to `group_value`.
    - `group_values` jinja variable is renamed to `group_value`.
-

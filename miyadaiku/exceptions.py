@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING, cast, Optional, Tuple, List
-from types import FrameType
 import traceback
+from types import FrameType
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, cast
 
 import jinja2.exceptions
 from jinja2 import Environment
 
-from . import repr_contentpath, ContentPath
+from . import ContentPath, repr_contentpath
 
 if TYPE_CHECKING:
     pass

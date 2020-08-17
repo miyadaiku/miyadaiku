@@ -1,7 +1,9 @@
 from pathlib import Path
-from miyadaiku import ipynb, ContentSrc
-from conftest import SiteRoot
+
 from bs4 import BeautifulSoup
+from conftest import SiteRoot
+
+from miyadaiku import ContentSrc, ipynb
 
 DIR = Path(__file__).parent
 

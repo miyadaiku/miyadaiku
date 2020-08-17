@@ -1,6 +1,8 @@
-from typing import cast, List
-from miyadaiku import builder, context
+from typing import List, cast
+
 from conftest import SiteRoot
+
+from miyadaiku import builder, context
 
 
 def test_index(siteroot: SiteRoot) -> None:

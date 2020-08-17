@@ -1,6 +1,8 @@
 from pathlib import Path
-from miyadaiku import html
+
 from conftest import to_contentsrc
+
+from miyadaiku import html
 
 
 def test_load(sitedir: Path) -> None:

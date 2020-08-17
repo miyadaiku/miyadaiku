@@ -1,6 +1,6 @@
 import pytest
-
 from conftest import SiteRoot
+
 from miyadaiku import extend
 
 

@@ -1,13 +1,13 @@
-import pytest
-import pathlib
 import logging
-from typing import Any, Dict, List, Sequence, Tuple, Optional
-
-import yaml
+import pathlib
 import shutil
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+import pytest
+import yaml
 
 import miyadaiku.site
-from miyadaiku import context, to_contentpath, extend, ContentSrc
+from miyadaiku import ContentSrc, context, extend, to_contentpath
 
 logging.getLogger().setLevel(logging.DEBUG)
 

@@ -1,51 +1,51 @@
 from __future__ import annotations
 
-
-from typing import (
-    TYPE_CHECKING,
-    Optional,
-    NamedTuple,
-    Type,
-    Sequence,
-    Tuple,
-    Dict,
-    Union,
-    Any,
-    Set,
-    List,
-    Callable,
-    cast,
-    DefaultDict,
-)
-
+import datetime
+import os
+import posixpath
+import random
+import shutil
+import time
+import urllib.parse
 import warnings
 from abc import abstractmethod
-import os, time, random, shutil
-from pathlib import Path
-from functools import update_wrapper
-import urllib.parse
-from urllib.parse import urlparse
-import posixpath
-import datetime
 from collections import defaultdict
+from functools import update_wrapper
+from pathlib import Path
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
+from urllib.parse import urlparse
 
-from jinja2 import Environment
 import jinja2.exceptions
-
-from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
 import markupsafe
+from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
+from jinja2 import Environment
 
 from miyadaiku import (
     ContentPath,
     PathTuple,
-    parse_path,
-    parse_dir,
     exceptions,
+    parse_dir,
+    parse_path,
     repr_contentpath,
 )
 
 if TYPE_CHECKING:
-    from .contents import Content, Article, IndexPage, FeedPage
+    from .contents import Article, Content, FeedPage, IndexPage
     from .site import Site
 
 SAFE_STR = Union[str, markupsafe.Markup]

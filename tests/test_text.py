@@ -1,7 +1,8 @@
 from pathlib import Path
-from miyadaiku import text
 
 from conftest import to_contentsrc
+
+from miyadaiku import text
 
 
 def test_meta(sitedir: Path) -> None:

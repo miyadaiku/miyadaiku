@@ -1,6 +1,7 @@
-from miyadaiku import context
-from conftest import SiteRoot, create_contexts
 from bs4 import BeautifulSoup
+from conftest import SiteRoot, create_contexts
+
+from miyadaiku import context
 
 
 def test_build(siteroot: SiteRoot) -> None:

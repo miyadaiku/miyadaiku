@@ -1,12 +1,14 @@
-from typing import Any, Dict, List, Tuple
-import re
 import os
+import re
 from collections import OrderedDict
+from typing import Any, Dict, List, Tuple
 
 import markdown
-from markdown import util, preprocessors, postprocessors, blockprocessors
 import markdown.extensions.codehilite
+from markdown import blockprocessors, postprocessors, preprocessors, util
+
 from miyadaiku import ContentSrc
+
 from . import parsesrc
 
 HTML_PLACEHOLDER2 = util.STX + "jgnkfkaj:%s" + util.ETX

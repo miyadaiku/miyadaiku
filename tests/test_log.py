@@ -1,9 +1,10 @@
 from typing import Any
 from unittest.mock import patch
+
 import pytest
+from conftest import SiteRoot, create_contexts
 
 from miyadaiku import context, exceptions, mp_log
-from conftest import SiteRoot, create_contexts
 
 
 @patch("miyadaiku.builder.logger.log")

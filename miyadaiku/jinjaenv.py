@@ -1,26 +1,24 @@
-from typing import List, Any, Dict, Tuple
-import re
+import logging
 import os
+import re
 import urllib
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
+from jinja2 import DebugUndefined  # NOQA
+from jinja2 import StrictUndefined  # NOQA
 from jinja2 import (
-    TemplateNotFound,
-    Environment,
-    PrefixLoader,
-    FileSystemLoader,
     ChoiceLoader,
+    Environment,
+    FileSystemLoader,
     PackageLoader,
-    select_autoescape,
+    PrefixLoader,
+    TemplateNotFound,
     make_logging_undefined,
-    StrictUndefined,
+    select_autoescape,
 )
 
-from jinja2 import StrictUndefined  # NOQA
-from jinja2 import DebugUndefined  # NOQA
-
-import logging
 import miyadaiku.site
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

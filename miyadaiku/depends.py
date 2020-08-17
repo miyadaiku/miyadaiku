@@ -1,23 +1,24 @@
 from __future__ import annotations
 
-from typing import (
-    Dict,
-    Iterator,
-    Sequence,
-    Set,
-    TYPE_CHECKING,
-    Tuple,
-    Optional,
-    Callable,
-)
 import os
 import pickle
 from pathlib import Path
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Iterator,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
+
 from miyadaiku import (
     CONFIG_FILE,
+    CONTENTS_DIR,
     MODULES_DIR,
     TEMPLATES_DIR,
-    CONTENTS_DIR,
     ContentPath,
     ContentSrc,
     DependsDict,

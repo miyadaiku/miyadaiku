@@ -1,6 +1,8 @@
 from typing import Set
-from miyadaiku import ContentSrc, config, loader, site, contents
+
 from conftest import SiteRoot
+
+from miyadaiku import ContentSrc, config, contents, loader, site
 
 
 def test_walk_directory(siteroot: SiteRoot) -> None:

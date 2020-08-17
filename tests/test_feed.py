@@ -1,7 +1,8 @@
-from typing import cast
-from conftest import SiteRoot
 import datetime
 import xml.etree.ElementTree as ET
+from typing import cast
+
+from conftest import SiteRoot
 
 
 def test_feed(siteroot: SiteRoot) -> None:
