@@ -28,7 +28,7 @@ def test_builder(siteroot: SiteRoot) -> None:
     context = b.build_context(site, jinjaenv)
     (path,) = context.build()
     assert path == site.outputdir / "package1_file1.txt"
-    assert path.read_text() == "package1_file1.txt"
+    assert path.read_text() == "package1_file1.txt\n"
 
 
 def test_indexbuilder(siteroot: SiteRoot) -> None:
