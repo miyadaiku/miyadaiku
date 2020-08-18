@@ -35,4 +35,4 @@ jobs:
         env:
           PYPI_PASS: ${{ secrets.PYPI }}
         run: |
-          .venv/bin/twine upload -u atsuoi -p "$PYPI_PASS" dist/*.whl
+          .venv/bin/twine upload -u __token__ -p "$PYPI_PASS" dist/*.whl
