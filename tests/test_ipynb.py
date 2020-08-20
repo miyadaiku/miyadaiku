@@ -19,6 +19,7 @@ def test_load() -> None:
 
     ((src, text),) = ipynb.load(contentsrc)
     assert src.metadata["type"] == "article"
+    assert "{{1+1}}" in text
 
 
 def test_package() -> None:
@@ -87,7 +88,7 @@ def test_split() -> None:
     assert "meta" not in soup.text
     assert "test1" in soup.text
 
-    assert src1.metadata == {"type": "article", "meta": "value1"}
+    assert src1.metadata == {"type": "article", "meta": "value1", "has_jinja": True}
 
     assert src2.contentpath == ((), "file2")
     soup = BeautifulSoup(text2, "html.parser")
@@ -96,4 +97,4 @@ def test_split() -> None:
     assert "3+3" in soup.text
 
     assert "meta" not in soup.text
-    assert src2.metadata == {"type": "article", "meta": "value2"}
+    assert src2.metadata == {"type": "article", "meta": "value2", "has_jinja": True}

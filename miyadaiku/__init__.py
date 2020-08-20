@@ -7,7 +7,7 @@ from typing import Any, Dict, NamedTuple, Optional, Set, Tuple, Union
 import importlib_resources
 import tzlocal
 
-__version__ = "1.16.0"
+__version__ = "1.17.dev1"
 
 YAML_ENCODING = "utf-8"
 

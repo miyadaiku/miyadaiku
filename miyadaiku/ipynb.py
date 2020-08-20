@@ -1,4 +1,5 @@
 import copy
+import hashlib
 from typing import Any, Dict, List, Optional, Tuple
 
 import nbformat
@@ -13,9 +14,8 @@ def _export(json: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     config = {"TemplateExporter": {"template_file": "basic.tpl"}}
     html, _ = HTMLExporter(config).from_notebook_node(json)
 
-    metadata = {"type": "article"}
+    metadata = {"type": "article", "has_jinja": True}
     metadata.update(json.get("metadata", {}).get("miyadaiku", {}))
-
     return metadata, html
 
 
@@ -69,7 +69,7 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
         cellmeta: Dict[str, Any] = {}
         if subcells:
             top = subcells[0]
-            if top.get("cell_type", "") != "code":
+            if top.get("cell_type", "") in ("markdown", "raw"):
                 srcstr = top.get("source", "")
                 if srcstr:
                     cellmeta, srcstr = parsesrc.split_yaml(srcstr, "---")
@@ -77,6 +77,22 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
 
         # remove raw cells
         newcells = [c for c in subcells if c.get("cell_type", "") != "raw"]
+
+        jinjatags = {}
+
+        def conv_jinjatag(s: str) -> str:
+            digest = hashlib.md5(s.encode("utf-8")).hexdigest()
+            jinjatags[digest] = s
+            return digest
+
+        # save jinja tag
+        if cellmeta.get("has_jinja", True):
+            for cell in subcells:
+                if cell.get("cell_type", "") == "markdown":
+                    newsrc = parsesrc.replace_jinjatag(
+                        cell.get("source", ""), conv_jinjatag
+                    )
+                    cell["source"] = newsrc
 
         # remove empty cells at bottom
         while len(newcells) > 1:
@@ -103,6 +119,12 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
         meta.update(cellmeta)
 
         subsrc.metadata.update(meta)
+
+        # restore jinja tag
+        html = html.translate({ord("{"): "&#123;", ord("}"): "&#125;"})
+        for hash, s in jinjatags.items():
+            html = html.replace(hash, s)
+
         ret.append((subsrc, html))
 
     return ret
