@@ -43,6 +43,12 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.17.0
+~~~~~~~~~~~~
+
+- :jinja:``  tag can be used in Jupyter markdown cell.
+
+
 1.16.0
 ~~~~~~~~~~~~
 
