@@ -19,7 +19,7 @@ def test_load() -> None:
 
     ((src, text),) = ipynb.load(contentsrc)
     assert src.metadata["type"] == "article"
-    assert "{{1+1}}" in text
+    assert "{{ 1+1 }}" in text
 
 
 def test_package() -> None:
