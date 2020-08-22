@@ -409,6 +409,7 @@ def build(site: Site) -> Tuple[int, int, DependsDict, Set[ContentPath]]:
         deps = {}
 
     deps = depends.update_deps(site, deps, newdeps, errors)
-
     depends.save_deps(site, deps, errors)
+
+    #    sitemap.save_sitemap(site, rebuild, newdeps)
     return (ok, err, deps, errors)
