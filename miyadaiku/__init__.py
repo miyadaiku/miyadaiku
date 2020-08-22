@@ -72,7 +72,8 @@ class ContentSrc(NamedTuple):
 
     def read_text(self, encoding: str = "utf-8") -> str:
         if self.package and self.srcpath:
-            path = importlib_resources.files(self.package).joinpath(self.srcpath)
+            path = importlib_resources.files(self.package)  # type: ignore
+            path = path.joinpath(self.srcpath)
             text: str = path.read_text()
             return text
         else:
@@ -81,7 +82,7 @@ class ContentSrc(NamedTuple):
 
     def read_bytes(self) -> bytes:
         if self.package and self.srcpath:
-            path = importlib_resources.files(self.package).joinpath(self.srcpath)
+            path = importlib_resources.files(self.package).joinpath(self.srcpath)  # type: ignore
             ret: bytes = path.read_bytes()
             return ret
         else:

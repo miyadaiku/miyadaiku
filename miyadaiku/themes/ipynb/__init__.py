@@ -11,7 +11,7 @@ def _build_head() -> str:
     import nbformat
     from nbconvert.exporters import HTMLExporter
 
-    path = importlib_resources.files("miyadaiku.themes.ipynb") / EMPTY_IPYNB
+    path = importlib_resources.files("miyadaiku.themes.ipynb") / EMPTY_IPYNB  # type: ignore
     src = path.read_bytes()
     json = nbformat.reads(src, nbformat.current_nbformat)
 

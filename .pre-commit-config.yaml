@@ -24,3 +24,5 @@ repos:
   rev: v0.782
   hooks:
     - id: mypy
+      args: [--strict, --ignore-missing-imports, --follow-imports=silent]
+      additional_dependencies: [importlib_resources]

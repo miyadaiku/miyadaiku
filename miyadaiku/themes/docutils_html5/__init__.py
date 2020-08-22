@@ -8,14 +8,12 @@ def load_package(site: site.Site) -> None:
         "docutils_html5", "miyadaiku.themes.docutils_html5!macros.html"
     )
 
-    path = importlib_resources.files("docutils.writers.html5_polyglot").joinpath(
-        "minimal.css"
-    )
+    path = importlib_resources.files("docutils.writers.html5_polyglot")  # type: ignore
+    path = path.joinpath("minimal.css")
     minimal_css = path.read_bytes()
 
-    path = importlib_resources.files("docutils.writers.html5_polyglot").joinpath(
-        "plain.css"
-    )
+    path = importlib_resources.files("docutils.writers.html5_polyglot")  # type: ignore
+    path = path.joinpath("plain.css")
     plain_css = path.read_bytes()
 
     site.files.add_bytes("binary", "/static/docutils_html5/minimal.css", minimal_css)
