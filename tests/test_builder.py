@@ -17,8 +17,8 @@ def test_builder(siteroot: SiteRoot) -> None:
     jinjaenv = site.build_jinjaenv()
     context = b.build_context(site, jinjaenv)
     (path,) = context.build()
-    assert path == site.outputdir / "subdir" / "file1.txt"
-    assert path.read_text() == "subdir/file1"
+    assert path.filename == site.outputdir / "subdir" / "file1.txt"
+    assert path.filename.read_text() == "subdir/file1"
 
     (b,) = builder.create_builders(
         site, site.files.get_content(((), "package1_file1.txt"))
@@ -27,8 +27,8 @@ def test_builder(siteroot: SiteRoot) -> None:
     jinjaenv = site.build_jinjaenv()
     context = b.build_context(site, jinjaenv)
     (path,) = context.build()
-    assert path == site.outputdir / "package1_file1.txt"
-    assert path.read_text() == "package1_file1.txt\n"
+    assert path.filename == site.outputdir / "package1_file1.txt"
+    assert path.filename.read_text() == "package1_file1.txt\n"
 
 
 def test_indexbuilder(siteroot: SiteRoot) -> None:

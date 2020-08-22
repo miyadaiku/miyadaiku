@@ -17,8 +17,8 @@ def test_htmlcontext(siteroot: SiteRoot) -> None:
     jinjaenv = site.build_jinjaenv()
 
     ctx = context.JinjaOutput(site, jinjaenv, ((), "doc.html"))
-    (filename,) = ctx.build()
-    html = Path(filename).read_text()
+    (outputinfo,) = ctx.build()
+    html = Path(outputinfo.filename).read_text()
     assert html == "<div>hello<a>2</a></div>"
 
     assert ctx.get_url() == "http://localhost:8888/doc.html"
@@ -30,10 +30,10 @@ def test_binarycontext(siteroot: SiteRoot) -> None:
 
     jinjaenv = site.build_jinjaenv()
     ctx = context.BinaryOutput(site, jinjaenv, (("subdir",), "file1.txt"))
-    (filename,) = ctx.build()
+    (outputinfo,) = ctx.build()
 
-    assert Path(filename) == site.outputdir / "subdir/file1.txt"
-    assert Path(filename).read_text() == "subdir/file1"
+    assert Path(outputinfo.filename) == site.outputdir / "subdir/file1.txt"
+    assert Path(outputinfo.filename).read_text() == "subdir/file1"
 
 
 def test_load(siteroot: SiteRoot) -> None:

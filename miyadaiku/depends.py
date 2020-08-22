@@ -22,6 +22,7 @@ from miyadaiku import (
     ContentPath,
     ContentSrc,
     DependsDict,
+    OutputInfo,
 )
 
 if TYPE_CHECKING:
@@ -131,7 +132,7 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
 def update_deps(
     site: site.Site,
     d: DependsDict,
-    deps: Sequence[Tuple[ContentSrc, Set[ContentPath], Set[str]]],
+    deps: Sequence[Tuple[ContentSrc, Set[ContentPath], Sequence[OutputInfo]]],
     errors: Set[ContentPath],
 ) -> DependsDict:
 
@@ -143,7 +144,8 @@ def update_deps(
     for contentpath, (contentsrc, depends, filenames) in d.items():
         new[contentpath] = (depends, {str(site.outputdir / f) for f in filenames})
 
-    for contentsrc, depends, filenames in deps:
+    for contentsrc, depends, outputinfos in deps:
+        filenames = {str(oi.filename) for oi in outputinfos}
         if contentsrc.contentpath in new:
             new[contentsrc.contentpath][1].update(filenames)
         else:

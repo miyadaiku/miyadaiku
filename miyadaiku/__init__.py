@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+import datetime
 import posixpath
+from pathlib import Path
 from typing import Any, Dict, NamedTuple, Optional, Set, Tuple, Union
 
 import importlib_resources
@@ -153,3 +155,11 @@ def parse_dir(path: str, cwd: PathTuple) -> PathTuple:
         path = posixpath.join(curdir, path)
 
     return to_pathtuple(path)
+
+
+class OutputInfo(NamedTuple):
+    filename: Path
+    url: str
+    title: str
+    date: Union[datetime.date, datetime.date, None]
+    updated: Union[datetime.date, datetime.date, None]

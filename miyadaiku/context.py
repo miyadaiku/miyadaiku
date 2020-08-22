@@ -7,7 +7,6 @@ import random
 import shutil
 import time
 import urllib.parse
-import warnings
 from abc import abstractmethod
 from collections import defaultdict
 from functools import update_wrapper
@@ -37,6 +36,7 @@ from jinja2 import Environment
 
 from miyadaiku import (
     ContentPath,
+    OutputInfo,
     PathTuple,
     exceptions,
     parse_dir,
@@ -117,16 +117,9 @@ class ContentProxy:
 
     @safe_prop
     def url(self) -> str:
-        warnings.warn(
-            "content.url is deprecated. Use contenxt.get_url().", DeprecationWarning
-        )
-
-        # TODO: should be deprecated
         if self.is_same(self.context):
-            pageargs = self.context._build_pagearg()
-        else:
-            pageargs = {}
-        return self.content.build_url(self.context, pageargs)
+            return self.context.get_url()
+        return self.content.build_url(self.context, {})
 
     @safe_prop
     def output_path(self) -> str:
@@ -560,8 +553,9 @@ class OutputContext:
         pageargs = self._build_pagearg()
         return self.content.build_url(self, pageargs)
 
-    def _get_outfilename(self, pagearg: Dict[Any, Any]) -> Path:
-        filename = self.content.build_filename(self, pagearg)
+    def _get_outfilename(self) -> Path:
+        pageargs = self._build_pagearg()
+        filename = self.content.build_filename(self, pageargs)
         dir = self.content.src.contentpath[0]
         return prepare_output_path(self.site.outputdir, dir, filename)
 
@@ -588,8 +582,17 @@ class OutputContext:
     ) -> None:
         self._filename_cache[(content.src.contentpath, tp_pagearg)] = filename
 
+    def build_outputinfo(self) -> OutputInfo:
+        return OutputInfo(
+            filename=self._get_outfilename(),
+            url=self.get_url(),
+            title=self.content.build_title(self),
+            date=self.content.get_metadata(self.site, "date", None),
+            updated=self.content.get_metadata(self.site, "updated", None),
+        )
+
     @abstractmethod
-    def build(self) -> Sequence[Path]:
+    def build(self) -> List[OutputInfo]:
         pass
 
     def _build_pagearg(self) -> Dict[Any, Any]:
@@ -683,23 +686,24 @@ class BinaryOutput(OutputContext):
         else:
             outpath.write_bytes(body)
 
-    def build(self) -> Sequence[Path]:
-        outfilename = self._get_outfilename({})
-        self.write_body(outfilename)
-        return [outfilename]
+    def build(self) -> List[OutputInfo]:
+        oi = self.build_outputinfo()
+        self.write_body(oi.filename)
+        return [oi]
 
 
 class JinjaOutput(OutputContext):
     content: Article
 
-    def build(self) -> Sequence[Path]:
+    def build(self) -> List[OutputInfo]:
+        oi = self.build_outputinfo()
+
         templatename = self.content.get_metadata(self.site, "article_template")
         pagearg = self._build_pagearg()
         output = eval_jinja_template(self, self.content, templatename, pagearg)
 
-        outfilename = self._get_outfilename({})
-        outfilename.write_text(output)
-        return [outfilename]
+        oi.filename.write_text(output)
+        return [oi]
 
 
 class IndexOutput(OutputContext):
@@ -746,15 +750,16 @@ class IndexOutput(OutputContext):
         else:
             return cast(str, self.content.get_metadata(self.site, "indexpage_template"))
 
-    def build(self) -> Sequence[Path]:
+    def build(self) -> List[OutputInfo]:
+        oi = self.build_outputinfo()
+
         templatename = self._get_templatename()
 
         pagearg = self._build_pagearg()
         output = eval_jinja_template(self, self.content, templatename, pagearg)
 
-        outfilename = self._get_outfilename(pagearg)
-        outfilename.write_text(output)
-        return [outfilename]
+        oi.filename.write_text(output)
+        return [oi]
 
 
 # from https://github.com/getpelican/feedgenerator
@@ -776,7 +781,9 @@ def get_tag_uri(url: str, date: datetime.datetime) -> str:
 class FeedOutput(OutputContext):
     content: FeedPage
 
-    def build(self) -> Sequence[Path]:
+    def build(self) -> List[OutputInfo]:
+        oi = self.build_outputinfo()
+
         num_articles = int(self.content.get_metadata(self.site, "feed_num_articles"))
 
         filters = self.content.get_metadata(self.site, "filters", {}).copy()
@@ -833,10 +840,9 @@ class FeedOutput(OutputContext):
 
         body = feed.writeString("utf-8")
 
-        outfilename = self._get_outfilename({})
-        outfilename.write_text(body)
+        oi.filename.write_text(body)
 
-        return [outfilename]
+        return [oi]
 
 
 CONTEXTS: Dict[str, Type[OutputContext]] = {

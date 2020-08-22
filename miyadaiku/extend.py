@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 if TYPE_CHECKING:
-    from . import ContentSrc, site
+    from . import ContentSrc, OutputInfo, site
     from .contents import Content
     from .context import OutputContext
 
@@ -139,7 +139,7 @@ def run_pre_build(context: OutputContext) -> Optional[OutputContext]:
 
 
 if TYPE_CHECKING:
-    HOOK_POST_BUILD = Callable[[OutputContext, Sequence[Path]], None]
+    HOOK_POST_BUILD = Callable[[OutputContext, Sequence[OutputInfo]], None]
 
 hooks_post_build: List[HOOK_POST_BUILD] = []
 
@@ -149,9 +149,9 @@ def post_build(f: HOOK_POST_BUILD) -> HOOK_POST_BUILD:
     return f
 
 
-def run_post_build(context: OutputContext, filenames: Sequence[Path]) -> None:
+def run_post_build(context: OutputContext, outputinfos: Sequence[OutputInfo]) -> None:
     for hook in hooks_post_build:
-        hook(context, filenames)
+        hook(context, outputinfos)
 
 
 if TYPE_CHECKING:

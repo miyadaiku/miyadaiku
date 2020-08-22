@@ -87,9 +87,9 @@ def pre_build1(ctx):
     return ctx
 
 @post_build
-def post_build1(ctx, filenames):
-    org = filenames[0].read_bytes()
-    filenames[0].write_bytes(org+b"post_build1")
+def post_build1(ctx, outputinfos):
+    org = outputinfos[0].filename.read_bytes()
+    outputinfos[0].filename.write_bytes(org+b"post_build1")
 """,
     )
 

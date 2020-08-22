@@ -8,7 +8,7 @@ def test_build(siteroot: SiteRoot) -> None:
     (ctx,) = create_contexts(siteroot, srcs=[("doc.html", "{{page.title}}",)],)
 
     (path,) = ctx.build()
-    assert path == ctx.site.outputdir / "doc.html"
+    assert path.filename == ctx.site.outputdir / "doc.html"
 
 
 def test_get_headers(siteroot: SiteRoot) -> None:
