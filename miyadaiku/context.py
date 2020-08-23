@@ -584,6 +584,7 @@ class OutputContext:
 
     def build_outputinfo(self) -> OutputInfo:
         return OutputInfo(
+            contentpath=self.contentpath,
             filename=self._get_outfilename(),
             url=self.get_url(),
             title=self.content.build_title(self),

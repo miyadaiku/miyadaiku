@@ -26,15 +26,13 @@ from jinja2 import Environment
 from miyadaiku import (
     BuildResult,
     ContentPath,
-    ContentSrc,
     DependsDict,
-    OutputInfo,
     PathTuple,
     parse_dir,
     repr_contentpath,
 )
 
-from . import context, depends, extend, mp_log, sitemap
+from . import context, depends, extend, mp_log
 
 if TYPE_CHECKING:
     from .contents import Content
@@ -381,7 +379,7 @@ def build(site: Site) -> Tuple[int, int, DependsDict, BuildResult, Set[ContentPa
     if site.rebuild:
         rebuild = True
     else:
-        rebuild, updates, deps, results = depends.check_depends(site)
+        rebuild, updates, deps, outputinfos = depends.check_depends(site)
 
     builders = []
     for contentpath, content in site.files.items():
@@ -394,14 +392,15 @@ def build(site: Site) -> Tuple[int, int, DependsDict, BuildResult, Set[ContentPa
         site.outputdir.mkdir(parents=True, exist_ok=True)
 
     if not site.debug:
-        ok, err, results, errors = asyncio.run(submit(site, batches))
+        ok, err, newresults, errors = asyncio.run(submit(site, batches))
     else:
-        ok, err, results, errors = submit_debug(site, batches)
+        ok, err, newresults, errors = submit_debug(site, batches)
     if rebuild:
         deps = {}
 
-    newdeps = depends.update_deps(site, deps, results, errors)
-    depends.save_deps(site, newdeps, results, errors)
+    newdeps = depends.update_deps(site, deps, newresults, errors)
+    newois = depends.update_outputinfos(site, outputinfos, newresults)
 
-    #    sitemap.save_sitemap(site, rebuild, newdeps)
-    return (ok, err, newdeps, results, errors)
+    depends.save_deps(site, newdeps, newois, errors)
+
+    return (ok, err, newdeps, newresults, errors)

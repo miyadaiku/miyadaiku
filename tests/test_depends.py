@@ -19,22 +19,25 @@ def test_update(siteroot: SiteRoot) -> None:
     site = siteroot.load({"themes": ["package1"]}, {})
 
     ok, err, deps, results, errors = site.build()
-    depends.save_deps(site, deps, results, errors)
+    orig_outputinfos = depends.update_outputinfos(site, [], results)
+    depends.save_deps(site, deps, orig_outputinfos, errors)
 
     # test no-update
     site.load(site.root, {})
-    rebuild, updated, depdict, results = depends.check_depends(site)
+    rebuild, updated, depdict, outputinfos = depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set()
+    assert orig_outputinfos == outputinfos
 
     # test update
     (siteroot.contents / "file1.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated, depdict, results = depends.check_depends(site)
+    rebuild, updated, depdict, outputinfos = depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set((((), "file1.rst"),))
+    assert orig_outputinfos == outputinfos
 
 
 def test_update_file(siteroot: SiteRoot) -> None:
@@ -53,12 +56,14 @@ def test_update_file(siteroot: SiteRoot) -> None:
     site = siteroot.load({}, {})
 
     ok, err, deps, results, errors = site.build()
-    depends.save_deps(site, deps, results, errors)
+
+    orig_outputinfos = depends.update_outputinfos(site, [], results)
+    depends.save_deps(site, deps, orig_outputinfos, errors)
 
     output = siteroot.outputs / "file1.html"
     output.unlink()
 
-    rebuild, updated, depdict, results = depends.check_depends(site)
+    rebuild, updated, depdict, outputinfos = depends.check_depends(site)
     assert rebuild is False
     assert updated == set((((), "file1.rst"),))
 
@@ -85,12 +90,13 @@ def test_refs(siteroot: SiteRoot) -> None:
     site = siteroot.load({}, {})
 
     ok, err, deps, results, errors = site.build()
-    depends.save_deps(site, deps, results, errors)
+    orig_outputinfos = depends.update_outputinfos(site, [], results)
+    depends.save_deps(site, deps, orig_outputinfos, errors)
 
     # test update depends
     (siteroot.contents / "file2.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated, depdict, results = depends.check_depends(site)
+    rebuild, updated, depdict, outputfinos = depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set((((), "file1.rst"), ((), "file2.rst"),))
@@ -103,12 +109,13 @@ def test_rebuild(siteroot: SiteRoot) -> None:
     site = siteroot.load({}, {})
 
     ok, err, deps, results, errors = site.build()
-    depends.save_deps(site, deps, results, errors)
+    orig_outputinfos = depends.update_outputinfos(site, [], results)
+    depends.save_deps(site, deps, orig_outputinfos, errors)
 
     # test new file
     (siteroot.contents / "file3.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated, depdict, results = depends.check_depends(site)
+    rebuild, updated, depdict, outputinfos = depends.check_depends(site)
 
     assert rebuild is True
 
@@ -118,11 +125,12 @@ def test_yaml(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
     ok, err, deps, results, errors = site.build()
-    depends.save_deps(site, deps, results, errors)
+    orig_outputinfos = depends.update_outputinfos(site, [], results)
+    depends.save_deps(site, deps, orig_outputinfos, errors)
 
     siteroot.write_text(siteroot.contents / "file2.yml", "")
 
-    rebuild, updated, depdict, results = depends.check_depends(site)
+    rebuild, updated, depdict, outputresults = depends.check_depends(site)
     assert rebuild is True
 
 
@@ -133,7 +141,8 @@ def test_metadata(siteroot: SiteRoot) -> None:
     site = siteroot.load({}, {})
 
     ok, err, deps, results, errors = site.build()
-    depends.save_deps(site, deps, results, errors)
+    orig_outputinfos = depends.update_outputinfos(site, [], results)
+    depends.save_deps(site, deps, orig_outputinfos, errors)
 
     # test metadata changed
     (siteroot.contents / "file1.rst").write_text(
@@ -143,7 +152,7 @@ file1-new-title
 """
     )
     site.load(site.root, {})
-    rebuild, updated, depdict, results = depends.check_depends(site)
+    rebuild, updated, depdict, outputinfos = depends.check_depends(site)
 
     assert rebuild is True
 
@@ -180,7 +189,8 @@ def test_macro(siteroot: SiteRoot) -> None:
     site = siteroot.load({}, {})
 
     ok, err, deps, results, errors = site.build()
-    depends.save_deps(site, deps, results, errors)
+    orig_outputinfos = depends.update_outputinfos(site, [], results)
+    depends.save_deps(site, deps, orig_outputinfos, errors)
 
     # test macro
     (siteroot.modules / "file1.rst").write_text(

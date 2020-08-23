@@ -21,12 +21,12 @@ from miyadaiku import (
     TEMPLATES_DIR,
     BuildResult,
     ContentPath,
-    ContentSrc,
     DependsDict,
+    OutputInfo,
 )
 
 if TYPE_CHECKING:
-    from miyadaiku import BuildResult, site
+    from miyadaiku import site
 
 DEP_FILE = "_depends.pickle"
 DEP_VER = "4.0.0"
@@ -56,7 +56,7 @@ def check_directory(
 
 def check_depends(
     site: site.Site,
-) -> Tuple[bool, Set[ContentPath], DependsDict, BuildResult]:
+) -> Tuple[bool, Set[ContentPath], DependsDict, Sequence[OutputInfo]]:
     deppath = site.root / DEP_FILE
 
     mtime: float
@@ -67,12 +67,13 @@ def check_depends(
     # load depends file
     try:
         with open(deppath, "rb") as f:
-            mtime, ver, depends, results, errors = pickle.load(f)
+            recs = pickle.load(f)
 
-        if ver != DEP_VER:
+        if recs[1] != DEP_VER:
             # old file format
             return True, set(), {}, []
 
+        mtime, ver, depends, outputinfos, errors = recs
     except Exception:
         # file load error
         return True, set(), {}, []
@@ -129,10 +130,8 @@ def check_depends(
                 updated.add(path)
                 break
 
-    results = [
-        result for result in results if site.files.has_content(result[0].contentpath)
-    ]
-    return False, updated, depends, results
+    outputinfos = [oi for oi in outputinfos if site.files.has_content(oi.contentpath)]
+    return False, updated, depends, outputinfos
 
 
 def update_deps(
@@ -172,12 +171,28 @@ def update_deps(
     return ret
 
 
+def update_outputinfos(
+    site: site.Site, outputinfos: Sequence[OutputInfo], newresults: BuildResult
+) -> Sequence[OutputInfo]:
+
+    merged_outputs = {}
+    for oi in outputinfos:
+        if site.files.has_content(oi.contentpath):
+            merged_outputs[oi.url] = oi
+
+    for resultrec in newresults:
+        for oi in resultrec[2]:
+            merged_outputs[oi.url] = oi
+
+    return list(merged_outputs.values())
+
+
 def save_deps(
     site: site.Site,
     depsdict: DependsDict,
-    results: BuildResult,
+    outputinfos: Sequence[OutputInfo],
     errors: Set[ContentPath],
 ) -> None:
 
     with open(site.root / DEP_FILE, "wb") as f:
-        pickle.dump((site.files.mtime, DEP_VER, depsdict, results, errors), f)
+        pickle.dump((site.files.mtime, DEP_VER, depsdict, outputinfos, errors), f)

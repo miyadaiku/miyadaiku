@@ -159,6 +159,7 @@ def parse_dir(path: str, cwd: PathTuple) -> PathTuple:
 
 
 class OutputInfo(NamedTuple):
+    contentpath: ContentPath
     filename: Path
     url: str
     title: str
