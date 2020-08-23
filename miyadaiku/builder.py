@@ -24,6 +24,7 @@ from typing import (
 from jinja2 import Environment
 
 from miyadaiku import (
+    BuildResult,
     ContentPath,
     ContentSrc,
     DependsDict,
@@ -33,7 +34,7 @@ from miyadaiku import (
     repr_contentpath,
 )
 
-from . import context, depends, extend, mp_log
+from . import context, depends, extend, mp_log, sitemap
 
 if TYPE_CHECKING:
     from .contents import Content
@@ -223,13 +224,10 @@ def split_batch(builders: Sequence[Any]) -> Sequence[Any]:
 def build_batch(
     site: Site, jinjaev: Environment, builders: List[Builder]
 ) -> Tuple[
-    int,
-    int,
-    List[Tuple[ContentSrc, Set[ContentPath], Sequence[OutputInfo]]],
-    Set[ContentPath],
+    int, int, BuildResult, Set[ContentPath],
 ]:
 
-    ret: List[Tuple[ContentSrc, Set[ContentPath], Sequence[OutputInfo]]] = []
+    ret: BuildResult = []
     errors: Set[ContentPath] = set()
 
     ok = err = 0
@@ -315,10 +313,7 @@ def run_build(
 async def submit(
     site: Site, batches: Sequence[List[Builder]]
 ) -> Tuple[
-    int,
-    int,
-    List[Tuple[ContentSrc, Set[ContentPath], Sequence[OutputInfo]]],
-    Set[ContentPath],
+    int, int, BuildResult, Set[ContentPath],
 ]:
 
     fd, picklefile = tempfile.mkstemp()
@@ -331,7 +326,7 @@ async def submit(
 
         loop = asyncio.get_running_loop()
         futs = []
-        deps = []
+        results = []
         errors = set()
 
         executor = ThreadPoolExecutor(max_workers=len(batches))
@@ -345,13 +340,13 @@ async def submit(
             msgs = await fut
             for msg in msgs:
                 if msg[0] == "RESULT":
-                    _ok, _err, _deps, _errors = msg[1]
+                    _ok, _err, _results, _errors = msg[1]
                     ok += _ok
                     err += _err
-                    deps.extend(_deps)
+                    results.extend(_results)
                     errors.update(_errors)
 
-        return ok, err, deps, errors
+        return ok, err, results, errors
 
     finally:
         if fd:
@@ -362,10 +357,7 @@ async def submit(
 def submit_debug(
     site: Site, batches: Sequence[List[Builder]]
 ) -> Tuple[
-    int,
-    int,
-    List[Tuple[ContentSrc, Set[ContentPath], Sequence[OutputInfo]]],
-    Set[ContentPath],
+    int, int, BuildResult, Set[ContentPath],
 ]:
 
     site.load_modules()
@@ -376,19 +368,20 @@ def submit_debug(
     errors = set()
 
     for batch in batches:
-        _ok, _err, deps, _errors = build_batch(site, jinjaenv, batch)
+        _ok, _err, results, _errors = build_batch(site, jinjaenv, batch)
         ok += _ok
         err += _err
-        ret.extend(deps)
+        ret.extend(results)
         errors.update(_errors)
+
     return ok, err, ret, errors
 
 
-def build(site: Site) -> Tuple[int, int, DependsDict, Set[ContentPath]]:
+def build(site: Site) -> Tuple[int, int, DependsDict, BuildResult, Set[ContentPath]]:
     if site.rebuild:
         rebuild = True
     else:
-        rebuild, updates, deps = depends.check_depends(site)
+        rebuild, updates, deps, results = depends.check_depends(site)
 
     builders = []
     for contentpath, content in site.files.items():
@@ -401,15 +394,14 @@ def build(site: Site) -> Tuple[int, int, DependsDict, Set[ContentPath]]:
         site.outputdir.mkdir(parents=True, exist_ok=True)
 
     if not site.debug:
-        ok, err, newdeps, errors = asyncio.run(submit(site, batches))
+        ok, err, results, errors = asyncio.run(submit(site, batches))
     else:
-        ok, err, newdeps, errors = submit_debug(site, batches)
-
+        ok, err, results, errors = submit_debug(site, batches)
     if rebuild:
         deps = {}
 
-    deps = depends.update_deps(site, deps, newdeps, errors)
-    depends.save_deps(site, deps, errors)
+    newdeps = depends.update_deps(site, deps, results, errors)
+    depends.save_deps(site, newdeps, results, errors)
 
     #    sitemap.save_sitemap(site, rebuild, newdeps)
-    return (ok, err, deps, errors)
+    return (ok, err, newdeps, results, errors)

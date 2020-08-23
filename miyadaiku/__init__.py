@@ -4,7 +4,7 @@ import copy
 import datetime
 import posixpath
 from pathlib import Path
-from typing import Any, Dict, NamedTuple, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple, Union
 
 import importlib_resources
 import tzlocal
@@ -164,3 +164,6 @@ class OutputInfo(NamedTuple):
     title: str
     date: Union[datetime.date, datetime.date, None]
     updated: Union[datetime.date, datetime.date, None]
+
+
+BuildResult = List[Tuple[ContentSrc, Set[ContentPath], Sequence[OutputInfo]]]

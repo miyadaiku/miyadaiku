@@ -18,12 +18,12 @@ def test_update(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({"themes": ["package1"]}, {})
 
-    ok, err, deps, errors = site.build()
-    depends.save_deps(site, deps, errors)
+    ok, err, deps, results, errors = site.build()
+    depends.save_deps(site, deps, results, errors)
 
     # test no-update
     site.load(site.root, {})
-    rebuild, updated, depdict = depends.check_depends(site)
+    rebuild, updated, depdict, results = depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set()
@@ -31,7 +31,7 @@ def test_update(siteroot: SiteRoot) -> None:
     # test update
     (siteroot.contents / "file1.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated, depdict = depends.check_depends(site)
+    rebuild, updated, depdict, results = depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set((((), "file1.rst"),))
@@ -52,17 +52,17 @@ def test_update_file(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors = site.build()
-    depends.save_deps(site, deps, errors)
+    ok, err, deps, results, errors = site.build()
+    depends.save_deps(site, deps, results, errors)
 
     output = siteroot.outputs / "file1.html"
     output.unlink()
 
-    rebuild, updated, depdict = depends.check_depends(site)
+    rebuild, updated, depdict, results = depends.check_depends(site)
     assert rebuild is False
     assert updated == set((((), "file1.rst"),))
 
-    ok, err, deps, errors = site.build()
+    ok, err, deps, results, errors = site.build()
     assert deps[((), "file1.rst")][2] == {"file1.html"}
     assert deps[((), "file2.rst")][2] == {"file2.html"}
 
@@ -84,13 +84,13 @@ def test_refs(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors = site.build()
-    depends.save_deps(site, deps, errors)
+    ok, err, deps, results, errors = site.build()
+    depends.save_deps(site, deps, results, errors)
 
     # test update depends
     (siteroot.contents / "file2.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated, depdict = depends.check_depends(site)
+    rebuild, updated, depdict, results = depends.check_depends(site)
 
     assert rebuild is False
     assert updated == set((((), "file1.rst"), ((), "file2.rst"),))
@@ -102,13 +102,13 @@ def test_rebuild(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors = site.build()
-    depends.save_deps(site, deps, errors)
+    ok, err, deps, results, errors = site.build()
+    depends.save_deps(site, deps, results, errors)
 
     # test new file
     (siteroot.contents / "file3.rst").write_text("")
     site.load(site.root, {})
-    rebuild, updated, depdict = depends.check_depends(site)
+    rebuild, updated, depdict, results = depends.check_depends(site)
 
     assert rebuild is True
 
@@ -117,12 +117,12 @@ def test_yaml(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "file1.rst", "")
 
     site = siteroot.load({}, {})
-    ok, err, deps, errors = site.build()
-    depends.save_deps(site, deps, errors)
+    ok, err, deps, results, errors = site.build()
+    depends.save_deps(site, deps, results, errors)
 
     siteroot.write_text(siteroot.contents / "file2.yml", "")
 
-    rebuild, updated, depdict = depends.check_depends(site)
+    rebuild, updated, depdict, results = depends.check_depends(site)
     assert rebuild is True
 
 
@@ -132,8 +132,8 @@ def test_metadata(siteroot: SiteRoot) -> None:
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors = site.build()
-    depends.save_deps(site, deps, errors)
+    ok, err, deps, results, errors = site.build()
+    depends.save_deps(site, deps, results, errors)
 
     # test metadata changed
     (siteroot.contents / "file1.rst").write_text(
@@ -143,7 +143,7 @@ file1-new-title
 """
     )
     site.load(site.root, {})
-    rebuild, updated, depdict = depends.check_depends(site)
+    rebuild, updated, depdict, results = depends.check_depends(site)
 
     assert rebuild is True
 
@@ -163,14 +163,14 @@ test
 
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors = site.build()
+    ok, err, deps, results, errors = site.build()
     assert ok == 0
     assert err == len(errors) == 2
 
     siteroot.write_text(siteroot.contents / "file2.rst", "")
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors = site.build()
+    ok, err, deps, results, errors = site.build()
     assert ok == 2
     assert err == len(errors) == 0
 
@@ -179,8 +179,8 @@ def test_macro(siteroot: SiteRoot) -> None:
     siteroot.write_text(siteroot.contents / "file1.rst", "")
     site = siteroot.load({}, {})
 
-    ok, err, deps, errors = site.build()
-    depends.save_deps(site, deps, errors)
+    ok, err, deps, results, errors = site.build()
+    depends.save_deps(site, deps, results, errors)
 
     # test macro
     (siteroot.modules / "file1.rst").write_text(

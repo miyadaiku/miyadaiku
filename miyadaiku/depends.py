@@ -19,17 +19,17 @@ from miyadaiku import (
     CONTENTS_DIR,
     MODULES_DIR,
     TEMPLATES_DIR,
+    BuildResult,
     ContentPath,
     ContentSrc,
     DependsDict,
-    OutputInfo,
 )
 
 if TYPE_CHECKING:
-    from miyadaiku import site
+    from miyadaiku import BuildResult, site
 
 DEP_FILE = "_depends.pickle"
-DEP_VER = "3.0.0"
+DEP_VER = "4.0.0"
 
 
 def is_newer(path: Path, mtime: float) -> bool:
@@ -54,51 +54,54 @@ def check_directory(
                 yield srcfile
 
 
-def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]:
+def check_depends(
+    site: site.Site,
+) -> Tuple[bool, Set[ContentPath], DependsDict, BuildResult]:
     deppath = site.root / DEP_FILE
 
     mtime: float
     ver: str
     depends: DependsDict
-    # load depends file
+    results: BuildResult
 
+    # load depends file
     try:
         with open(deppath, "rb") as f:
-            mtime, ver, depends, errors = pickle.load(f)
+            mtime, ver, depends, results, errors = pickle.load(f)
 
         if ver != DEP_VER:
             # old file format
-            return True, set(), {}
+            return True, set(), {}, []
 
     except Exception:
         # file load error
-        return True, set(), {}
+        return True, set(), {}, []
 
     # rebuild if config file updated
     if is_newer(site.root / CONFIG_FILE, mtime):
-        return True, set(), {}
+        return True, set(), {}, []
 
     # todo: check for removal of templates
 
     # check modules directory
     if any(check_directory(site.root / MODULES_DIR, mtime)):
-        return True, set(), {}
+        return True, set(), {}, []
 
     # check template directory
     if any(check_directory(site.root / TEMPLATES_DIR, mtime)):
-        return True, set(), {}
+        return True, set(), {}, []
 
     def is_yaml(filename: Path) -> bool:
         return filename.suffix in (".yml", ".yaml")
 
     # check contents directory
     if any(check_directory(site.root / CONTENTS_DIR, mtime, is_yaml)):
-        return True, set(), {}
+        return True, set(), {}, []
 
     # rebuild if contents are created or removed
     contentpaths = site.files.get_contentfiles_keys()
     if contentpaths != depends.keys():
-        return True, set(), {}
+        return True, set(), {}, []
 
     # select for updated files
     updated: Set[ContentPath] = set()
@@ -108,7 +111,7 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
 
         # rebuild if metadata changed
         if src.metadata != depends[path][0].metadata:
-            return True, set(), {}
+            return True, set(), {}, []
 
         if ((src.mtime or 0) > mtime) or (path in errors):
             updated.update(depends[path][1])
@@ -126,14 +129,14 @@ def check_depends(site: site.Site) -> Tuple[bool, Set[ContentPath], DependsDict]
                 updated.add(path)
                 break
 
-    return False, updated, depends
+    results = [
+        result for result in results if site.files.has_content(result[0].contentpath)
+    ]
+    return False, updated, depends, results
 
 
 def update_deps(
-    site: site.Site,
-    d: DependsDict,
-    deps: Sequence[Tuple[ContentSrc, Set[ContentPath], Sequence[OutputInfo]]],
-    errors: Set[ContentPath],
+    site: site.Site, d: DependsDict, results: BuildResult, errors: Set[ContentPath],
 ) -> DependsDict:
 
     new: Dict[ContentPath, Tuple[Set[ContentPath], Set[str]]] = {}
@@ -144,7 +147,7 @@ def update_deps(
     for contentpath, (contentsrc, depends, filenames) in d.items():
         new[contentpath] = (depends, {str(site.outputdir / f) for f in filenames})
 
-    for contentsrc, depends, outputinfos in deps:
+    for contentsrc, depends, outputinfos in results:
         filenames = {str(oi.filename) for oi in outputinfos}
         if contentsrc.contentpath in new:
             new[contentsrc.contentpath][1].update(filenames)
@@ -169,7 +172,12 @@ def update_deps(
     return ret
 
 
-def save_deps(site: site.Site, depsdict: DependsDict, errors: Set[ContentPath]) -> None:
+def save_deps(
+    site: site.Site,
+    depsdict: DependsDict,
+    results: BuildResult,
+    errors: Set[ContentPath],
+) -> None:
 
     with open(site.root / DEP_FILE, "wb") as f:
-        pickle.dump((site.files.mtime, DEP_VER, depsdict, errors), f)
+        pickle.dump((site.files.mtime, DEP_VER, depsdict, results, errors), f)
