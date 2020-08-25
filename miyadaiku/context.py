@@ -711,7 +711,7 @@ class BinaryOutput(OutputContext):
 
 class JinjaOutput(OutputContext):
     is_sitemap = True
-    sitemap_priority = 1.0
+    sitemap_priority = 0.5
     content: Article
 
     def build(self) -> List[OutputInfo]:
