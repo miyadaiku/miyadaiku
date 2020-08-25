@@ -14,6 +14,9 @@ def write_sitemap(site: Site, outputinfos: Sequence[OutputInfo]) -> None:
     root.attrib["xmlns"] = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
     for oi in outputinfos:
+        if not oi.sitemap:
+            continue
+
         url = ET.SubElement(root, "url")
         ET.SubElement(url, "loc").text = oi.url
 

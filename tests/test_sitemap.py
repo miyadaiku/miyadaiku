@@ -38,6 +38,8 @@ def test_update(siteroot: SiteRoot) -> None:
 """,
     )
 
+    siteroot.write_text(siteroot.contents / "image.png", "")
+
     site = siteroot.load({}, {})
     site.build()
 
