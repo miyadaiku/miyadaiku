@@ -109,7 +109,7 @@ date: {datestr}
                     datestr = m[0]
                     try:
                         return config.format_value("date", datestr)
-                    except ValueError:
+                    except (ValueError, OverflowError):
                         pass
         return None
 

@@ -29,7 +29,7 @@ title: title
     site = siteroot.load({}, {})
     site.build()
 
-    assert len(list(siteroot.outputs.iterdir())) == 1
+    assert len(list(siteroot.outputs.glob("**/*.html"))) == 1
     text = (siteroot.outputs / "doc2.html").read_text()
     assert "snipet<b>text</b>" in text
     assert "aaa" in text
@@ -62,4 +62,4 @@ title: title
     site = siteroot.load({}, {})
     site.build()
 
-    assert len(list(siteroot.outputs.iterdir())) == 1
+    assert len(list(siteroot.outputs.glob("**/*.html"))) == 1

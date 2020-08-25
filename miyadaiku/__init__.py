@@ -20,6 +20,8 @@ CONTENTS_DIR = "contents"
 FILES_DIR = "files"
 TEMPLATES_DIR = "templates"
 OUTPUTS_DIR = "outputs"
+SITEMAP_FILENAME = "sitemap.xml"
+SITEMAP_CHANGEFREQ = "daily"
 
 DEFAULT_TIMEZONE = tzlocal.get_localzone().zone
 DEFAULT_THEME = "miyadaiku.themes.base"
@@ -163,8 +165,10 @@ class OutputInfo(NamedTuple):
     filename: Path
     url: str
     title: str
-    date: Union[datetime.date, datetime.date, None]
-    updated: Union[datetime.date, datetime.date, None]
+    date: Union[datetime.date, datetime.datetime, None]
+    updated: Union[datetime.date, datetime.datetime, None]
+    sitemap: bool
+    sitemap_priority: float
 
 
 BuildResult = List[Tuple[ContentSrc, Set[ContentPath], Sequence[OutputInfo]]]

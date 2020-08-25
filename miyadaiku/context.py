@@ -528,6 +528,9 @@ class HTMLInfo(NamedTuple):
 
 
 class OutputContext:
+    is_sitemap = False
+    sitemap_priority = 0.5
+
     site: Site
     contentpath: ContentPath
     content: Content
@@ -582,6 +585,17 @@ class OutputContext:
     ) -> None:
         self._filename_cache[(content.src.contentpath, tp_pagearg)] = filename
 
+    def get_is_sitemap(self) -> bool:
+        is_sitemap: bool = self.content.get_metadata(self.site, "sitemap", None)
+        if is_sitemap is not None:
+            return is_sitemap
+
+        is_draft = self.content.get_metadata(self.site, "draft", False)
+        if is_draft:
+            return False
+
+        return self.is_sitemap
+
     def build_outputinfo(self) -> OutputInfo:
         return OutputInfo(
             contentpath=self.contentpath,
@@ -590,6 +604,8 @@ class OutputContext:
             title=self.content.build_title(self),
             date=self.content.get_metadata(self.site, "date", None),
             updated=self.content.get_metadata(self.site, "updated", None),
+            sitemap=self.get_is_sitemap(),
+            sitemap_priority=self.sitemap_priority,
         )
 
     @abstractmethod
@@ -694,6 +710,8 @@ class BinaryOutput(OutputContext):
 
 
 class JinjaOutput(OutputContext):
+    is_sitemap = True
+    sitemap_priority = 1.0
     content: Article
 
     def build(self) -> List[OutputInfo]:
@@ -708,6 +726,9 @@ class JinjaOutput(OutputContext):
 
 
 class IndexOutput(OutputContext):
+    is_sitemap = True
+    sitemap_priority = 0.4
+
     content: IndexPage
     value: str
     items: Sequence[Content]

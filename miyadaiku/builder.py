@@ -32,7 +32,7 @@ from miyadaiku import (
     repr_contentpath,
 )
 
-from . import context, depends, extend, mp_log
+from . import context, depends, extend, mp_log, sitemap
 
 if TYPE_CHECKING:
     from .contents import Content
@@ -395,12 +395,16 @@ def build(site: Site) -> Tuple[int, int, DependsDict, BuildResult, Set[ContentPa
         ok, err, newresults, errors = asyncio.run(submit(site, batches))
     else:
         ok, err, newresults, errors = submit_debug(site, batches)
+
     if rebuild:
         deps = {}
+        outputinfos = []
 
     newdeps = depends.update_deps(site, deps, newresults, errors)
     newois = depends.update_outputinfos(site, outputinfos, newresults)
-
     depends.save_deps(site, newdeps, newois, errors)
+
+    if site.config.get("/", "generate_sitemap", True):
+        sitemap.write_sitemap(site, newois)
 
     return (ok, err, newdeps, newresults, errors)
