@@ -47,7 +47,7 @@ History
 ~~~~~~~~~~~~
 
 - :jinja:``  tag can be used in Jupyter markdown cell.
-
+- Generates sitemap
 
 1.16.0
 ~~~~~~~~~~~~
