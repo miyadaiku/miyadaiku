@@ -8,7 +8,7 @@ import re
 import unicodedata
 import urllib.parse
 from pathlib import Path, PurePosixPath
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pytz
 from bs4 import BeautifulSoup
@@ -232,27 +232,28 @@ date: {datestr}
 
         return ret
 
-    def build_html_src(self, ctx: context.OutputContext) -> None:
+    def _build_html_src(self, ctx: context.OutputContext) -> None:
         ctx.set_cache("html", self, "")
 
-    def build_html(self, ctx: context.OutputContext) -> None:
+    def _build_html(self, ctx: context.OutputContext) -> None:
         ret = ctx.get_cache("html", self)
         if ret is not None:
             return
 
         ctx.add_depend(self)
-        self.build_html_src(ctx)
+        with ctx.on_build_html(self):
+            self._build_html_src(ctx)
 
-    def get_html(self, ctx: context.OutputContext) -> Optional[str]:
-        self.build_html(ctx)
-        return cast(Optional[str], ctx.get_cache("html", self))
+    def get_html(self, ctx: context.OutputContext) -> str:
+        self._build_html(ctx)
+        return cast(str, ctx.get_cache("html", self))
 
     def get_soup(self, ctx: context.OutputContext) -> Any:
         ret = ctx.get_cache("soup", self)
         if ret:
             return ret
 
-        self.build_html(ctx)
+        self._build_html(ctx)
         return ctx.get_cache("soup", self)
 
     def get_first_header(self, context: context.OutputContext) -> Optional[str]:
@@ -300,7 +301,7 @@ date: {datestr}
         context: context.OutputContext,
         abstract_length: Optional[int] = None,
         plain: bool = False,
-    ) -> Union[None, str]:
+    ) -> str:
         return ""
 
     def get_headers(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
@@ -338,7 +339,8 @@ date: {datestr}
         ret["content"] = context.ContentProxy(ctx, self)
         ret["contents"] = context.ContentsProxy(ctx, self)
         ret["config"] = context.ConfigProxy(ctx, self)
-
+        bases = [context.ContentProxy(ctx, base) for base in ctx.bases[:-1]]
+        ret["bases"] = bases
         return ret
 
 
@@ -421,7 +423,7 @@ class HTMLContent(Content):
         ctx.set_cache("header_anchors", self, header_anchors)
         return soup
 
-    def build_html_src(self, ctx: context.OutputContext) -> None:
+    def _build_html_src(self, ctx: context.OutputContext) -> None:
         if self.get_metadata(ctx.site, "has_jinja"):
             html = self.eval_body(ctx, "html")
         else:
@@ -449,7 +451,7 @@ class HTMLContent(Content):
 
         self._in_build_headers = True
         try:
-            self.build_html(ctx)
+            self._build_html(ctx)
         finally:
             self._in_build_headers = False
 
@@ -460,7 +462,7 @@ class HTMLContent(Content):
         plain: bool = False,
     ) -> str:
 
-        self.build_html(ctx)
+        self._build_html(ctx)
         soup = ctx.get_cache("soup", self)
         if not soup:
             return ""

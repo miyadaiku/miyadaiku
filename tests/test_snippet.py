@@ -1,4 +1,4 @@
-from conftest import SiteRoot
+from conftest import SiteRoot, create_contexts
 
 
 def test_load(siteroot: SiteRoot) -> None:
@@ -37,29 +37,34 @@ title: title
 
 
 def test_header(siteroot: SiteRoot) -> None:
-    siteroot.write_text(
-        siteroot.contents / "doc1.html",
-        """
+    (ctx2,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "doc1.html",
+                """
 type: snippet
 
 <h1>header-snippet</h1>
 
+++{{bases[0].title}}++
 """,
-    )
-
-    siteroot.write_text(
-        siteroot.contents / "doc2.html",
-        """
-title: title
+            ),
+            (
+                "doc2.html",
+                """
+title: doc2-title
 
 <h1>header-page</h1>
 
 {{ page.load("./doc1.html").html }}
-
 """,
+            ),
+        ],
     )
-
-    site = siteroot.load({}, {})
-    site.build()
-
-    assert len(list(siteroot.outputs.glob("**/*.html"))) == 1
+    headers = {h.text for h in ctx2.content.get_headers(ctx2)}
+    assert headers == {"header-snippet", "header-page"}
+    print(ctx2.content.get_html(ctx2))
+    html = ctx2.content.get_html(ctx2)
+    assert html
+    assert "++doc2-title++" in html

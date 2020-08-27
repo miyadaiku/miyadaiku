@@ -43,6 +43,11 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.18.0
+~~~~~~~~~~~~
+
+- Add `bases` to the jinja variable.
+
 1.17.0
 ~~~~~~~~~~~~
 

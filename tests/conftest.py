@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 import miyadaiku.site
-from miyadaiku import ContentSrc, context, extend, to_contentpath
+from miyadaiku import ContentSrc, builder, context, extend, to_contentpath
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -99,7 +99,7 @@ def create_contexts(
     siteroot: SiteRoot,
     srcs: Sequence[Tuple[str, str]],
     config: Optional[Dict[Any, Any]] = None,
-) -> List[context.JinjaOutput]:
+) -> List[context.OutputContext]:
     siteroot.clear()
     for path, src in srcs:
         siteroot.write_text(siteroot.contents / path, src)
@@ -112,7 +112,10 @@ def create_contexts(
     for path, src in srcs:
         contentpath = to_contentpath(path)
         if site.files.has_content(contentpath):
-            ctx = context.JinjaOutput(site, jinjaenv, contentpath)
-            ret.append(ctx)
+            content = site.files.get_content(contentpath)
+            builders = builder.create_builders(site, content)
+            for b in builders:
+                ctx = b.build_context(site, jinjaenv)
+                ret.append(ctx)
 
     return ret

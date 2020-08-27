@@ -9,6 +9,7 @@ import time
 import urllib.parse
 from abc import abstractmethod
 from collections import defaultdict
+from contextlib import contextmanager
 from functools import update_wrapper
 from pathlib import Path
 from typing import (
@@ -17,6 +18,7 @@ from typing import (
     Callable,
     DefaultDict,
     Dict,
+    Iterator,
     List,
     NamedTuple,
     Optional,
@@ -454,8 +456,8 @@ def eval_jinja(
 
     ctx.add_depend(content)
 
-    args = content.get_jinja_vars(ctx)
-    args.update(kwargs)
+    #    args = content.get_jinja_vars(ctx)
+    #    args.update(kwargs)
 
     filename = f"{repr_contentpath(content.src.contentpath)}#{propname}"
 
@@ -534,8 +536,7 @@ class OutputContext:
     site: Site
     contentpath: ContentPath
     content: Content
-    #    _html_cache: Dict[ContentPath, HTMLInfo]
-
+    bases: List[Content]
     depends: Set[ContentPath]
 
     _filename_cache: Dict[Tuple[ContentPath, Tuple[Any, ...]], str]
@@ -549,6 +550,7 @@ class OutputContext:
         self.contentpath = contentpath
         self.content = site.files.get_content(self.contentpath)
         self.depends = set([contentpath])
+        self.bases = [self.content]
         self._filename_cache = {}
         self._cache = defaultdict(dict)
 
@@ -607,6 +609,15 @@ class OutputContext:
             sitemap=self.get_is_sitemap(),
             sitemap_priority=self.sitemap_priority,
         )
+
+    @contextmanager
+    def on_build_html(self, content: Content) -> Iterator[None]:
+        try:
+            self.bases.append(content)
+            yield None
+        finally:
+            assert self.bases[-1] is content
+            self.bases.pop()
 
     @abstractmethod
     def build(self) -> List[OutputInfo]:
