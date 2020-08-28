@@ -251,47 +251,55 @@ class ContentFiles:
         if "type" not in filters_copy:
             filters_copy["type"] = {"article"}
 
-        def adj(content: Content, filters: Dict[str, Any]) -> bool:
-            notfound = object()
-            for k, v in filters.items():
-                prop = content.get_metadata(site, k, notfound)
-                if prop is notfound:
-                    if v is None:
-                        continue
-                    else:
-                        return False
+        notfound = object()
 
-                if isinstance(prop, str):
-                    if v is None:
-                        return False
-
-                    if prop not in v:
-                        return False
-
-                elif isinstance(prop, collections.abc.Collection):
-                    if v is None:
-                        if not prop:
-                            continue
-                        else:
-                            return False
-
-                    for e in prop:
-                        if e in v:
-                            break
-                    else:
-                        return False
+        def term(key: str, value: Any, content: Content) -> bool:
+            prop = content.get_metadata(site, key, notfound)
+            if prop is notfound:
+                if value is None:
+                    return True
                 else:
-                    if v is None:
-                        return False
+                    return False
 
-                    if prop not in v:
-                        return False
+            if value is None:
+                if prop is notfound:
+                    return True
+
+                if not prop:
+                    return True
+
+                return False
+
+            if isinstance(prop, str) or (
+                not isinstance(prop, collections.abc.Collection)
+            ):
+                # str, bool, etc
+                return prop in value
+
+            else:
+                # list, dict, etc
+                for e in prop:
+                    if e in value:
+                        return True
+                else:
+                    return False
+
+        def adj_and(content: Content, filters: Dict[str, Any]) -> bool:
+            for k, v in filters.items():
+                if not term(k, v, content):
+                    return False
             return True
 
-        contents = [c for c in self._contentfiles.values() if adj(c, filters_copy)]
+        def adj_or(content: Content, filters: Dict[str, Any]) -> bool:
+            for k, v in filters.items():
+                if term(k, v, content):
+                    return True
+            return False
+
+        contents = [c for c in self._contentfiles.values() if adj_and(c, filters_copy)]
 
         if excludes:
-            contents = [c for c in contents if not adj(c, excludes)]
+            contents = [c for c in contents if not adj_or(c, excludes)]
 
         if subdirs is not None:
             dirs = subdirs
