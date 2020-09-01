@@ -4,24 +4,35 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import nbformat
 from nbconvert.exporters import HTMLExporter
+from traitlets.config import Config
 
 from miyadaiku import ContentSrc
 
 from . import parsesrc
 
 
-def _export(json: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-    config = {"TemplateExporter": {"template_file": "basic.tpl"}}
-    html, _ = HTMLExporter(config).from_notebook_node(json)
+def _export(json: Dict[str, Any], opt: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    c = Config(
+        {
+            "TemplateExporter": {"template_file": "basic.tpl"},
+            "TagRemovePreprocessor": {
+                "remove_cell_tags": ["remove_cell"],
+                "remove_all_outputs_tags": ["remove_output"],
+                "remove_input_tags": ["remove_input"],
+            },
+        }
+    )
+
+    html, _ = HTMLExporter(c).from_notebook_node(json)
 
     metadata = {"type": "article", "has_jinja": True}
     metadata.update(json.get("metadata", {}).get("miyadaiku", {}))
     return metadata, html
 
 
-def _load_string(s: str) -> Tuple[Dict[str, Any], str]:
+def _load_string(s: str, opt: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     json = nbformat.reads(s, nbformat.current_nbformat)
-    return _export(json)
+    return _export(json, opt)
 
 
 def get_cellfilename(cell: Dict[str, Any]) -> Optional[str]:
@@ -58,7 +69,7 @@ def split_cells(
     return ret
 
 
-def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
+def load(src: ContentSrc, opt: Dict[str, Any]) -> List[Tuple[ContentSrc, str]]:
     s = src.read_text()
     json = nbformat.reads(s, nbformat.current_nbformat)
 
@@ -115,7 +126,7 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
 
         subjson["cells"] = newcells
 
-        meta, html = _export(subjson)
+        meta, html = _export(subjson, opt)
         meta.update(cellmeta)
 
         subsrc.metadata.update(meta)

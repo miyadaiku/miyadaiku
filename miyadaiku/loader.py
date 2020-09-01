@@ -131,7 +131,7 @@ def walk_package(package: str, path: str, ignores: Set[str]) -> Iterator[Content
         )
 
 
-def yamlloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, None]]:
+def yamlloader(site: site.Site, src: ContentSrc) -> Sequence[Tuple[ContentSrc, None]]:
     text = src.read_bytes()
     metadata = yaml.load(text, Loader=yaml.FullLoader) or {}
     if not isinstance(metadata, (dict, list, tuple)):
@@ -144,30 +144,41 @@ def yamlloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, None]]:
     return [(src, None)]
 
 
-def binloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
+def binloader(
+    site: site.Site, src: ContentSrc
+) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     src.metadata["type"] = "binary"
     return [(src, None)]
 
 
-def rstloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
+def rstloader(
+    site: site.Site, src: ContentSrc
+) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     from . import rst
 
     return rst.load(src)
 
 
-def mdloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
+def mdloader(
+    site: site.Site, src: ContentSrc
+) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     from . import md
 
     return md.load(src)
 
 
-def ipynbloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
+def ipynbloader(
+    site: site.Site, src: ContentSrc
+) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     from . import ipynb
 
-    return ipynb.load(src)
+    opt = site.config.get("/", "ipynb_export_options")
+    return ipynb.load(src, opt)
 
 
-def txtloader(src: ContentSrc) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
+def txtloader(
+    site: site.Site, src: ContentSrc
+) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     from . import text
 
     return text.load(src)
@@ -355,7 +366,9 @@ class ContentFiles:
         return sorted(d.items())
 
 
-def loadfile(src: ContentSrc, bin: bool) -> List[Tuple[ContentSrc, Optional[bytes]]]:
+def loadfile(
+    site: site.Site, src: ContentSrc, bin: bool
+) -> List[Tuple[ContentSrc, Optional[bytes]]]:
     if not bin:
         assert src.srcpath
         ext = os.path.splitext(src.srcpath)[1]
@@ -364,7 +377,7 @@ def loadfile(src: ContentSrc, bin: bool) -> List[Tuple[ContentSrc, Optional[byte
         loader = binloader
 
     ret: List[Tuple[ContentSrc, Optional[bytes]]] = []
-    for contentsrc, body in loader(src):
+    for contentsrc, body in loader(site, src):
         if isinstance(body, bytes):
             ret.append((contentsrc, body))
         if isinstance(body, str):
@@ -392,7 +405,7 @@ def loadfiles(
             if not f:
                 continue
 
-            for f, body in loadfile(f, bin):
+            for f, body in loadfile(site, f, bin):
                 if not f:
                     continue
 

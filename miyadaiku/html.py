@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import re
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from miyadaiku import ContentSrc, parsesrc
 
+if TYPE_CHECKING:
+    from miyadaiku import site
 
-def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
+
+def load(site: site.Site, src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
     meta, html = _load_string(src.read_text())
     src.metadata.update(meta)
     return [(src, html)]

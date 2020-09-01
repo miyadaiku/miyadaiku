@@ -35,6 +35,13 @@ DEFAULTS = dict(
     indexpage_max_num_pages=0,
     indexpage_max_articles=5,
     indexpage_orphan=1,
+    ipynb_export_options={
+        "TagRemovePreprocessor": {
+            "remove_cell_tags": ["remove_cell"],
+            "remove_all_outputs_tags": ["remove_output"],
+            "remove_input_tags": ["remove_input"],
+        },
+    },
     feedtype="atom",
     feed_num_articles=20,
     title="",

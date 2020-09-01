@@ -48,6 +48,18 @@ History
 
 - Add `bases` to the jinja variable.
 
+- Add `ipynb_export_options` config for nbexport option. Default to
+  ::
+
+     {"TagRemovePreprocessor": {
+         "remove_cell_tags": ["remove_cell"],
+         "remove_all_outputs_tags": ["remove_output"],
+         "remove_input_tags": ["remove_input"]
+         },
+     }
+
+
+
 1.17.0
 ~~~~~~~~~~~~
 

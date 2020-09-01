@@ -2,7 +2,7 @@ from pathlib import Path
 
 from conftest import to_contentsrc
 
-from miyadaiku import html
+from miyadaiku import html, site
 
 
 def test_load(sitedir: Path) -> None:
@@ -17,7 +17,7 @@ date: 2017-1-1
 """
     )
 
-    ((src, text),) = html.load(to_contentsrc(sitedir.joinpath("a.html")))
+    ((src, text),) = html.load(site.Site(), to_contentsrc(sitedir.joinpath("a.html")))
 
     assert src.metadata["title"] == "title<>"
     assert src.metadata["tags"] == "a,b,c"
@@ -41,7 +41,7 @@ date: 2017-1-1
 """
     )
 
-    ((src, text),) = html.load(to_contentsrc(sitedir.joinpath("a.html")))
+    ((src, text),) = html.load(site.Site(), to_contentsrc(sitedir.joinpath("a.html")))
 
     assert src.metadata["title"] == "title<>"
     assert src.metadata["tags"] == ["a", "b", "c"]

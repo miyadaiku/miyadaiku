@@ -17,9 +17,11 @@ def test_load() -> None:
         mtime=0,
     )
 
-    ((src, text),) = ipynb.load(contentsrc)
+    ((src, text),) = ipynb.load(contentsrc, {})
     assert src.metadata["type"] == "article"
     assert "{{ 1+1 }}" in text
+
+    assert "hidden cell" not in text
 
 
 def test_package() -> None:
@@ -31,7 +33,7 @@ def test_package() -> None:
         mtime=0,
     )
 
-    ((src, text),) = ipynb.load(contentsrc)
+    ((src, text),) = ipynb.load(contentsrc, {})
     assert src.metadata["type"] == "article"
     print(text)
 
@@ -76,7 +78,7 @@ def test_split() -> None:
         mtime=0,
     )
 
-    ((src1, text1), (src2, text2),) = ipynb.load(contentsrc)
+    ((src1, text1), (src2, text2),) = ipynb.load(contentsrc, {})
 
     assert src1.contentpath == ((), "file1")
     soup = BeautifulSoup(text1, "html.parser")
