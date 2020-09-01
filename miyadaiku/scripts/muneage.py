@@ -23,9 +23,15 @@ logger = logging.getLogger(__name__)
 locale.setlocale(locale.LC_ALL, "")
 
 
+class MiyadaikuHTTPHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("cache-control", "no-cache")
+        return super().end_headers()
+
+
 def exec_server(dir, bind, port):
     os.chdir(dir)
-    http.server.test(http.server.SimpleHTTPRequestHandler, bind=bind, port=port)
+    http.server.test(MiyadaikuHTTPHandler, bind=bind, port=port)
 
 
 def build(path, outputdir, props, args):
