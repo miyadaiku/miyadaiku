@@ -10,23 +10,24 @@ from miyadaiku import ContentSrc
 
 from . import parsesrc
 
+c = Config(
+    {
+        "TemplateExporter": {
+            "template_name": "classic",
+            "template_file": "base.html.j2",
+        },
+        "TagRemovePreprocessor": {
+            "remove_cell_tags": ["remove_cell"],
+            "remove_all_outputs_tags": ["remove_output"],
+            "remove_input_tags": ["remove_input"],
+        },
+    }
+)
+exporter = HTMLExporter(c)
+
 
 def _export(json: Dict[str, Any], opt: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-    c = Config(
-        {
-            "TemplateExporter": {
-                "template_name": "classic",
-                "template_file": "base.html.j2",
-            },
-            "TagRemovePreprocessor": {
-                "remove_cell_tags": ["remove_cell"],
-                "remove_all_outputs_tags": ["remove_output"],
-                "remove_input_tags": ["remove_input"],
-            },
-        }
-    )
-
-    html, _ = HTMLExporter(c).from_notebook_node(json)
+    html, _ = exporter.from_notebook_node(json)
     metadata = {"type": "article", "has_jinja": True}
     metadata.update(json.get("metadata", {}).get("miyadaiku", {}))
     return metadata, html

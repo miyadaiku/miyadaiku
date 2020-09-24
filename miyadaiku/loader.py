@@ -6,6 +6,7 @@ import logging
 import os
 import posixpath
 import time
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor  # noqa
 from pathlib import Path
 from typing import (
     Any,
@@ -397,6 +398,8 @@ def loadfiles(
 ) -> None:
     def load(walk: Iterator[ContentSrc], bin: bool = False) -> None:
         f: Optional[ContentSrc]
+        srcs: List[ContentSrc] = []
+
         for f in walk:
             if not f:
                 continue
@@ -404,22 +407,47 @@ def loadfiles(
             f = extend.run_pre_load(site, f, bin)
             if not f:
                 continue
+            srcs.append(f)
 
-            for f, body in loadfile(site, f, bin):
-                if not f:
-                    continue
+        def loaded(fut: Any) -> Any:
+            for src, body in fut.result():
+                if not src:
+                    return
 
-                f, body = extend.run_post_load(site, f, bin, body)
+                src, body = extend.run_post_load(site, src, bin, body)
 
-                if not f:
-                    continue
+                if not src:
+                    return
 
                 if bin:
-                    files.add(f, body)
-                elif f.metadata["type"] == "config":
-                    cfg.add(f.contentpath[0], f.metadata, f)
+                    files.add(src, body)
+                elif src.metadata["type"] == "config":
+                    cfg.add(src.contentpath[0], src.metadata, src)
                 else:
-                    files.add(f, body)
+                    files.add(src, body)
+
+        with ProcessPoolExecutor() as exe:
+            for src in srcs:
+                fut = exe.submit(loadfile, site, src, bin)
+                fut.add_done_callback(loaded)
+                fut.result()
+
+    #
+    #            for f, body in loadfile(site, f, bin):
+    #                if not f:
+    #                    continue
+    #
+    #                f, body = extend.run_post_load(site, f, bin, body)
+    #
+    #                if not f:
+    #                    continue
+    #
+    #                if bin:
+    #                    files.add(f, body)
+    #                elif f.metadata["type"] == "config":
+    #                    cfg.add(f.contentpath[0], f.metadata, f)
+    #                else:
+    #                    files.add(f, body)
 
     load(walk_directory(root / miyadaiku.CONTENTS_DIR, ignores))
     load(walk_directory(root / miyadaiku.FILES_DIR, ignores), bin=True)
