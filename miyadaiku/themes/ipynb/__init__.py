@@ -28,8 +28,7 @@ def _build_head() -> str:
         if isinstance(x, Doctype):
             x.extract()
         if x.name == "meta":
-            if "charset" in x.attrs:
-                x.extract()
+            x.extract()
 
     return str(soup)
 

@@ -58,6 +58,7 @@ History
          },
      }
 
+- Support nbconvert >= 6.0
 
 
 1.17.0
