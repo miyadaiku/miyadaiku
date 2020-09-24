@@ -409,28 +409,32 @@ def loadfiles(
                 continue
             srcs.append(f)
 
-        def loaded(fut: Any) -> Any:
-            for src, body in fut.result():
+        def loaded(items: List[Tuple[ContentSrc, Optional[bytes]]]) -> None:
+            for src, body in items:
                 if not src:
                     return
 
-                src, body = extend.run_post_load(site, src, bin, body)
+                loaded_src, body = extend.run_post_load(site, src, bin, body)
 
-                if not src:
+                if not loaded_src:
                     return
 
                 if bin:
-                    files.add(src, body)
-                elif src.metadata["type"] == "config":
-                    cfg.add(src.contentpath[0], src.metadata, src)
+                    files.add(loaded_src, body)
+                elif loaded_src.metadata["type"] == "config":
+                    cfg.add(loaded_src.contentpath[0], loaded_src.metadata, loaded_src)
                 else:
-                    files.add(src, body)
+                    files.add(loaded_src, body)
 
-        with ProcessPoolExecutor() as exe:
-            for src in srcs:
-                fut = exe.submit(loadfile, site, src, bin)
-                fut.add_done_callback(loaded)
-                fut.result()
+        for src in srcs:
+            ret = loadfile(site, src, bin)
+            loaded(ret)
+
+    #        with ProcessPoolExecutor() as exe:
+    #            for src in srcs:
+    #                fut = exe.submit(loadfile, site, src, bin)
+    #                fut.add_done_callback(loaded)
+    #                fut.result()
 
     #
     #            for f, body in loadfile(site, f, bin):
