@@ -58,8 +58,9 @@ History
          },
      }
 
-- Support nbconvert >= 6.0
+- Support nbconvert >= 6.0.
 
+- Improve file cache.
 
 1.17.0
 ~~~~~~~~~~~~

@@ -5,6 +5,7 @@ import fnmatch
 import logging
 import os
 import posixpath
+import shelve
 import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor  # noqa
 from pathlib import Path
@@ -20,6 +21,7 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    cast,
 )
 
 import importlib_resources
@@ -367,9 +369,41 @@ class ContentFiles:
         return sorted(d.items())
 
 
+CACHE_FILE = "_file_cache.db"
+CACHE_VER = b"1.0.0"
+CACHE_VER_KEY = "::<<miyadaiku_cache_ver>>::"
+
+
+def _load_filecache(site: site.Site) -> shelve.DbfilenameShelf:
+    filename = str(site.root / CACHE_FILE)
+    if site.rebuild:
+        file_cache = shelve.open(filename, "n")
+        file_cache[CACHE_VER_KEY] = CACHE_VER
+    else:
+        file_cache = shelve.open(filename, "c")
+
+        if file_cache.get(CACHE_VER_KEY, b"") != CACHE_VER:
+            file_cache.close()
+
+            file_cache = shelve.open(filename, "n")
+            file_cache[CACHE_VER_KEY] = CACHE_VER
+
+    return file_cache
+
+
 def loadfile(
-    site: site.Site, src: ContentSrc, bin: bool
+    site: site.Site, src: ContentSrc, bin: bool, filecache: shelve.DbfilenameShelf
 ) -> List[Tuple[ContentSrc, Optional[bytes]]]:
+
+    curstat = src.stat()
+
+    key = f"{src.package}_::::_{src.srcpath}"
+
+    stat, bodies = filecache.get(key, (None, None))
+    if stat:
+        if stat == curstat:
+            return cast(List[Tuple[ContentSrc, Optional[bytes]]], bodies)
+
     if not bin:
         assert src.srcpath
         ext = os.path.splitext(src.srcpath)[1]
@@ -385,6 +419,8 @@ def loadfile(
             ret.append((contentsrc, body.encode("utf-8")))
         else:
             ret.append((contentsrc, None))
+
+    filecache[key] = curstat, ret
     return ret
 
 
@@ -396,6 +432,8 @@ def loadfiles(
     ignores: Set[str],
     themes: List[str],
 ) -> None:
+    filecache = _load_filecache(site)
+
     def load(walk: Iterator[ContentSrc], bin: bool = False) -> None:
         f: Optional[ContentSrc]
         srcs: List[ContentSrc] = []
@@ -427,31 +465,8 @@ def loadfiles(
                     files.add(loaded_src, body)
 
         for src in srcs:
-            ret = loadfile(site, src, bin)
+            ret = loadfile(site, src, bin, filecache)
             loaded(ret)
-
-    #        with ProcessPoolExecutor() as exe:
-    #            for src in srcs:
-    #                fut = exe.submit(loadfile, site, src, bin)
-    #                fut.add_done_callback(loaded)
-    #                fut.result()
-
-    #
-    #            for f, body in loadfile(site, f, bin):
-    #                if not f:
-    #                    continue
-    #
-    #                f, body = extend.run_post_load(site, f, bin, body)
-    #
-    #                if not f:
-    #                    continue
-    #
-    #                if bin:
-    #                    files.add(f, body)
-    #                elif f.metadata["type"] == "config":
-    #                    cfg.add(f.contentpath[0], f.metadata, f)
-    #                else:
-    #                    files.add(f, body)
 
     load(walk_directory(root / miyadaiku.CONTENTS_DIR, ignores))
     load(walk_directory(root / miyadaiku.FILES_DIR, ignores), bin=True)
@@ -461,3 +476,5 @@ def loadfiles(
         load(walk_package(theme, miyadaiku.FILES_DIR, ignores), bin=True)
 
     extend.run_load_finished(site)
+
+    filecache.close()
