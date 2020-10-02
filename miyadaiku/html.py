@@ -18,7 +18,11 @@ def load(site: site.Site, src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
 def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
     loaded, string = parsesrc.split_yaml(string, sep="---")
 
-    meta = {"type": "article", "has_jinja": True}
+    meta = {
+        "type": "article",
+        "has_jinja": True,
+        "loader": "html",
+    }
     meta.update(loaded)
 
     lines = string.splitlines()

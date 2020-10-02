@@ -28,7 +28,11 @@ exporter = HTMLExporter(c)
 
 def _export(json: Dict[str, Any], opt: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     html, _ = exporter.from_notebook_node(json)
-    metadata = {"type": "article", "has_jinja": True}
+    metadata = {
+        "type": "article",
+        "has_jinja": True,
+        "loader": "ipynb",
+    }
     metadata.update(json.get("metadata", {}).get("miyadaiku", {}))
     return metadata, html
 

@@ -113,7 +113,11 @@ def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
 
     md = markdown.Markdown(extensions=extensions)
     md.postprocessors.register(JinjaPostprocessor(md), "jinja_raw_html", 0)
-    md.meta = {"type": "article", "has_jinja": True}
+    md.meta = {
+        "type": "article",
+        "has_jinja": True,
+        "loader": "md",
+    }
 
     meta, string = parsesrc.split_yaml(string, sep="---")
     md.meta.update(meta)

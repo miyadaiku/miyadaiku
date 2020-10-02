@@ -118,6 +118,7 @@ def _load_string(src: ContentSrc, string: str) -> Tuple[Dict[str, Any], str]:
         "has_jinja": True,
         "ext": ext,
         "article_template": "plain.txt",
+        "loader": "text",
     }
     filemeta, string = parsesrc.split_yaml(string, sep="---")
     meta.update(filemeta)

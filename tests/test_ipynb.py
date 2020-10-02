@@ -90,7 +90,12 @@ def test_split() -> None:
     assert "meta" not in soup.text
     assert "test1" in soup.text
 
-    assert src1.metadata == {"type": "article", "meta": "value1", "has_jinja": True}
+    assert src1.metadata == {
+        "type": "article",
+        "meta": "value1",
+        "has_jinja": True,
+        "loader": "ipynb",
+    }
 
     assert src2.contentpath == ((), "file2")
     soup = BeautifulSoup(text2, "html.parser")
@@ -99,4 +104,9 @@ def test_split() -> None:
     assert "3+3" in soup.text
 
     assert "meta" not in soup.text
-    assert src2.metadata == {"type": "article", "meta": "value2", "has_jinja": True}
+    assert src2.metadata == {
+        "type": "article",
+        "meta": "value2",
+        "has_jinja": True,
+        "loader": "ipynb",
+    }

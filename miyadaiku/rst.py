@@ -191,7 +191,12 @@ def _parse(pub: Any) -> Tuple[Dict[str, Any], str]:
     if title:
         title = BeautifulSoup(html.unescape(title), "html.parser").text
 
-    metadata = {"type": "article", "title": title, "has_jinja": True}
+    metadata = {
+        "type": "article",
+        "title": title,
+        "has_jinja": True,
+        "loader": "rst",
+    }
 
     if hasattr(pub.document, "article_metadata"):
         metadata.update(pub.document.article_metadata)

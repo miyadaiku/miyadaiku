@@ -62,6 +62,9 @@ History
 
 - Improve file cache.
 
+- Add `content.loader` property.
+
+
 1.17.0
 ~~~~~~~~~~~~
 

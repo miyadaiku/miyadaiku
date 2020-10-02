@@ -144,6 +144,8 @@ def yamlloader(site: site.Site, src: ContentSrc) -> Sequence[Tuple[ContentSrc, N
         metadata["type"] = "config"
 
     src.metadata.update(metadata)
+    src.metadata["loader"] = "yaml"
+
     return [(src, None)]
 
 
@@ -151,6 +153,7 @@ def binloader(
     site: site.Site, src: ContentSrc
 ) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     src.metadata["type"] = "binary"
+    src.metadata["loader"] = "binary"
     return [(src, None)]
 
 
@@ -413,6 +416,8 @@ def loadfile(
 
     ret: List[Tuple[ContentSrc, Optional[bytes]]] = []
     for contentsrc, body in loader(site, src):
+        assert contentsrc.metadata["loader"]
+
         if isinstance(body, bytes):
             ret.append((contentsrc, body))
         if isinstance(body, str):
