@@ -1,33 +1,69 @@
 import copy
 import hashlib
+import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import nbformat
 from nbconvert.exporters import HTMLExporter
 from traitlets.config import Config
 
-from miyadaiku import ContentSrc
+from miyadaiku import NBCONVERT_TEMPLATES_DIR, ContentSrc
 
-from . import parsesrc
+from . import parsesrc, site
+from .site import Site
 
-c = Config(
-    {
-        "TemplateExporter": {
-            "template_name": "classic",
-            "template_file": "base.html.j2",
-        },
-        "TagRemovePreprocessor": {
-            "remove_cell_tags": ["remove_cell"],
-            "remove_all_outputs_tags": ["remove_output"],
-            "remove_input_tags": ["remove_input"],
-        },
-    }
-)
-exporter = HTMLExporter(c)
+options: Optional[Dict[str, Any]] = None
+exporters = {}
+root: Optional[Path] = None
 
 
-def _export(json: Dict[str, Any], opt: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-    html, _ = exporter.from_notebook_node(json)
+def init(site: Site) -> None:
+    global options, exporters, root
+
+    options = copy.deepcopy(site.config.get("/", "ipynb_export_options"))
+
+    template_name = site.config.get("/", "ipynb_template_name")
+    options["TemplateExporter"]["template_name"] = template_name
+
+    template_file = site.config.get("/", "ipynb_template_file")
+    options["TemplateExporter"]["template_file"] = template_file
+
+    exporters = {}
+    root = site.root / NBCONVERT_TEMPLATES_DIR
+
+
+def _make_exporter(
+    template_name: Optional[str], template_file: Optional[str]
+) -> HTMLExporter:
+    template_name = template_name or options["TemplateExporter"]["template_name"]
+    template_file = template_file or options["TemplateExporter"]["template_file"]
+
+    if (template_name, template_file) not in exporters:
+        assert options
+        assert root
+
+        opt = copy.deepcopy(options)
+        opt["TemplateExporter"]["template_name"] = template_name
+        opt["TemplateExporter"]["template_file"] = template_file
+        opt["TemplateExporter"]["extra_template_basedirs"] = [os.getcwd(), str(root)]
+
+        exp = HTMLExporter(opt)
+        exporters[(template_name, template_file)] = exp
+
+    return exporters[(template_name, template_file)]
+
+
+def _export(
+    json: Dict[str, Any],
+    template_name: Optional[str] = None,
+    template_file: Optional[str] = None,
+) -> Tuple[Dict[str, Any], str]:
+    assert options
+
+    exp = _make_exporter(template_name, template_file)
+
+    html, _ = exp.from_notebook_node(json)
     metadata = {
         "type": "article",
         "has_jinja": True,
@@ -35,11 +71,6 @@ def _export(json: Dict[str, Any], opt: Dict[str, Any]) -> Tuple[Dict[str, Any], 
     }
     metadata.update(json.get("metadata", {}).get("miyadaiku", {}))
     return metadata, html
-
-
-def _load_string(s: str, opt: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-    json = nbformat.reads(s, nbformat.current_nbformat)
-    return _export(json, opt)
 
 
 def get_cellfilename(cell: Dict[str, Any]) -> Optional[str]:
@@ -76,7 +107,7 @@ def split_cells(
     return ret
 
 
-def load(src: ContentSrc, opt: Dict[str, Any]) -> List[Tuple[ContentSrc, str]]:
+def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
     s = src.read_text()
     json = nbformat.reads(s, nbformat.current_nbformat)
 
@@ -133,7 +164,11 @@ def load(src: ContentSrc, opt: Dict[str, Any]) -> List[Tuple[ContentSrc, str]]:
 
         subjson["cells"] = newcells
 
-        meta, html = _export(subjson, opt)
+        meta, html = _export(
+            subjson,
+            cellmeta.get("nbconvert_template", None),
+            cellmeta.get("nbconvert_templatefile", None),
+        )
         meta.update(cellmeta)
 
         subsrc.metadata.update(meta)

@@ -178,8 +178,7 @@ def ipynbloader(
 ) -> Sequence[Tuple[ContentSrc, Optional[str]]]:
     from . import ipynb
 
-    opt = site.config.get("/", "ipynb_export_options")
-    return ipynb.load(src, opt)
+    return ipynb.load(src)
 
 
 def txtloader(
@@ -438,6 +437,10 @@ def loadfiles(
     themes: List[str],
 ) -> None:
     filecache = _load_filecache(site)
+
+    from . import ipynb
+
+    ipynb.init(site)
 
     def load(walk: Iterator[ContentSrc], bin: bool = False) -> None:
         f: Optional[ContentSrc]

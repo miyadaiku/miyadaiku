@@ -8,6 +8,19 @@ import dateutil.parser
 import miyadaiku
 from miyadaiku import ContentSrc, PathTuple, exceptions, to_pathtuple
 
+IPYNB_EXPORT_OPTIONS = {
+    "TemplateExporter": {
+        #        "template_name": "classic",
+        #        "template_file": "base.html.j2",
+    },
+    "TagRemovePreprocessor": {
+        "remove_cell_tags": ["remove_cell"],
+        "remove_all_outputs_tags": ["remove_output"],
+        "remove_input_tags": ["remove_input"],
+    },
+}
+
+
 DEFAULTS = dict(
     ignore=[],
     themes=[miyadaiku.DEFAULT_THEME],
@@ -35,13 +48,9 @@ DEFAULTS = dict(
     indexpage_max_num_pages=0,
     indexpage_max_articles=5,
     indexpage_orphan=1,
-    ipynb_export_options={
-        "TagRemovePreprocessor": {
-            "remove_cell_tags": ["remove_cell"],
-            "remove_all_outputs_tags": ["remove_output"],
-            "remove_input_tags": ["remove_input"],
-        },
-    },
+    ipynb_export_options=IPYNB_EXPORT_OPTIONS,
+    ipynb_template_name="classic",
+    ipynb_template_file="base.html.j2",
     feedtype="atom",
     feed_num_articles=20,
     title="",

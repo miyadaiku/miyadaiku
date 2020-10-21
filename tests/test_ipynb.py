@@ -8,7 +8,10 @@ from miyadaiku import ContentSrc, ipynb
 DIR = Path(__file__).parent
 
 
-def test_load() -> None:
+def test_load(siteroot: SiteRoot) -> None:
+    site = siteroot.load({}, {})
+    ipynb.init(site)
+
     contentsrc = ContentSrc(
         package=None,
         srcpath=str(DIR / "test.ipynb"),
@@ -17,14 +20,17 @@ def test_load() -> None:
         mtime=0,
     )
 
-    ((src, text),) = ipynb.load(contentsrc, {})
+    ((src, text),) = ipynb.load(contentsrc)
     assert src.metadata["type"] == "article"
     assert "{{ 1+1 }}" in text
 
     assert "hidden cell" not in text
 
 
-def test_package() -> None:
+def test_package(siteroot: SiteRoot) -> None:
+    site = siteroot.load({}, {})
+    ipynb.init(site)
+
     contentsrc = ContentSrc(
         package="pkg_ipynb",
         srcpath="files/test.ipynb",
@@ -33,12 +39,15 @@ def test_package() -> None:
         mtime=0,
     )
 
-    ((src, text),) = ipynb.load(contentsrc, {})
+    ((src, text),) = ipynb.load(contentsrc)
     assert src.metadata["type"] == "article"
     print(text)
 
 
 def test_theme(siteroot: SiteRoot) -> None:
+    site = siteroot.load({}, {})
+    ipynb.init(site)
+
     site = siteroot.load({"themes": ["miyadaiku.themes.ipynb"]}, {})
     jinjaenv = site.build_jinjaenv()
     template = jinjaenv.from_string("{{ipynb.set_header()}}")
@@ -55,6 +64,9 @@ def test_theme(siteroot: SiteRoot) -> None:
 
 
 def test_theme_cssfile(siteroot: SiteRoot) -> None:
+    site = siteroot.load({}, {})
+    ipynb.init(site)
+
     siteroot.write_text(
         siteroot.contents / "test.html",
         """
@@ -69,7 +81,10 @@ def test_theme_cssfile(siteroot: SiteRoot) -> None:
     assert (siteroot.outputs / "static/ipynb/ipynb.css").exists()
 
 
-def test_split() -> None:
+def test_split(siteroot: SiteRoot) -> None:
+    site = siteroot.load({}, {})
+    ipynb.init(site)
+
     contentsrc = ContentSrc(
         package=None,
         srcpath=str(DIR / "test_splitsrc.ipynb"),
@@ -78,7 +93,7 @@ def test_split() -> None:
         mtime=0,
     )
 
-    ((src1, text1), (src2, text2),) = ipynb.load(contentsrc, {})
+    ((src1, text1), (src2, text2),) = ipynb.load(contentsrc)
 
     assert src1.contentpath == ((), "file1")
     soup = BeautifulSoup(text1, "html.parser")
