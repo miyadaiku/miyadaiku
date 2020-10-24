@@ -14,7 +14,7 @@ from . import parsesrc
 from .site import Site
 
 options: Optional[Dict[str, Any]] = None
-exporters: Optional[Dict[Tuple[str, str], HTMLExporter]]
+exporters: Dict[Tuple[str, str], HTMLExporter] = {}
 
 root: Optional[Path] = None
 
@@ -43,7 +43,6 @@ def _make_exporter(
     template_name = template_name or options["TemplateExporter"]["template_name"]
     template_file = template_file or options["TemplateExporter"]["template_file"]
 
-    assert exporters
     if (template_name, template_file) not in exporters:
         assert options
         assert root
