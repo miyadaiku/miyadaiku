@@ -93,7 +93,10 @@ def test_split(siteroot: SiteRoot) -> None:
         mtime=0,
     )
 
-    ((src1, text1), (src2, text2),) = ipynb.load(contentsrc)
+    (
+        (src1, text1),
+        (src2, text2),
+    ) = ipynb.load(contentsrc)
 
     assert src1.contentpath == ((), "file1")
     soup = BeautifulSoup(text1, "html.parser")

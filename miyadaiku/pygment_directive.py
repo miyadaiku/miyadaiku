@@ -78,8 +78,7 @@ TEMPL = """
 
 
 class Pygments(Directive):
-    """ Source code syntax hightlighting.
-    """
+    """Source code syntax hightlighting."""
 
     required_arguments = 0
     optional_arguments = 1

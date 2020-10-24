@@ -43,7 +43,13 @@ def split_yaml(s: str, sep: str) -> Tuple[Dict[Any, Any], str]:
     for n, line in enumerate(lines[1:], 1):
         if line.startswith(sep):
             meta = "\n".join(lines[1:n])
-            d = yaml.load(meta, Loader=yaml.FullLoader,) or {}
+            d = (
+                yaml.load(
+                    meta,
+                    Loader=yaml.FullLoader,
+                )
+                or {}
+            )
             if not isinstance(d, dict):
                 logger.warn("yaml should return dicionay: %s", meta)
                 return {}, s
@@ -52,7 +58,10 @@ def split_yaml(s: str, sep: str) -> Tuple[Dict[Any, Any], str]:
     return {}, s
 
 
-def replace_jinjatag(text: str, repl: Optional[Callable[[str], str]] = None,) -> str:
+def replace_jinjatag(
+    text: str,
+    repl: Optional[Callable[[str], str]] = None,
+) -> str:
 
     re_start = re.compile(r"(\\)?:jinja:`")
     re_end = re.compile(r"\\|`")

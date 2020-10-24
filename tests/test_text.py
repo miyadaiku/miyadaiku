@@ -50,7 +50,10 @@ first
 second"""
     )
 
-    ((src1, text1), (src2, text2),) = text.load(to_contentsrc(sitedir / "a.txt"))
+    (
+        (src1, text1),
+        (src2, text2),
+    ) = text.load(to_contentsrc(sitedir / "a.txt"))
 
     assert src1.metadata["type"] == "article"
     assert src1.contentpath == ((), "b.txt")

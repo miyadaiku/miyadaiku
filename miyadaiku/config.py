@@ -9,10 +9,7 @@ import miyadaiku
 from miyadaiku import ContentSrc, PathTuple, exceptions, to_pathtuple
 
 IPYNB_EXPORT_OPTIONS = {
-    "TemplateExporter": {
-        #        "template_name": "classic",
-        #        "template_file": "base.html.j2",
-    },
+    "TemplateExporter": {},
     "TagRemovePreprocessor": {
         "remove_cell_tags": ["remove_cell"],
         "remove_all_outputs_tags": ["remove_output"],

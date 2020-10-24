@@ -18,6 +18,7 @@ from miyadaiku import (
     CONFIG_FILE,
     CONTENTS_DIR,
     MODULES_DIR,
+    NBCONVERT_TEMPLATES_DIR,
     TEMPLATES_DIR,
     BuildResult,
     ContentPath,
@@ -92,6 +93,10 @@ def check_depends(
     if any(check_directory(site.root / TEMPLATES_DIR, mtime)):
         return True, set(), {}, []
 
+    # check nbconvert template directory
+    if any(check_directory(site.root / NBCONVERT_TEMPLATES_DIR, mtime)):
+        return True, set(), {}, []
+
     def is_yaml(filename: Path) -> bool:
         return filename.suffix in (".yml", ".yaml")
 
@@ -135,7 +140,10 @@ def check_depends(
 
 
 def update_deps(
-    site: site.Site, d: DependsDict, results: BuildResult, errors: Set[ContentPath],
+    site: site.Site,
+    d: DependsDict,
+    results: BuildResult,
+    errors: Set[ContentPath],
 ) -> DependsDict:
 
     new: Dict[ContentPath, Tuple[Set[ContentPath], Set[str]]] = {}

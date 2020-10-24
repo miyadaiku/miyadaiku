@@ -62,7 +62,13 @@ class Site:
         src = ""
         if cfgfile.is_file():
             src = cfgfile.read_text(encoding=miyadaiku.YAML_ENCODING)
-        self.siteconfig = yaml.load(src, Loader=yaml.FullLoader,) or {}
+        self.siteconfig = (
+            yaml.load(
+                src,
+                Loader=yaml.FullLoader,
+            )
+            or {}
+        )
         self.siteconfig.update(props)
 
         self.config = Config(self.siteconfig)

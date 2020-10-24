@@ -5,7 +5,15 @@ from miyadaiku import context
 
 
 def test_build(siteroot: SiteRoot) -> None:
-    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", "{{page.title}}",)],)
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "doc.html",
+                "{{page.title}}",
+            )
+        ],
+    )
 
     (path,) = ctx.build()
     assert path.filename == ctx.site.outputdir / "doc.html"

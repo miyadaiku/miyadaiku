@@ -64,7 +64,10 @@ class SiteRoot:
         build_sitedir(self.path.parent)
 
     def load(
-        self, config: Dict[Any, Any], props: Dict[Any, Any], debug: bool = True,
+        self,
+        config: Dict[Any, Any],
+        props: Dict[Any, Any],
+        debug: bool = True,
     ) -> miyadaiku.site.Site:
         cfg = yaml.dump(config)
         (self.path / "config.yml").write_text(cfg)
@@ -89,7 +92,7 @@ class SiteRoot:
         return path
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def siteroot(tmpdir: Any) -> SiteRoot:
     ret = SiteRoot(tmpdir)
     return ret

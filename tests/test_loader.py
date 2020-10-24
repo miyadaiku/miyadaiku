@@ -14,12 +14,18 @@ def test_walk_directory(siteroot: SiteRoot) -> None:
 
     results = loader.walk_directory(siteroot.contents, set(["*.bak"]))
 
-    all = sorted(results, key=lambda d: d.srcpath)
+    all = sorted(results, key=lambda d: str(d.srcpath))
     assert len(all) == 2
 
     assert all[0] == ContentSrc(
         srcpath=str(file2),
-        contentpath=(("dir1", "dir2",), "file2"),
+        contentpath=(
+            (
+                "dir1",
+                "dir2",
+            ),
+            "file2",
+        ),
         package="",
         metadata={},
         mtime=all[0].mtime,
@@ -35,7 +41,7 @@ def test_walk_directory(siteroot: SiteRoot) -> None:
 
 def test_walkpackage() -> None:
     results = loader.walk_package("package1", "contents", {"*.bak", ".*"})
-    all = sorted(results, key=lambda d: d.srcpath)
+    all = sorted(results, key=lambda d: str(d.srcpath))
 
     assert len(all) == 7
     assert all[0] == ContentSrc(

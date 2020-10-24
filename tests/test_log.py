@@ -27,7 +27,15 @@ def test_mpbuild(log: Any, siteroot: SiteRoot) -> None:
 
 
 def test_jinja_str_err(siteroot: SiteRoot) -> None:
-    (ctx,) = create_contexts(siteroot, srcs=[("abc/index.rst", "",)],)
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "abc/index.rst",
+                "",
+            )
+        ],
+    )
 
     src = """1
 2
@@ -49,7 +57,15 @@ def test_jinja_str_err(siteroot: SiteRoot) -> None:
 
 
 def test_jinja_str_syntaxerr(siteroot: SiteRoot) -> None:
-    (ctx,) = create_contexts(siteroot, srcs=[("abc/index.rst", "",)],)
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "abc/index.rst",
+                "",
+            )
+        ],
+    )
 
     src = """1
 2

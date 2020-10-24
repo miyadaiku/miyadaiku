@@ -62,8 +62,8 @@ def to_markupsafe(s: Optional[str]) -> Optional[SAFE_STR]:
 
 def safe_prop(f: Callable[..., Any]) -> property:
     """AttributeError in the function raises TypeError instead.
-       This prevents __getattr__() being called in case if error
-       in the decorator"""
+    This prevents __getattr__() being called in case if error
+    in the decorator"""
 
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:
@@ -485,7 +485,10 @@ def eval_jinja(
 
 
 def eval_jinja_template(
-    ctx: OutputContext, content: Content, templatename: str, kwargs: Dict[str, Any],
+    ctx: OutputContext,
+    content: Content,
+    templatename: str,
+    kwargs: Dict[str, Any],
 ) -> str:
 
     try:
@@ -695,7 +698,12 @@ class OutputContext:
             for k, v in attrs.items():
                 s_attrs.append(f"{markupsafe.escape(k)}='{markupsafe.escape(v)}'")
         path = markupsafe.escape(
-            self.path_to(target, pageargs, fragment=fragment, abs_path=abs_path,)
+            self.path_to(
+                target,
+                pageargs,
+                fragment=fragment,
+                abs_path=abs_path,
+            )
         )
         return markupsafe.Markup(f"<a href='{path}' { ' '.join(s_attrs) }>{text}</a>")
 
@@ -839,7 +847,10 @@ class FeedOutput(OutputContext):
         contents = [
             c
             for c in self.site.files.get_contents(
-                self.site, filters=filters, excludes=excludes, subdirs=dirs,
+                self.site,
+                filters=filters,
+                excludes=excludes,
+                subdirs=dirs,
             )
         ][:num_articles]
 

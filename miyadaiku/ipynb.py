@@ -10,11 +10,12 @@ from traitlets.config import Config
 
 from miyadaiku import NBCONVERT_TEMPLATES_DIR, ContentSrc
 
-from . import parsesrc, site
+from . import parsesrc
 from .site import Site
 
 options: Optional[Dict[str, Any]] = None
-exporters = {}
+exporters: Optional[Dict[Tuple[str, str], HTMLExporter]]
+
 root: Optional[Path] = None
 
 
@@ -22,6 +23,7 @@ def init(site: Site) -> None:
     global options, exporters, root
 
     options = copy.deepcopy(site.config.get("/", "ipynb_export_options"))
+    assert options
 
     template_name = site.config.get("/", "ipynb_template_name")
     options["TemplateExporter"]["template_name"] = template_name
@@ -36,9 +38,12 @@ def init(site: Site) -> None:
 def _make_exporter(
     template_name: Optional[str], template_file: Optional[str]
 ) -> HTMLExporter:
+
+    assert options
     template_name = template_name or options["TemplateExporter"]["template_name"]
     template_file = template_file or options["TemplateExporter"]["template_file"]
 
+    assert exporters
     if (template_name, template_file) not in exporters:
         assert options
         assert root
@@ -48,7 +53,7 @@ def _make_exporter(
         opt["TemplateExporter"]["template_file"] = template_file
         opt["TemplateExporter"]["extra_template_basedirs"] = [os.getcwd(), str(root)]
 
-        exp = HTMLExporter(opt)
+        exp = HTMLExporter(Config(opt))
         exporters[(template_name, template_file)] = exp
 
     return exporters[(template_name, template_file)]

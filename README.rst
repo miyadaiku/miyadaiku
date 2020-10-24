@@ -43,6 +43,13 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.19.0
+~~~~~~~~~~~~
+
+- Support Python 3.9.0
+
+- nbconvert themes can be installed in `nb_templates` directory.
+
 1.18.0
 ~~~~~~~~~~~~
 

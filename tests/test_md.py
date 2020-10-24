@@ -205,7 +205,10 @@ second
 """
     )
 
-    ((src1, text1), (src2, text2),) = md.load(to_contentsrc(sitedir / "a.md"))
+    (
+        (src1, text1),
+        (src2, text2),
+    ) = md.load(to_contentsrc(sitedir / "a.md"))
 
     assert src1.metadata["type"] == "article"
     assert src1.contentpath == ((), "b.md")

@@ -221,9 +221,7 @@ def split_batch(builders: Sequence[Any]) -> Sequence[Any]:
 
 def build_batch(
     site: Site, jinjaev: Environment, builders: List[Builder]
-) -> Tuple[
-    int, int, BuildResult, Set[ContentPath],
-]:
+) -> Tuple[int, int, BuildResult, Set[ContentPath],]:
 
     ret: BuildResult = []
     errors: Set[ContentPath] = set()
@@ -239,7 +237,13 @@ def build_batch(
             filenames = context.build()
             extend.run_post_build(context, filenames)
 
-            ret.append((context.content.src, set(context.depends), filenames,))
+            ret.append(
+                (
+                    context.content.src,
+                    set(context.depends),
+                    filenames,
+                )
+            )
             ok += 1
 
         except Exception:
@@ -289,7 +293,6 @@ def run_build(
     queue: Any = multiprocessing.Queue()
     p = multiprocessing.Process(target=mp_build_batch, args=(queue, picklefile, batch))
     p.start()
-
     msgs = []
     while True:
         msg = queue.get()
@@ -310,9 +313,7 @@ def run_build(
 
 async def submit(
     site: Site, batches: Sequence[List[Builder]]
-) -> Tuple[
-    int, int, BuildResult, Set[ContentPath],
-]:
+) -> Tuple[int, int, BuildResult, Set[ContentPath],]:
 
     fd, picklefile = tempfile.mkstemp()
 
@@ -326,6 +327,12 @@ async def submit(
         futs = []
         results = []
         errors = set()
+
+        # build Queue here for Python 3.9 issue35943
+        # force importing multiprocessing.* modules
+        dmy_executor = ThreadPoolExecutor(max_workers=1)
+        fut = loop.run_in_executor(dmy_executor, run_build, loop, picklefile, [])
+        await fut
 
         executor = ThreadPoolExecutor(max_workers=len(batches))
         for batch in batches:
@@ -354,9 +361,7 @@ async def submit(
 
 def submit_debug(
     site: Site, batches: Sequence[List[Builder]]
-) -> Tuple[
-    int, int, BuildResult, Set[ContentPath],
-]:
+) -> Tuple[int, int, BuildResult, Set[ContentPath],]:
 
     site.load_modules()
     jinjaenv = site.build_jinjaenv()

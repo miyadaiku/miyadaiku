@@ -99,7 +99,12 @@ def test_refs(siteroot: SiteRoot) -> None:
     rebuild, updated, depdict, outputfinos = depends.check_depends(site)
 
     assert rebuild is False
-    assert updated == set((((), "file1.rst"), ((), "file2.rst"),))
+    assert updated == set(
+        (
+            ((), "file1.rst"),
+            ((), "file2.rst"),
+        )
+    )
 
 
 def test_rebuild(siteroot: SiteRoot) -> None:

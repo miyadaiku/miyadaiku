@@ -4,7 +4,12 @@ from typing import Any, Dict, List, Tuple
 
 import markdown
 import markdown.extensions.codehilite
-from markdown import blockprocessors, postprocessors, preprocessors, util
+from markdown import (  # type: ignore
+    blockprocessors,
+    postprocessors,
+    preprocessors,
+    util,
+)
 
 from miyadaiku import ContentSrc
 
@@ -111,7 +116,7 @@ def _load_string(string: str) -> Tuple[Dict[str, Any], str]:
         Ext(),
     ]
 
-    md = markdown.Markdown(extensions=extensions)
+    md: Any = markdown.Markdown(extensions=extensions)
     md.postprocessors.register(JinjaPostprocessor(md), "jinja_raw_html", 0)
     md.meta = {
         "type": "article",

@@ -359,7 +359,10 @@ hi"""
     <h1>header</h1>
     """
 
-    (ctx,) = create_contexts(siteroot, srcs=[("doc.html", src2)],)
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[("doc.html", src2)],
+    )
     assert ctx.content.build_title(ctx) == "doc"
 
     (ctx,) = create_contexts(
@@ -370,7 +373,9 @@ hi"""
     assert ctx.content.build_title(ctx) == "01234 5"
 
     (ctx,) = create_contexts(
-        siteroot, srcs=[("doc.html", src2)], config={"title_fallback": "header"},
+        siteroot,
+        srcs=[("doc.html", src2)],
+        config={"title_fallback": "header"},
     )
     assert ctx.content.build_title(ctx) == "header"
 

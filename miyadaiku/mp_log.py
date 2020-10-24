@@ -12,7 +12,12 @@ _pendings: List[Dict[str, Any]] = []
 
 
 class MpLogFormatter(logging.Formatter):
-    def __init__(self, fmt: Any = None, datefmt: Any = None, style: Any = "%",) -> None:
+    def __init__(
+        self,
+        fmt: Any = None,
+        datefmt: Any = None,
+        style: Any = "%",
+    ) -> None:
         super().__init__(fmt=fmt, datefmt=datefmt, style=style)
 
     def format_dict(self, record: Any) -> Dict[str, Any]:
@@ -61,7 +66,9 @@ def init_mp_logging(queue: Any) -> None:
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
-        "loggers": {"": {"level": "DEBUG", "handlers": ["streamhandler"]},},
+        "loggers": {
+            "": {"level": "DEBUG", "handlers": ["streamhandler"]},
+        },
         "handlers": {
             "streamhandler": {"()": lambda: MpLogHandler(level=logging.DEBUG)}
         },
@@ -125,7 +132,9 @@ def init_logging() -> None:
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
-        "loggers": {"": {"level": "DEBUG", "handlers": ["default"]},},
+        "loggers": {
+            "": {"level": "DEBUG", "handlers": ["default"]},
+        },
         "handlers": {
             "default": {
                 "level": "INFO",

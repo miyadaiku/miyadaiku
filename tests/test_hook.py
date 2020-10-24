@@ -32,9 +32,7 @@ def initialized(site):
     extend.run_finished(site)
 
     assert len(extend.hooks_finished) == 2
-    assert [1, 1] == [
-        f.called for f in extend.hooks_finished  # type: ignore
-    ]
+    assert [1, 1] == [f.called for f in extend.hooks_finished]  # type: ignore
 
     assert len(extend.hooks_initialized) == 1
     assert extend.hooks_initialized[0].called == 1  # type: ignore
@@ -74,7 +72,7 @@ def load_finished1(site):
     assert 1 == extend.hooks_load_finished[0].called  # type: ignore
 
 
-@pytest.mark.parametrize("debug", [True, False])  # type: ignore
+@pytest.mark.parametrize("debug", [True, False])
 def test_build(siteroot: SiteRoot, debug: bool) -> None:
     siteroot.write_text(
         siteroot.path / "hooks.py",

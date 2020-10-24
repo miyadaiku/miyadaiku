@@ -12,9 +12,27 @@ def test_get() -> None:
 
     assert cfg.get(("dir1",), "prop_a1") == "value_a1"
     assert cfg.get(("dir1", "dir2"), "prop_a1") == "value_a11"
-    assert cfg.get(("dir1", "dir2",), "prop_b1") == "value_b1"
+    assert (
+        cfg.get(
+            (
+                "dir1",
+                "dir2",
+            ),
+            "prop_b1",
+        )
+        == "value_b1"
+    )
 
-    assert cfg.get(("dir1", "dir2",), "root") == "root_value"
+    assert (
+        cfg.get(
+            (
+                "dir1",
+                "dir2",
+            ),
+            "root",
+        )
+        == "root_value"
+    )
 
 
 def test_add_str() -> None:
@@ -28,7 +46,16 @@ def test_theme() -> None:
     cfg = config.Config({"root": "root_value"})
     cfg.add_themecfg({"theme": "theme_value"})
 
-    assert cfg.get(("dir1", "dir2",), "theme") == "theme_value"
+    assert (
+        cfg.get(
+            (
+                "dir1",
+                "dir2",
+            ),
+            "theme",
+        )
+        == "theme_value"
+    )
 
 
 def test_value() -> None:

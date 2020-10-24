@@ -81,7 +81,10 @@ def test_link(siteroot: SiteRoot) -> None:
     (ctx1, ctx2) = create_contexts(
         siteroot,
         srcs=[
-            ("doc1.html", "",),
+            (
+                "doc1.html",
+                "",
+            ),
             (
                 "doc2.html",
                 """
