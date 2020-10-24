@@ -36,7 +36,7 @@ def build_sitedir(path: pathlib.Path) -> pathlib.Path:
     return site
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def sitedir(tmpdir: Any) -> pathlib.Path:
     d = pathlib.Path(str(tmpdir))
     return build_sitedir(d)

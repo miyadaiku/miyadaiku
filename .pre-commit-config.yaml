@@ -25,4 +25,4 @@ repos:
   hooks:
     - id: mypy
       args: [--strict, --ignore-missing-imports, --follow-imports=silent]
-      additional_dependencies: [importlib_resources]
+      additional_dependencies: [importlib_resources, pytest]
