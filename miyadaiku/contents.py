@@ -250,6 +250,14 @@ date: {datestr}
                 path = posixpath.join(*self.src.contentpath[0], path)
         else:
             path = self.build_output_path(ctx, pageargs)
+
+        if self.get_metadata(ctx.site, "strip_directory_index"):
+            directory_index = self.get_metadata(ctx.site, "directory_index")
+            parsed = urllib.parse.urlparse(path)
+            if posixpath.basename(parsed.path) == directory_index:
+                parsed = parsed._replace(path=posixpath.dirname(parsed.path) + "/")
+                path = urllib.parse.urlunparse(parsed)
+
         return cast(str, urllib.parse.urljoin(site_url, path))
 
     def eval_body(self, ctx: context.OutputContext, propname: str) -> str:

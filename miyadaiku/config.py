@@ -69,6 +69,8 @@ DEFAULTS = dict(
     generate_metadata_file=False,
     has_jinja=False,
     short_header_id=False,
+    strip_directory_index=False,
+    directory_index="index.html",
 )
 
 
