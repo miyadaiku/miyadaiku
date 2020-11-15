@@ -47,6 +47,7 @@ History
 ~~~~~~~~~~~~
 
 - Fix bug in jinja tag extraction.
+- `short_header_id` to generate short header id.
 
 1.19.0
 ~~~~~~~~~~~~

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import binascii
 import copy
 import datetime
 import os
 import posixpath
 import re
+import string
 import unicodedata
 import urllib.parse
 from pathlib import Path, PurePosixPath
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Counter, Dict, List, Optional, Tuple, cast
 
 import pytz
 from bs4 import BeautifulSoup
@@ -18,6 +20,32 @@ from miyadaiku import METADATA_FILE_SUFFIX, ContentSrc, PathTuple, repr_contentp
 
 from . import config, context, extend, site
 from .jinjaenv import safepath
+
+# https://stackoverflow.com/a/2267446
+digs = string.digits + string.ascii_letters
+
+
+def int2base(x: int, base: int) -> str:
+    if x < 0:
+        sign = -1
+    elif x == 0:
+        return digs[0]
+    else:
+        sign = 1
+
+    x *= sign
+    digits = []
+
+    while x:
+        digits.append(digs[int(x % base)])
+        x = int(x / base)
+
+    if sign < 0:
+        digits.append("-")
+
+    digits.reverse()
+
+    return "".join(digits)
 
 
 class Content:
@@ -367,8 +395,10 @@ class HTMLContent(Content):
         headers: List[context.HTMLIDInfo] = []
         header_anchors: List[context.HTMLIDInfo] = []
 
+        short_header_id = self.get_config_metadata(ctx.site, "short_header_id")
+        gen_ids: Counter[str] = Counter()
         target_id = None
-        nth = 1
+
         for c in soup.recursiveChildGenerator():
             if not isinstance(c, str):
                 cid = c.get("id", None)
@@ -399,15 +429,20 @@ class HTMLContent(Content):
 
                 id = c.get("id", None)
                 if id is None:
-                    slug = (
-                        f"{repr_contentpath(self.src.contentpath)}_{c.text[:80]}_{nth}"
-                    )
-                    nth += 1
+                    slug = f"{repr_contentpath(self.src.contentpath)}_{c.text[:80]}"
+                    if short_header_id:
+                        id = int2base(binascii.crc32(slug.encode("utf-8")), 62)
+                    else:
+                        slug = unicodedata.normalize("NFKC", slug)
+                        slug = re.sub(r"[^\w]+", "_", slug)
 
-                    slug = unicodedata.normalize("NFKC", slug)
-                    slug = re.sub(r"[^\w]+", "_", slug)
+                        id = f"h_{slug}"
 
-                    id = f"h_{slug}"
+                    gen_ids[id] += 1
+                    nth = gen_ids[id]
+                    if nth != 1:
+                        id = f"{id}_{nth-1}"
+
                     c["id"] = id
 
                 c["class"] = c.get("class", []) + ["md_header_block"]

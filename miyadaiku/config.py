@@ -68,6 +68,7 @@ DEFAULTS = dict(
     imports="",
     generate_metadata_file=False,
     has_jinja=False,
+    short_header_id=False,
 )
 
 
