@@ -1,6 +1,7 @@
 import copy
 import hashlib
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -180,7 +181,7 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
         # restore jinja tag
         html = html.translate({ord("{"): "&#123;", ord("}"): "&#125;"})
         for hash, s in jinjatags.items():
-            html = html.replace(hash, s)
+            html = re.sub(rf"(<p>\s*{hash}\s*</p>)|{hash}", s, html, 1)
 
         ret.append((subsrc, html))
 

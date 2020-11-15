@@ -43,6 +43,11 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.20.0
+~~~~~~~~~~~~
+
+- Fix bug in jinja tag extraction.
+
 1.19.0
 ~~~~~~~~~~~~
 

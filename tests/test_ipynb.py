@@ -23,7 +23,7 @@ def test_load(siteroot: SiteRoot) -> None:
     ((src, text),) = ipynb.load(contentsrc)
     assert src.metadata["type"] == "article"
     assert "{{ 1+1 }}" in text
-
+    assert "<p>{{ 1+1 }}</p>" not in text
     assert "hidden cell" not in text
 
 
