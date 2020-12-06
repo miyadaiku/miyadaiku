@@ -133,9 +133,12 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
         newcells = [c for c in subcells if c.get("cell_type", "") != "raw"]
 
         jinjatags = {}
+        idx = 0
 
         def conv_jinjatag(s: str) -> str:
-            digest = hashlib.md5(s.encode("utf-8")).hexdigest()
+            nonlocal idx
+            idx += 1
+            digest = hashlib.md5(s.encode("utf-8")).hexdigest() + str(idx)
             jinjatags[digest] = s
             return digest
 
