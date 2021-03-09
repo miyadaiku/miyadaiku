@@ -176,12 +176,4 @@ def test_pygments(siteroot: SiteRoot) -> None:
     )
 
     assert ctx.content.body
-    assert ctx.content.body.strip() == (
-        b"""<div class="code-block">
-<div class="code-block-caption">caption</div>
-<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv">"""
-        b"""<pre>1</pre></div></td><td class="code"><div class="highlight"><pre><span></span>:jinja:`&#123;&#123;&#125;&#125;`
-</pre></div>
-</td></tr></table>
-</div>"""
-    )
+    assert b":jinja:`&#123;&#123;&#125;&#125;`" in ctx.content.body
