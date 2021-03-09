@@ -43,6 +43,11 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.21.0
+~~~~~~~~~~~~
+
+- `abstract_html` property specifies static abstract text of content in HTML.
+
 1.20.0
 ~~~~~~~~~~~~
 

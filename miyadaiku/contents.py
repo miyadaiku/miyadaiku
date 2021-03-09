@@ -324,12 +324,28 @@ date: {datestr}
 
         return posixpath.splitext(self.src.contentpath[1])[0]
 
+    def get_metadata_abstract(
+        self, context: context.OutputContext, plain: bool = False
+    ) -> Optional[str]:
+        meta_abstract: str = self.get_metadata(context.site, "abstract_html", None)
+        if meta_abstract:
+            if plain:
+                soup = BeautifulSoup(meta_abstract, "html.parser")
+                return " ".join(soup.get_text(" ").split())
+            else:
+                return meta_abstract
+
+        return None
+
     def build_abstract(
         self,
         context: context.OutputContext,
         abstract_length: Optional[int] = None,
         plain: bool = False,
     ) -> str:
+        abstract = self.get_metadata_abstract(context, plain)
+        if abstract is not None:
+            return abstract
         return ""
 
     def get_headers(self, ctx: context.OutputContext) -> List[context.HTMLIDInfo]:
@@ -496,6 +512,10 @@ class HTMLContent(Content):
         abstract_length: Optional[int] = None,
         plain: bool = False,
     ) -> str:
+
+        abstract = self.get_metadata_abstract(ctx, plain)
+        if abstract is not None:
+            return abstract
 
         self._build_html(ctx)
         soup = ctx.get_cache("soup", self)
