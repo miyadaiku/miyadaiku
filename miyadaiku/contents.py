@@ -611,22 +611,22 @@ class HTMLContent(Content):
         if self._in_build_headers:
             return "!!!! Circular reference detected !!!"
 
-        re_search = re.compile(search, re.M | re.I)
+        search = search.lower()
 
         for id, elem, text in self.get_headers(ctx):
-            if re_search.search(text):
+            if search in text.lower():
                 return id
 
         for id, elem, text in self.get_header_anchors(ctx):
-            if re_search.search(text):
+            if search in text.lower():
                 return id
 
         for id, elem, text in self.get_targets(ctx):
-            if re_search.search(text):
+            if search in text.lower():
                 return id
 
         for id, elem, text in ctx.get_cache("ids", self) or ():
-            if re_search.search(text):
+            if search in text.lower():
                 return id
 
         return None
