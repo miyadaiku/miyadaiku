@@ -43,6 +43,11 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.21.1
+~~~~~~~~~~~~
+
+- `search` argument of `context.link_to()` is not regular expression but plain text.
+
 1.21.0
 ~~~~~~~~~~~~
 
