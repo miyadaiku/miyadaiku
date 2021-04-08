@@ -116,7 +116,7 @@ RST_SETTINGS = {
     "syntax_highlight": "short",
     "embed_stylesheet": False,
     #    'doctitle_xform': False,
-    #    'initial_header_level': 1,
+    "initial_header_level": 1,
 }
 
 
