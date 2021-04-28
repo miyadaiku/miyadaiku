@@ -46,6 +46,7 @@ History
 1.21.1
 ~~~~~~~~~~~~
 
+- `updated` property is used as `updated` element of feed if specified.
 - `search` argument of `context.link_to()` is not regular expression but plain text.
 
 1.21.0

@@ -8,11 +8,13 @@ from conftest import SiteRoot
 def test_feed(siteroot: SiteRoot) -> None:
     for i in range(21):
         tag = f"tag{(i % 4) + 1}"
-        d = datetime.datetime(2020, 1, 1) + datetime.timedelta(days=i)
+        date = datetime.datetime(2020, 1, 1) + datetime.timedelta(days=i)
+        updated = date + datetime.timedelta(days=1)
         siteroot.write_text(
             siteroot.contents / f"htmldir/{i}.html",
             f"""
-date: {d.ctime()}
+date: {date.ctime()}
+updated: {updated.ctime()}
 
 tags: {tag}
 
@@ -35,6 +37,19 @@ type: feed
 
     entries = root.findall("./{http://www.w3.org/2005/Atom}entry")
     assert len(entries) == 20
+
+    elem_published = entries[0].find("{http://www.w3.org/2005/Atom}published")
+    assert elem_published is not None
+    assert elem_published.text
+
+    elem_updated = entries[0].find("{http://www.w3.org/2005/Atom}updated")
+    assert elem_updated is not None
+    assert elem_updated.text
+
+    published = datetime.datetime.fromisoformat(elem_published.text)
+    updated = datetime.datetime.fromisoformat(elem_updated.text)
+
+    assert (updated - published) == datetime.timedelta(days=1)
 
     siteroot.write_text(
         siteroot.contents / "feed.yml",

@@ -873,6 +873,8 @@ class FeedOutput(OutputContext):
             link = c.build_url(self, {})
             description = c.build_abstract(self)
             date = c.get_metadata(self.site, "date")
+            updated = c.get_metadata(self.site, "updated")
+
             if date:
                 feed.add_item(
                     title=c.build_title(self),
@@ -880,6 +882,7 @@ class FeedOutput(OutputContext):
                     unique_id=get_tag_uri(link, date),
                     description=str(description),
                     pubdate=date,
+                    updateddate=updated,
                 )
 
         body = feed.writeString("utf-8")
