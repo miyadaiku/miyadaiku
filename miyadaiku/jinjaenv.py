@@ -65,7 +65,15 @@ def create_env(
     for path in paths:
         loaders.append(FileSystemLoader(os.fspath(path)))
 
-    loaders.extend([PackageLoader(theme) for theme in themes])
+    for theme in themes:
+        try:
+            loader = PackageLoader(theme)
+        except ValueError:
+            # PackageLoader raises ValueError if the theme does not contain
+            # templates directory
+            continue
+        loaders.append(loader)
+
     loaders.append(PackageLoader("miyadaiku.themes.base"))
 
     env = Environment(
