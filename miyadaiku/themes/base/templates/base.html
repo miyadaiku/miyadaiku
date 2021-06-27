@@ -5,6 +5,11 @@
     <meta charset="{{ page.charset }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ page.title | striptags }} - {{ page.site_title | striptags }}{% endblock %}</title>
+    {% set refresh_to = page.get_config('refresh_to', None) %}
+    {% if refresh_to %}
+      <meta http-equiv="refresh" content="0;url={{ page.path_to(refresh_to, abs_path=True) }}" />
+    {% endif %}
+
   {% endblock head %}
 </head>
 

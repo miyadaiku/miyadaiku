@@ -43,6 +43,12 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.22.0
+~~~~~~~~~~~~
+
+- `<meta http-equiv="refresh" ...>` element is emitted if `refresh_to` property is path to the target page.
+- `search` argument of `context.link_to()` is not regular expression but plain text.
+
 1.21.1
 ~~~~~~~~~~~~
 
