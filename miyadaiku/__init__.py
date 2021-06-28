@@ -184,7 +184,11 @@ def strip_directory_index(path: str, directory_index: str):
     parsed = urllib.parse.urlparse(path)
 
     if posixpath.basename(parsed.path) == directory_index:
-        parsed = parsed._replace(path=posixpath.dirname(parsed.path) + "/")
+        new_path = posixpath.dirname(parsed.path)
+        if len(new_path) != 0 and new_path != '/':
+            new_path += "/"
+
+        parsed = parsed._replace(path=new_path)
         path = urllib.parse.urlunparse(parsed)
 
     return path
