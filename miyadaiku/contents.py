@@ -16,7 +16,7 @@ import pytz
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
-from miyadaiku import METADATA_FILE_SUFFIX, ContentSrc, PathTuple, repr_contentpath
+from miyadaiku import METADATA_FILE_SUFFIX, ContentSrc, PathTuple, repr_contentpath, strip_directory_index
 
 from . import config, context, extend, site
 from .jinjaenv import safepath
@@ -253,10 +253,7 @@ date: {datestr}
 
         if self.get_metadata(ctx.site, "strip_directory_index"):
             directory_index = self.get_metadata(ctx.site, "directory_index")
-            parsed = urllib.parse.urlparse(path)
-            if posixpath.basename(parsed.path) == directory_index:
-                parsed = parsed._replace(path=posixpath.dirname(parsed.path) + "/")
-                path = urllib.parse.urlunparse(parsed)
+            path = strip_directory_index(path, directory_index)
 
         return cast(str, urllib.parse.urljoin(site_url, path))
 
