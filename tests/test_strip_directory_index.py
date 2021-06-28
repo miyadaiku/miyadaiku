@@ -9,12 +9,15 @@ def test_strip_directory_index():
     assert strip_directory_index('foo/bar.html', 'foo.html') == 'foo/bar.html'
 
     # abs path simulation
+    assert strip_directory_index('/', 'hoge.html') == '/'
     assert strip_directory_index('/index.html', 'index.html') == '/'
     assert strip_directory_index('/hoge.html', 'fuga.html') == '/hoge.html'
     assert strip_directory_index('/foo/bar.html', 'bar.html') == '/foo/'
     assert strip_directory_index('/foo/bar.html', 'foo.html') == '/foo/bar.html'
 
     # URL simulation
+    assert strip_directory_index('https://example.com', 'hoge.html') == 'https://example.com'
+    assert strip_directory_index('https://example.com/', 'hoge.html') == 'https://example.com/'
     assert strip_directory_index('https://example.com/index.html', 'index.html') == 'https://example.com/'
     assert strip_directory_index('https://example.com/hoge.html', 'hoge.html') == 'https://example.com/'
     assert strip_directory_index('https://example.com/hoge.html', 'fuga.html') == 'https://example.com/hoge.html'
