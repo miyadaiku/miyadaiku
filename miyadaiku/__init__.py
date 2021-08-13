@@ -9,7 +9,7 @@ from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple, 
 import importlib_resources
 import tzlocal
 
-__version__ = "1.22.0"
+__version__ = "1.23.0"
 
 YAML_ENCODING = "utf-8"
 
@@ -24,7 +24,12 @@ OUTPUTS_DIR = "outputs"
 SITEMAP_FILENAME = "sitemap.xml"
 SITEMAP_CHANGEFREQ = "daily"
 
-DEFAULT_TIMEZONE = tzlocal.get_localzone().zone
+zinfo = tzlocal.get_localzone()
+try:
+    DEFAULT_TIMEZONE = zinfo.zone
+except AttributeError:
+    DEFAULT_TIMEZONE = str(zinfo)
+
 DEFAULT_THEME = "miyadaiku.themes.base"
 
 IGNORE = [

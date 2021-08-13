@@ -22,7 +22,7 @@ def test_props(siteroot: SiteRoot) -> None:
     assert proxy.order == 0
     assert proxy.site_title == "(FIXME-site_title)"
     assert proxy.site_url == "http://localhost:8888/"
-    assert proxy.timezone == tzlocal.get_localzone().zone
+    assert proxy.timezone == str(tzlocal.get_localzone())
     assert proxy.title == "docfile"
 
 

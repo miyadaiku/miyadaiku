@@ -43,6 +43,12 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.23.0
+~~~~~~~~~~~~
+
+- Support new version of tzlocal module.
+
+
 1.22.0
 ~~~~~~~~~~~~
 
