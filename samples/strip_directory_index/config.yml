@@ -1,4 +1,3 @@
-strip_directory_index: true
-directory_index: index.html
+strip_directory_index: index.html
 themes:
     - miyadaiku.themes.sample.blog

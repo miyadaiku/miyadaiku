@@ -70,7 +70,6 @@ DEFAULTS = dict(
     has_jinja=False,
     short_header_id=False,
     strip_directory_index=False,
-    directory_index="index.html",
 )
 
 
