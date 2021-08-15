@@ -3,9 +3,9 @@
   <div class="index-pagination">
     {% if cur_page != 1 %}
       <a class="index-pagination-button"
-         href="{{page.link(group_value=group_value, npage=1)}}">⇤</a>
+         href="{{page.path(group_value=group_value, npage=1)}}">⇤</a>
       <a class="index-pagination-button"
-         href="{{page.link(group_value=group_value, npage=cur_page-1)}}">←</a>
+         href="{{page.path(group_value=group_value, npage=cur_page-1)}}">←</a>
     {% else %}
       <span class="index-pagination-button index-pagination-button-disabled">⇤</span>
       <span class="index-pagination-button index-pagination-button-disabled">←</span>
