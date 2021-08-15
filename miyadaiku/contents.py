@@ -251,9 +251,9 @@ date: {datestr}
         else:
             path = self.build_output_path(ctx, pageargs)
 
-        if self.get_metadata(ctx.site, "strip_directory_index"):
-            directory_index = self.get_metadata(ctx.site, "directory_index")
-            path = strip_directory_index(path, directory_index)
+            if self.get_metadata(ctx.site, "strip_directory_index"):
+                directory_index = self.get_metadata(ctx.site, "directory_index")
+                path = strip_directory_index(path, directory_index)
 
         return cast(str, urllib.parse.urljoin(site_url, path))
 
