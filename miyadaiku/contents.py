@@ -16,7 +16,7 @@ import pytz
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
-from miyadaiku import METADATA_FILE_SUFFIX, ContentSrc, PathTuple, repr_contentpath
+from miyadaiku import METADATA_FILE_SUFFIX, ContentSrc, PathTuple, repr_contentpath, strip_directory_index
 
 from . import config, context, extend, site
 from .jinjaenv import safepath
@@ -250,6 +250,12 @@ date: {datestr}
                 path = posixpath.join(*self.src.contentpath[0], path)
         else:
             path = self.build_output_path(ctx, pageargs)
+
+            # strip_directory_index is not applied if canonical_url is specified
+            directory_index = self.get_metadata(ctx.site, "strip_directory_index")
+            if directory_index: # skip if falsy value (false, empty string, etc.)
+                path = strip_directory_index(path, directory_index)
+
         return cast(str, urllib.parse.urljoin(site_url, path))
 
     def eval_body(self, ctx: context.OutputContext, propname: str) -> str:

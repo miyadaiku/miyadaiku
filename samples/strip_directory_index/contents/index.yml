@@ -1,0 +1,5 @@
+type: index
+indexpage_max_articles: 1
+indexpage_orphan: 0
+indexpage_filename_templ: './index.html'
+indexpage_filename_templ2: './page/{{cur_page}}/index.html'

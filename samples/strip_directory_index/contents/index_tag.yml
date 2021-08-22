@@ -1,0 +1,6 @@
+type: index
+groupby: tags
+indexpage_max_articles: 1
+indexpage_orphan: 0
+indexpage_group_filename_templ: '{{ content.groupby }}/{{ group_value }}/index.html'
+indexpage_group_filename_templ2: '{{ content.groupby }}/{{ group_value }}/page/{{ cur_page }}/index.html'
