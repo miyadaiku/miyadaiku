@@ -43,6 +43,11 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.24.0
+~~~~~~~~~~~~
+
+- `strip_directory_index` property specifies a file name to be striped from the page URL.
+
 1.23.0
 ~~~~~~~~~~~~
 
