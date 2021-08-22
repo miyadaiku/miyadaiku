@@ -303,6 +303,8 @@ hi""",
     proxy = context.ContentProxy(ctx, ctx.content)
     assert proxy.url == "http://localhost:8888/a/abc.html"
 
+
+def test_canonical_url(siteroot: SiteRoot) -> None:
     (ctx,) = create_contexts(
         siteroot,
         srcs=[
@@ -337,6 +339,51 @@ hi""",
             (
                 "a/b/doc.html",
                 """
+canonical_url: abc.html
+hi""",
+            )
+        ],
+    )
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert proxy.url == "http://localhost:8888/a/b/abc.html"
+
+
+def test_strip_directory_index(siteroot: SiteRoot) -> None:
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "a/b/index.html",
+                """
+strip_directory_index: index.html
+hi""",
+            )
+        ],
+    )
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert proxy.url == "http://localhost:8888/a/b/"
+
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "a/b/index2.html",
+                """
+strip_directory_index: index.html
+hi""",
+            )
+        ],
+    )
+    proxy = context.ContentProxy(ctx, ctx.content)
+    assert proxy.url == "http://localhost:8888/a/b/index2.html"
+
+    (ctx,) = create_contexts(
+        siteroot,
+        srcs=[
+            (
+                "a/b/index.html",
+                """
+strip_directory_index: index.html
 canonical_url: abc.html
 hi""",
             )

@@ -4,7 +4,6 @@ import copy
 import datetime
 import posixpath
 from pathlib import Path
-import urllib.parse
 from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple, Union
 
 import importlib_resources
@@ -178,20 +177,6 @@ def parse_dir(path: str, cwd: PathTuple) -> PathTuple:
         path = posixpath.join(curdir, path)
 
     return to_pathtuple(path)
-
-
-def strip_directory_index(path: str, directory_index: str):
-    parsed = urllib.parse.urlparse(path)
-
-    if posixpath.basename(parsed.path) == directory_index:
-        new_path = posixpath.dirname(parsed.path)
-        if len(new_path) != 0 and new_path != '/':
-            new_path += "/"
-
-        parsed = parsed._replace(path=new_path)
-        path = urllib.parse.urlunparse(parsed)
-
-    return path
 
 
 class OutputInfo(NamedTuple):
