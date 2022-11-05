@@ -1,5 +1,6 @@
 import copy
 import hashlib
+import html
 import os
 import re
 from pathlib import Path
@@ -112,6 +113,15 @@ def split_cells(
     return ret
 
 
+def build_header_id(src: str) -> str:
+    def gen_div(m):  # type: ignore
+        idstr = html.escape(m[1])
+        return f'<div id="{idstr}"></div>'
+
+    ret = re.sub(r"^<p>.. target::\s+(\S+)</p>$", gen_div, src, flags=re.M)
+    return ret
+
+
 def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
     s = src.read_text()
     json = nbformat.reads(s, nbformat.current_nbformat)
@@ -181,6 +191,7 @@ def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:
 
         subsrc.metadata.update(meta)
 
+        html = build_header_id(html)
         # restore jinja tag
         html = html.translate({ord("{"): "&#123;", ord("}"): "&#125;"})
         for hash, s in jinjatags.items():

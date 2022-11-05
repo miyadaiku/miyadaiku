@@ -9,7 +9,7 @@ from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple, 
 import importlib_resources
 import tzlocal
 
-__version__ = "1.24.0"
+__version__ = "1.24.1"
 
 YAML_ENCODING = "utf-8"
 
@@ -80,7 +80,7 @@ class ContentSrc(NamedTuple):
 
     def get_package_path(self) -> Any:
         if self.package and self.srcpath:
-            path = importlib_resources.files(self.package)  # type: ignore
+            path = importlib_resources.files(self.package)
             return path.joinpath(self.srcpath)
         return None
 

@@ -25,6 +25,7 @@ def test_load(siteroot: SiteRoot) -> None:
     assert "{{ 1+1 }}" in text
     assert "<p>{{ 1+1 }}</p>" not in text
     assert "hidden cell" not in text
+    assert '<div id="header2_target"></div>' in text
 
 
 def test_package(siteroot: SiteRoot) -> None:
