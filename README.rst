@@ -43,6 +43,11 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.25.0
+~~~~~~~~~~~~
+
+- Support target markup in ipynb files
+
 1.24.1
 ~~~~~~~~~~~~
 
