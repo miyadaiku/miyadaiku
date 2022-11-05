@@ -1,5 +1,6 @@
 import re
 from collections import OrderedDict
+import xml.etree.ElementTree as etree
 from typing import Any, Dict, List, Tuple
 
 import markdown
@@ -89,7 +90,7 @@ class TargetProcessor(blockprocessors.BlockProcessor):  # type: ignore
             "class": "header_target",
             "id": m.group(1),
         }
-        util.etree.SubElement(parent, "div", attrib=attrs)
+        etree.SubElement(parent, "div", attrib=attrs)
 
 
 def load(src: ContentSrc) -> List[Tuple[ContentSrc, str]]:

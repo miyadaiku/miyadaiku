@@ -43,6 +43,11 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.24.1
+~~~~~~~~~~~~
+
+- Support recent python-markdown.
+
 1.24.0
 ~~~~~~~~~~~~
 
