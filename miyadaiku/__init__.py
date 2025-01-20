@@ -9,7 +9,7 @@ from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple, 
 import importlib_resources
 import tzlocal
 
-__version__ = "1.25.0"
+__version__ = "1.26.0"
 
 YAML_ENCODING = "utf-8"
 
