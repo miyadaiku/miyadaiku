@@ -33,7 +33,7 @@ from urllib.parse import urlparse
 
 import jinja2.exceptions
 import markupsafe
-from feedgenerator import Atom1Feed, Rss201rev2Feed, datetime_safe
+from feedgenerator import Atom1Feed, Rss201rev2Feed
 from jinja2 import Environment
 
 from miyadaiku import (
@@ -812,7 +812,7 @@ def get_tag_uri(url: str, date: datetime.datetime) -> str:
     bits = urlparse(url)
     d = ""
     if date is not None:
-        d = ",%s" % datetime_safe.new_datetime(date).strftime("%Y-%m-%d %H:%M:%S.%f")
+        d = ",%s" % date.strftime("%Y-%m-%d %H:%M:%S.%f")
     fragment = ""
     if bits.fragment != "":
         fragment = "/%s" % (bits.fragment)
@@ -883,6 +883,7 @@ class FeedOutput(OutputContext):
                     description=str(description),
                     pubdate=date,
                     updateddate=updated,
+                    content=None
                 )
 
         body = feed.writeString("utf-8")
