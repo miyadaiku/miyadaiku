@@ -43,6 +43,17 @@ Use pip to install miyadaiku.
 History
 ------------------
 
+1.27.0
+~~~~~~~~~~~~
+
+Fix for feedgenerator 2.0
+
+
+1.26.0
+~~~~~~~~~~~~
+
+- Remove pgktuils
+
 1.25.0
 ~~~~~~~~~~~~
 
