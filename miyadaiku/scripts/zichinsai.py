@@ -42,7 +42,11 @@ def main() -> None:
             )
             sys.exit(1)
 
-    tz = tzlocal.get_localzone().zone
+    zinfo = tzlocal.get_localzone()
+    try:
+        tz = zinfo.zone
+    except AttributeError:
+        tz = str(zinfo)
 
     locale.setlocale(locale.LC_ALL, "")
     lang = locale.getlocale()[0]
